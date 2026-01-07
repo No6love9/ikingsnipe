@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'com.ikingsnipe'
-version = '2.0.0'
+version = '14.0.0'
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
@@ -12,38 +12,39 @@ repositories {
 }
 
 dependencies {
-    // DreamBot client will be downloaded and placed in libs/ folder
-    // See README.md for instructions
+    // DreamBot client JAR from libs folder
     compileOnly fileTree(dir: 'libs', include: ['*.jar'])
 }
 
-// Task to create JAR
-task createJar(type: Jar) {
+// Main JAR task
+jar {
     archiveBaseName.set('TitanCasino')
     archiveVersion.set(version)
     from sourceSets.main.output
     
-    // Exclude any libs from the JAR
-    exclude 'META-INF/*.SF'
-    exclude 'META-INF/*.DSA'
-    exclude 'META-INF/*.RSA'
+    destinationDirectory.set(file('output'))
     
     manifest {
         attributes(
-            'Main-Class': 'com.ikingsnipe.ikingsnipe',
+            'Main-Class': 'com.ikingsnipe.TitanCasino',
             'Implementation-Title': 'Titan Casino',
-            'Implementation-Version': version
+            'Implementation-Version': version,
+            'Built-By': System.getProperty('user.name'),
+            'Built-Date': new Date().format('yyyy-MM-dd HH:mm:ss')
         )
     }
-    
-    destinationDirectory.set(file('output'))
 }
 
-// Make build depend on createJar
-build.dependsOn createJar
+// Build task
+build {
+    dependsOn jar
+}
 
+// Compile settings
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+    options.deprecation = true
+    options.compilerArgs << '-Xlint:unchecked'
 }
 
 // Clean task
@@ -51,5 +52,5 @@ clean {
     delete 'build', 'output'
 }
 
-// Default task
+// Default tasks
 defaultTasks 'clean', 'build'

@@ -1,58 +1,58 @@
 @echo off
 echo ============================================
-echo  iKingSnipe Titan Casino - Windows Builder
+echo  Titan Casino v14.0 - Windows Builder
 echo ============================================
 echo.
 
-REM Check if Java is installed
+REM Check Java
 java -version >nul 2>&1
 if errorlevel 1 (
-    echo ERROR: Java is not installed or not in PATH
-    echo Please install Java 8 or higher from: https://www.java.com/
+    echo ERROR: Java not found! Install from https://www.java.com/
     pause
     exit /b 1
 )
 
-echo [1/4] Checking for DreamBot client JAR...
+echo [1/5] Checking DreamBot JAR...
 if not exist "libs\*.jar" (
-    echo ERROR: No DreamBot client JAR found in libs\ folder
+    echo ERROR: DreamBot client JAR not found in libs\ folder!
     echo.
-    echo Please follow these steps:
-    echo 1. Download DreamBot from: https://dreambot.org/download.php
-    echo 2. Run DreamBot once
-    echo 3. Find client-X.X.X.jar in: %%USERPROFILE%%\.dreambot\cache\
-    echo 4. Copy that JAR file to the libs\ folder in this project
+    echo Please copy client-X.X.X.jar from:
+    echo   %%USERPROFILE%%\.dreambot\cache\
+    echo to:
+    echo   %CD%\libs\
     echo.
     pause
     exit /b 1
 )
 
-echo [2/4] Creating output directory...
+echo [2/5] Creating directories...
 if not exist "output" mkdir output
+if exist "build" rmdir /s /q build
 
-echo [3/4] Compiling Java source...
-dir /b libs\*.jar > temp_classpath.txt
-set /p DREAMBOT_JAR=<temp_classpath.txt
-del temp_classpath.txt
+echo [3/5] Finding DreamBot JAR...
+for %%f in (libs\*.jar) do set DREAMBOT_JAR=%%f
+echo Using: %DREAMBOT_JAR%
 
-javac -encoding UTF-8 -source 1.8 -target 1.8 -cp "libs\%DREAMBOT_JAR%" -d output src\main\java\com\ikingsnipe\*.java
+echo [4/5] Compiling Java source...
+javac -encoding UTF-8 -source 1.8 -target 1.8 ^
+      -cp "%DREAMBOT_JAR%" ^
+      -d build ^
+      src\main\java\com\ikingsnipe\*.java
 
 if errorlevel 1 (
     echo.
     echo ERROR: Compilation failed!
-    echo Check the error messages above.
+    echo Check the errors above.
     pause
     exit /b 1
 )
 
-echo [4/4] Creating JAR file...
-cd output
-jar cvf TitanCasino-2.0.0.jar com\ikingsnipe\*.class
+echo [5/5] Creating JAR file...
+cd build
+jar cvfm ..\output\TitanCasino-14.0.0.jar ..\MANIFEST.MF com\ikingsnipe\*.class
 if errorlevel 1 (
-    echo ERROR: JAR creation failed!
-    cd ..
-    pause
-    exit /b 1
+    echo Creating JAR without manifest...
+    jar cvf ..\output\TitanCasino-14.0.0.jar com\ikingsnipe\*.class
 )
 cd ..
 
@@ -61,11 +61,10 @@ echo ============================================
 echo  BUILD SUCCESSFUL!
 echo ============================================
 echo.
-echo Output: output\TitanCasino-2.0.0.jar
+echo Output: output\TitanCasino-14.0.0.jar
+echo Size: 
+dir output\TitanCasino-14.0.0.jar | find "TitanCasino"
 echo.
-echo Next steps:
-echo 1. Copy output\TitanCasino-2.0.0.jar to %%USERPROFILE%%\.dreambot\scripts\
-echo 2. Open DreamBot
-echo 3. Click Scripts -^> Find "iKingSnipe TITAN" -^> Start
+echo Next: Run INSTALL.bat to install to DreamBot
 echo.
 pause
