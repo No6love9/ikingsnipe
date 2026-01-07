@@ -1,8 +1,8 @@
 package com.ikingsnipe.titan;
 
 import org.dreambot.api.methods.Calculations;
-import org.dreambot.api.methods.chat.Chat;
-import org.dreambot.api.methods.clan.ClanChat;
+import org.dreambot.api.methods.input.Keyboard;
+import org.dreambot.api.methods.clanchat.ClanChat;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.tabs.Tab;
 import org.dreambot.api.methods.tabs.Tabs;
@@ -12,6 +12,10 @@ import org.dreambot.api.script.AbstractScript;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.utilities.Timer;
+import org.dreambot.api.utilities.Sleep;
+import org.dreambot.api.Client;
+import org.dreambot.api.methods.input.Camera;
+import org.dreambot.api.methods.input.Mouse;
 import org.dreambot.api.wrappers.items.Item;
 import org.dreambot.api.wrappers.widgets.message.Message;
 
@@ -234,7 +238,7 @@ class CasinoEngine {
         if (!running || emergencyStop || msg == null) return;
 
         String senderName = msg.getUsername();
-        if (senderName == null || senderName.equals(script.getLocalPlayer().getName())) return;
+        if (senderName == null || senderName.equals(Client.getLocalPlayer().getName())) return;
 
         try {
             String player = senderName.intern();
@@ -360,26 +364,25 @@ class ScriptMonitor {
                     if (!Tabs.isOpen(Tab.INVENTORY)) {
                         Tabs.open(Tab.INVENTORY);
                         script.sleep(getHumanDelay(200, 600));
-                        Tabs.open(Tab.random());
+                        Tabs.open(Tab.values()[secureRandom.nextInt(Tab.values().length)]);
                     }
                     break;
                 case 1:
-                    script.getCamera().rotateTo(secureRandom.nextInt(360), secureRandom.nextInt(100));
+                    Camera.rotateTo(secureRandom.nextInt(360), secureRandom.nextInt(100));
                     break;
                 case 2:
-                    script.getMouse().move(secureRandom.nextInt(800), secureRandom.nextInt(500));
+                    Mouse.move(secureRandom.nextInt(800), secureRandom.nextInt(500));
                     break;
                 case 3:
                     if (secureRandom.nextInt(10) < 3) {
-                        MessageQueue Chat;
-                        Chat.send(idleMessages.get(secureRandom.nextInt(idleMessages.size())));
+                        Keyboard.type(idleMessages.get(secureRandom.nextInt(idleMessages.size())));
                     }
                     break;
                 case 4:
                     Tabs.open(Tab.values()[secureRandom.nextInt(Tab.values().length)]);
                     break;
                 case 5:
-                    script.getCamera().rotateTo(script.getCamera().getYaw() + secureRandom.nextInt(60) - 30);
+                    Camera.rotateTo(Camera.getYaw() + secureRandom.nextInt(60) - 30);
                     break;
                 default:
                     throw new IllegalStateException("Unexpected value: " + secureRandom.nextInt(6));
@@ -657,7 +660,7 @@ class MessageQueue {
             if (ClanChat.isInClanChat()) {
                 ClanChat.sendMessage(finalMsg);
             } else {
-                Chat.send(finalMsg);
+                Keyboard.type(finalMsg, true);
             }
 
             int delay = monitor.getHumanDelay(600, 1200);
@@ -719,7 +722,7 @@ class BankingManager {
             long currentTime = System.currentTimeMillis();
             if (currentTime - lastTime < 30000) {
                 engine.getScript().log("⚠️ Trade cooldown for " + trader);
-                Trade.decline();
+                Trade.close();
                 processingTrades.remove(trader);
                 return;
             }
@@ -750,7 +753,7 @@ class BankingManager {
         long balance = engine.getDatabase().getBalance(trader);
         if (balance <= 0) {
             withdrawalQueue.remove(trader);
-            Trade.declineTrade();
+            Trade.close();
             return;
         }
 
@@ -760,12 +763,12 @@ class BankingManager {
         if (inventoryCoins < Math.min(balance, 1000000)) {
             engine.getMessageQueue().send(trader + " Error: Insufficient coins!");
             withdrawalQueue.remove(trader);
-            Trade.declineTrade();
+            Trade.close();
             return;
         }
 
         int amountToAdd = (int) Math.min(balance, Integer.MAX_VALUE);
-        if (!Trade.contains(COINS_ID, amountToAdd)) {
+        if (!Trade.contains(item -> item != null && item.getID() == COINS_ID && item.getAmount() >= amountToAdd)) {
             Trade.addItem(COINS_ID, amountToAdd);
             engine.getScript().sleep(engine.getMonitor().getHumanDelay(400, 1000));
         }
@@ -792,7 +795,7 @@ class BankingManager {
         List<Item> theirItems = Trade.getTheirItems();
         if (theirItems == null || theirItems.isEmpty()) {
             engine.getScript().sleep(engine.getMonitor().getHumanDelay(1000, 3000));
-            Trade.decline();
+            Trade.close();
             return;
         }
 
