@@ -8,6 +8,7 @@ import org.dreambot.api.methods.input.Keyboard;
 import org.dreambot.api.methods.tabs.Tab;
 import org.dreambot.api.methods.tabs.Tabs;
 import org.dreambot.api.methods.trade.Trade;
+import org.dreambot.api.methods.trade.TradeUser;
 import org.dreambot.api.script.AbstractScript;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
@@ -19,6 +20,7 @@ import org.dreambot.api.wrappers.widgets.message.Message;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.border.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -26,6 +28,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.nio.file.attribute.FileTime;
 import java.security.SecureRandom;
 import java.text.*;
 import java.util.*;
@@ -303,7 +306,7 @@ class CasinoEngine {
             }
             
             // Join clan chat if configured
-            if (!clanChatName.isEmpty() && !ClanChat.isInClanChat()) {
+            if (!clanChatName.isEmpty() && !ClanChat.isOpen()) {
                 if (Calculations.random(0, 200) == 0) {
                     joinClanChat();
                 }
@@ -333,7 +336,7 @@ class CasinoEngine {
                 Tabs.open(Tab.CLAN);
                 Sleep.sleep(Calculations.random(300, 600));
             }
-            ClanChat.joinChat(clanChatName);
+            ClanChat.join(clanChatName);
         } catch (Exception e) {
             errorHandler.handle("Join clan chat", e);
         }
@@ -780,13 +783,13 @@ class TradeManager {
             }
             
             // Add coins to trade
-            if (!Trade.contains(item -> item != null && item.getID() == COINS_ID && item.getAmount() >= amount)) {
+            if (Trade.getOurItems().stream().noneMatch(item -> item != null && item.getID() == COINS_ID && item.getAmount() >= amount)) {
                 Trade.addItem(COINS_ID, (int) Math.min(amount, Integer.MAX_VALUE));
                 Sleep.sleep(Calculations.random(400, 800));
             }
             
             // Accept trade
-            if (Trade.hasAcceptedTrade()) {
+            if (Trade.hasAccepted(TradeUser.THEM)) {
                 Trade.acceptTrade();
                 Sleep.sleepUntil(() -> !Trade.isOpen(), 10000);
                 
@@ -823,7 +826,7 @@ class TradeManager {
                 .sum();
             
             if (depositAmount > 0) {
-                if (Trade.hasAcceptedTrade()) {
+                if (Trade.hasAccepted(TradeUser.THEM)) {
                     Trade.acceptTrade();
                     Sleep.sleepUntil(() -> !Trade.isOpen(), 10000);
                     
@@ -894,7 +897,7 @@ class MessageQueue {
     
     private void sendMessageNow(String message) {
         try {
-            if (ClanChat.isInClanChat()) {
+            if (ClanChat.isOpen()) {
                 ClanChat.sendMessage(message);
             } else {
                 Keyboard.type(message, true);
