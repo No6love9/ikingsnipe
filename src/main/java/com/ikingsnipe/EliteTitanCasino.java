@@ -2,6 +2,9 @@ package com.ikingsnipe;
 
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.clan.chat.ClanChat;
+import org.dreambot.api.methods.clan.chat.ClanChatTab;
+import org.dreambot.api.methods.interactive.Players;
+import org.dreambot.api.Client;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.input.Keyboard;
@@ -306,7 +309,7 @@ class CasinoEngine {
             }
             
             // Join clan chat if configured
-            if (!clanChatName.isEmpty() && !ClanChat.isOpen()) {
+            if (!clanChatName.isEmpty() && !ClanChat.isOpen(ClanChatTab.CHAT_CHANNEL)) {
                 if (Calculations.random(0, 200) == 0) {
                     joinClanChat();
                 }
@@ -371,7 +374,7 @@ class CasinoEngine {
             String sender = msg.getUsername();
             if (sender == null || sender.isEmpty()) return;
             
-            Player localPlayer = script.getLocalPlayer();
+            Player localPlayer = Players.getLocal();
             if (localPlayer != null && sender.equals(localPlayer.getName())) return;
             
             if (database.isBlacklisted(sender)) return;
@@ -504,6 +507,7 @@ class CasinoEngine {
     public GameRegistry getGameRegistry() { return gameRegistry; }
     public StatisticsTracker getStats() { return stats; }
     public ErrorHandler getErrorHandler() { return errorHandler; }
+    public TradeManager getTradeManager() { return tradeManager; }
     public void setClanChat(String name) { this.clanChatName = name; }
     public void setDiscordWebhook(String webhook) { this.discordWebhook = webhook; }
     public String getClanChat() { return clanChatName; }
@@ -783,13 +787,13 @@ class TradeManager {
             }
             
             // Add coins to trade
-            if (Trade.getOurItems().stream().noneMatch(item -> item != null && item.getID() == COINS_ID && item.getAmount() >= amount)) {
+            if (Arrays.stream(Trade.getMyItems()).noneMatch(item -> item != null && item.getID() == COINS_ID && item.getAmount() >= amount)) {
                 Trade.addItem(COINS_ID, (int) Math.min(amount, Integer.MAX_VALUE));
                 Sleep.sleep(Calculations.random(400, 800));
             }
             
             // Accept trade
-            if (Trade.hasAccepted(TradeUser.THEM)) {
+            if (Trade.hasAcceptedTrade(TradeUser.THEM)) {
                 Trade.acceptTrade();
                 Sleep.sleepUntil(() -> !Trade.isOpen(), 10000);
                 
@@ -810,7 +814,7 @@ class TradeManager {
     
     private void handleDeposit(String player) {
         try {
-            List<Item> theirItems = Trade.getTheirItems();
+            List<Item> theirItems = Arrays.asList(Trade.getTheirItems());
             if (theirItems == null || theirItems.isEmpty()) {
                 Sleep.sleep(1000);
                 if (Calculations.random(0, 5) == 0) {
@@ -826,7 +830,7 @@ class TradeManager {
                 .sum();
             
             if (depositAmount > 0) {
-                if (Trade.hasAccepted(TradeUser.THEM)) {
+                if (Trade.hasAcceptedTrade(TradeUser.THEM)) {
                     Trade.acceptTrade();
                     Sleep.sleepUntil(() -> !Trade.isOpen(), 10000);
                     
@@ -897,8 +901,9 @@ class MessageQueue {
     
     private void sendMessageNow(String message) {
         try {
-            if (ClanChat.isOpen()) {
-                ClanChat.sendMessage(message);
+            if (ClanChat.isOpen(ClanChatTab.CHAT_CHANNEL)) {
+                // ClanChat.sendMessage(message); // Method not found in this API version
+                Keyboard.type("/c " + message, true);
             } else {
                 Keyboard.type(message, true);
             }
@@ -1041,7 +1046,7 @@ class GameRegistry {
         }
         
         engine.sendMessage(player + " - Trade me to withdraw " + formatGP(balance));
-        ((TradeManager) engine.getScript()).requestWithdrawal(player);
+        engine.getTradeManager().requestWithdrawal(player);
     }
     
     private String formatGP(long amount) {

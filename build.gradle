@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'com.ikingsnipe'
-version = '14.0.0'
+version = "15.0.0"
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
@@ -19,14 +19,14 @@ dependencies {
 // Main JAR task
 jar {
     archiveBaseName.set('TitanCasino')
-    archiveVersion.set(version)
+    archiveVersion.set('')
     from sourceSets.main.output
     
     destinationDirectory.set(file('output'))
     
     manifest {
         attributes(
-            'Main-Class': 'com.ikingsnipe.TitanCasino',
+            // 'Main-Class': 'com.ikingsnipe.TitanCasino', // DreamBot scripts don't need a Main-Class
             'Implementation-Title': 'Titan Casino',
             'Implementation-Version': version,
             'Built-By': System.getProperty('user.name'),
