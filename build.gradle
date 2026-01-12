@@ -1,56 +1,63 @@
 plugins {
     id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 group = 'com.ikingsnipe'
-version = "15.0.0"
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
 
 repositories {
     mavenCentral()
+    // DreamBot repo if you need it; builds compileOnly so project compiles without bundling DreamBot.
+    maven {
+        url 'https://repo.dreambot.io/artifactory/public'
+        // no credentials by default; set via env if required
+    }
 }
 
 dependencies {
-    // DreamBot client JAR from libs folder
-    compileOnly fileTree(dir: 'libs', include: ['*.jar'])
+    // DreamBot API as compileOnly (so the API is available at compile-time but not bundled)
+    compileOnly 'org.dreambot:dreambot-api:4.0.0'
+
+    // Helpful libs (optional)
+    implementation 'com.google.guava:guava:31.1-jre'
+    implementation 'org.slf4j:slf4j-simple:2.0.5'
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mockito:mockito-core:5.2.0'
 }
 
-// Main JAR task
+application {
+    // Not used by DreamBot, but keeps tooling happy
+    mainClass = 'com.ikingsnipe.EliteTitanCasino'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.compilerArgs = ['-Xlint:deprecation', '-Xlint:unchecked', '-parameters']
+}
+
 jar {
-    archiveBaseName.set('TitanCasino')
-    archiveVersion.set('')
-    from sourceSets.main.output
-    
-    destinationDirectory.set(file('output'))
-    
     manifest {
         attributes(
-            // 'Main-Class': 'com.ikingsnipe.TitanCasino', // DreamBot scripts don't need a Main-Class
-            'Implementation-Title': 'Titan Casino',
-            'Implementation-Version': version,
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
             'Built-By': System.getProperty('user.name'),
-            'Built-Date': new Date().format('yyyy-MM-dd HH:mm:ss')
+            'Build-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         )
     }
 }
 
-// Build task
-build {
-    dependsOn jar
+shadowJar {
+    archiveBaseName.set('EliteTitanCasino')
+    archiveVersion.set(project.version)
+    archiveClassifier.set('all')
+    mergeServiceFiles()
+    // Keep defaults for output (build/libs)
 }
-
-// Compile settings
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-    options.deprecation = true
-    options.compilerArgs << '-Xlint:unchecked'
-}
-
-// Clean task
-clean {
-    delete 'build', 'output'
-}
-
-// Default tasks
-defaultTasks 'clean', 'build'

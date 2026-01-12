@@ -1,0 +1,461 @@
+warning: [options] bootstrap class path not set in conjunction with -source 8
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:3: error: package org.dreambot.api.methods does not exist
+import org.dreambot.api.methods.Calculations;
+                               ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:4: error: package org.dreambot.api.methods.clan.chat does not exist
+import org.dreambot.api.methods.clan.chat.ClanChat;
+                                         ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:5: error: package org.dreambot.api.methods.container.impl does not exist
+import org.dreambot.api.methods.container.impl.Inventory;
+                                              ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:6: error: package org.dreambot.api.methods.container.impl.bank does not exist
+import org.dreambot.api.methods.container.impl.bank.Bank;
+                                                   ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:7: error: package org.dreambot.api.methods.input does not exist
+import org.dreambot.api.methods.input.Keyboard;
+                                     ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:8: error: package org.dreambot.api.methods.tabs does not exist
+import org.dreambot.api.methods.tabs.Tab;
+                                    ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:9: error: package org.dreambot.api.methods.tabs does not exist
+import org.dreambot.api.methods.tabs.Tabs;
+                                    ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:10: error: package org.dreambot.api.methods.trade does not exist
+import org.dreambot.api.methods.trade.Trade;
+                                     ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:11: error: package org.dreambot.api.methods.trade does not exist
+import org.dreambot.api.methods.trade.TradeUser;
+                                     ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:12: error: package org.dreambot.api.script does not exist
+import org.dreambot.api.script.AbstractScript;
+                              ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:13: error: package org.dreambot.api.script does not exist
+import org.dreambot.api.script.Category;
+                              ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:14: error: package org.dreambot.api.script does not exist
+import org.dreambot.api.script.ScriptManifest;
+                              ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:15: error: package org.dreambot.api.utilities does not exist
+import org.dreambot.api.utilities.Sleep;
+                                 ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:16: error: package org.dreambot.api.wrappers.interactive does not exist
+import org.dreambot.api.wrappers.interactive.Player;
+                                            ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:17: error: package org.dreambot.api.wrappers.items does not exist
+import org.dreambot.api.wrappers.items.Item;
+                                      ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:18: error: package org.dreambot.api.wrappers.widgets.message does not exist
+import org.dreambot.api.wrappers.widgets.message.Message;
+                                                ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:70: error: cannot find symbol
+public class EliteTitanCasino extends AbstractScript {
+                                      ^
+  symbol: class AbstractScript
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:63: error: cannot find symbol
+@ScriptManifest(
+ ^
+  symbol: class ScriptManifest
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:141: error: cannot find symbol
+    public void onMessage(Message msg) {
+                          ^
+  symbol:   class Message
+  location: class EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:367: error: cannot find symbol
+    public void processMessage(Message msg) {
+                               ^
+  symbol:   class Message
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:67: error: cannot find symbol
+    category = Category.MONEYMAKING,
+               ^
+  symbol: variable Category
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:76: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:79: error: cannot find symbol
+            log("???????????????????????????????????????????????????????");
+            ^
+  symbol:   method log(String)
+  location: class EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:80: error: cannot find symbol
+            log("  ELITE TITAN CASINO v15.0 - ULTIMATE EDITION");
+            ^
+  symbol:   method log(String)
+  location: class EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:81: error: cannot find symbol
+            log("???????????????????????????????????????????????????????");
+            ^
+  symbol:   method log(String)
+  location: class EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:86: error: cannot find symbol
+                log("First run detected - Starting auto-setup...");
+                ^
+  symbol:   method log(String)
+  location: class EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:95: error: cannot find symbol
+            log("? ELITE TITAN CASINO is now ONLINE!");
+            ^
+  symbol:   method log(String)
+  location: class EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:96: error: cannot find symbol
+            log("? Professional GUI launched");
+            ^
+  symbol:   method log(String)
+  location: class EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:97: error: cannot find symbol
+            log("? All systems operational");
+            ^
+  symbol:   method log(String)
+  location: class EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:100: error: cannot find symbol
+            log("? CRITICAL ERROR during startup: " + e.getMessage());
+            ^
+  symbol:   method log(String)
+  location: class EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:102: error: cannot find symbol
+            stop();
+            ^
+  symbol:   method stop()
+  location: class EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:106: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:113: error: cannot find symbol
+            log("Loop error (recovered): " + e.getMessage());
+            ^
+  symbol:   method log(String)
+  location: class EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:118: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:124: error: cannot find symbol
+            log("ELITE TITAN CASINO stopped gracefully.");
+            ^
+  symbol:   method log(String)
+  location: class EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:126: error: cannot find symbol
+            log("Shutdown error: " + e.getMessage());
+            ^
+  symbol:   method log(String)
+  location: class EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:130: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:147: error: cannot find symbol
+            log("Message processing error: " + e.getMessage());
+            ^
+  symbol:   method log(String)
+  location: class EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:178: error: cannot find symbol
+            script.log("[AUTO-SETUP] Creating directories...");
+                  ^
+  symbol:   method log(String)
+  location: variable script of type EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:183: error: cannot find symbol
+            script.log("[AUTO-SETUP] Generating default configuration...");
+                  ^
+  symbol:   method log(String)
+  location: variable script of type EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:186: error: cannot find symbol
+            script.log("[AUTO-SETUP] Initializing database...");
+                  ^
+  symbol:   method log(String)
+  location: variable script of type EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:189: error: cannot find symbol
+            script.log("[AUTO-SETUP] Setup complete!");
+                  ^
+  symbol:   method log(String)
+  location: variable script of type EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:193: error: cannot find symbol
+            script.log("[AUTO-SETUP] Error: " + e.getMessage());
+                  ^
+  symbol:   method log(String)
+  location: variable script of type EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:213: error: cannot find symbol
+            script.log("Config creation error: " + e.getMessage());
+                  ^
+  symbol:   method log(String)
+  location: variable script of type EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:223: error: cannot find symbol
+                script.log("Database init error: " + e.getMessage());
+                      ^
+  symbol:   method log(String)
+  location: variable script of type EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:267: error: cannot find symbol
+            script.log("[ENGINE] Initializing core systems...");
+                  ^
+  symbol:   method log(String)
+  location: variable script of type EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:271: error: cannot find symbol
+            script.log("[ENGINE] ? Database loaded");
+                  ^
+  symbol:   method log(String)
+  location: variable script of type EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:275: error: cannot find symbol
+            script.log("[ENGINE] ? Fairness engine initialized");
+                  ^
+  symbol:   method log(String)
+  location: variable script of type EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:279: error: cannot find symbol
+            script.log("[ENGINE] ? " + gameRegistry.getGameCount() + " games registered");
+                  ^
+  symbol:   method log(String)
+  location: variable script of type EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:283: error: cannot find symbol
+            script.log("[ENGINE] ? Message queue started");
+                  ^
+  symbol:   method log(String)
+  location: variable script of type EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:287: error: cannot find symbol
+            script.log("[ENGINE] ? Professional GUI launched");
+                  ^
+  symbol:   method log(String)
+  location: variable script of type EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:304: error: cannot find symbol
+            if (Trade.isOpen()) {
+                ^
+  symbol:   variable Trade
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:309: error: cannot find symbol
+            if (!clanChatName.isEmpty() && !ClanChat.isOpen()) {
+                                            ^
+  symbol:   variable ClanChat
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:310: error: cannot find symbol
+                if (Calculations.random(0, 200) == 0) {
+                    ^
+  symbol:   variable Calculations
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:316: error: cannot find symbol
+            if (Calculations.random(0, 500) == 0) {
+                ^
+  symbol:   variable Calculations
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:325: error: cannot find symbol
+            return Calculations.random(300, 600);
+                   ^
+  symbol:   variable Calculations
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:335: error: cannot find symbol
+            if (!Tabs.isOpen(Tab.CLAN)) {
+                             ^
+  symbol:   variable Tab
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:335: error: cannot find symbol
+            if (!Tabs.isOpen(Tab.CLAN)) {
+                 ^
+  symbol:   variable Tabs
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:336: error: cannot find symbol
+                Tabs.open(Tab.CLAN);
+                          ^
+  symbol:   variable Tab
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:336: error: cannot find symbol
+                Tabs.open(Tab.CLAN);
+                ^
+  symbol:   variable Tabs
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:337: error: cannot find symbol
+                Sleep.sleep(Calculations.random(300, 600));
+                ^
+  symbol:   variable Sleep
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:337: error: cannot find symbol
+                Sleep.sleep(Calculations.random(300, 600));
+                            ^
+  symbol:   variable Calculations
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:339: error: cannot find symbol
+            ClanChat.join(clanChatName);
+            ^
+  symbol:   variable ClanChat
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:347: error: cannot find symbol
+            int action = Calculations.random(0, 4);
+                         ^
+  symbol:   variable Calculations
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:350: error: cannot find symbol
+                    Tab[] tabs = Tab.values();
+                    ^
+  symbol:   class Tab
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:350: error: cannot find symbol
+                    Tab[] tabs = Tab.values();
+                                 ^
+  symbol:   variable Tab
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:351: error: cannot find symbol
+                    Tabs.open(tabs[Calculations.random(0, tabs.length)]);
+                                   ^
+  symbol:   variable Calculations
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:351: error: cannot find symbol
+                    Tabs.open(tabs[Calculations.random(0, tabs.length)]);
+                    ^
+  symbol:   variable Tabs
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:354: error: cannot find symbol
+                    if (!Tabs.isOpen(Tab.INVENTORY)) {
+                                     ^
+  symbol:   variable Tab
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:354: error: cannot find symbol
+                    if (!Tabs.isOpen(Tab.INVENTORY)) {
+                         ^
+  symbol:   variable Tabs
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:355: error: cannot find symbol
+                        Tabs.open(Tab.INVENTORY);
+                                  ^
+  symbol:   variable Tab
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:355: error: cannot find symbol
+                        Tabs.open(Tab.INVENTORY);
+                        ^
+  symbol:   variable Tabs
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:359: error: cannot find symbol
+                    Sleep.sleep(Calculations.random(100, 300));
+                    ^
+  symbol:   variable Sleep
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:359: error: cannot find symbol
+                    Sleep.sleep(Calculations.random(100, 300));
+                                ^
+  symbol:   variable Calculations
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:374: error: cannot find symbol
+            Player localPlayer = script.getLocalPlayer();
+            ^
+  symbol:   class Player
+  location: class CasinoEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:374: error: cannot find symbol
+            Player localPlayer = script.getLocalPlayer();
+                                       ^
+  symbol:   method getLocalPlayer()
+  location: variable script of type EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:459: error: cannot find symbol
+            script.log("[ENGINE] Shutdown complete");
+                  ^
+  symbol:   method log(String)
+  location: variable script of type EliteTitanCasino
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:705: error: cannot find symbol
+            return Calculations.random(min, max);
+                   ^
+  symbol:   variable Calculations
+  location: class FairnessEngine
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:742: error: cannot find symbol
+            if (!Trade.isOpen()) {
+                 ^
+  symbol:   variable Trade
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:747: error: cannot find symbol
+            String trader = Trade.getTradingWith();
+                            ^
+  symbol:   variable Trade
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:772: error: cannot find symbol
+                Trade.close();
+                ^
+  symbol:   variable Trade
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:778: error: cannot find symbol
+            long availableCoins = Inventory.count(COINS_ID);
+                                  ^
+  symbol:   variable Inventory
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:781: error: cannot find symbol
+                Trade.close();
+                ^
+  symbol:   variable Trade
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:786: error: cannot find symbol
+            if (Trade.getOurItems().stream().noneMatch(item -> item != null && item.getID() == COINS_ID && item.getAmount() >= amount)) {
+                ^
+  symbol:   variable Trade
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:787: error: cannot find symbol
+                Trade.addItem(COINS_ID, (int) Math.min(amount, Integer.MAX_VALUE));
+                ^
+  symbol:   variable Trade
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:788: error: cannot find symbol
+                Sleep.sleep(Calculations.random(400, 800));
+                ^
+  symbol:   variable Sleep
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:788: error: cannot find symbol
+                Sleep.sleep(Calculations.random(400, 800));
+                            ^
+  symbol:   variable Calculations
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:792: error: cannot find symbol
+            if (Trade.hasAccepted(TradeUser.THEM)) {
+                                  ^
+  symbol:   variable TradeUser
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:792: error: cannot find symbol
+            if (Trade.hasAccepted(TradeUser.THEM)) {
+                ^
+  symbol:   variable Trade
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:793: error: cannot find symbol
+                Trade.acceptTrade();
+                ^
+  symbol:   variable Trade
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:794: error: cannot find symbol
+                Sleep.sleepUntil(() -> !Trade.isOpen(), 10000);
+                ^
+  symbol:   variable Sleep
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:794: error: cannot find symbol
+                Sleep.sleepUntil(() -> !Trade.isOpen(), 10000);
+                                        ^
+  symbol:   variable Trade
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:802: error: cannot find symbol
+                Trade.acceptTrade();
+                ^
+  symbol:   variable Trade
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:803: error: cannot find symbol
+                Sleep.sleep(Calculations.random(500, 1000));
+                ^
+  symbol:   variable Sleep
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:803: error: cannot find symbol
+                Sleep.sleep(Calculations.random(500, 1000));
+                            ^
+  symbol:   variable Calculations
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:813: error: cannot find symbol
+            List<Item> theirItems = Trade.getTheirItems();
+                 ^
+  symbol:   class Item
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:813: error: cannot find symbol
+            List<Item> theirItems = Trade.getTheirItems();
+                                    ^
+  symbol:   variable Trade
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:815: error: cannot find symbol
+                Sleep.sleep(1000);
+                ^
+  symbol:   variable Sleep
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:816: error: cannot find symbol
+                if (Calculations.random(0, 5) == 0) {
+                    ^
+  symbol:   variable Calculations
+  location: class TradeManager
+src\main\java\com\ikingsnipe\EliteTitanCasino.java:817: error: cannot find symbol
+                    Trade.close();
+                    ^
+  symbol:   variable Trade
+  location: class TradeManager
+100 errors
+1 warning
+only showing the first 100 errors, of 118 total; use -Xmaxerrs if you would like to see more
