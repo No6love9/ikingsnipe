@@ -1,56 +1,98 @@
 plugins {
     id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 group = 'com.ikingsnipe'
-version = "15.0.0"
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
+version = '1.0.0'
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
 
 repositories {
     mavenCentral()
+    maven {
+        url 'https://repo.dreambot.io/artifactory/public'
+        credentials {
+            username System.getenv('DREAMBOT_REPO_USER') ?: 'guest'
+            password System.getenv('DREAMBOT_REPO_PASS') ?: 'guest'
+        }
+    }
 }
 
 dependencies {
-    // DreamBot client JAR from libs folder
-    compileOnly fileTree(dir: 'libs', include: ['*.jar'])
+    // DreamBot 4.0+ API
+    implementation 'org.dreambot:dreambot-api:4.+'
+    
+    // Java Utilities
+    implementation 'com.google.guava:guava:31.1-jre'
+    
+    // Logging
+    implementation 'org.slf4j:slf4j-api:2.0.5'
+    implementation 'org.slf4j:slf4j-simple:2.0.5'
+    
+    // Testing
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mockito:mockito-core:5.2.0'
 }
 
-// Main JAR task
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.compilerArgs = ['-Xlint:unchecked', '-Xlint:deprecation']
+}
+
 jar {
-    archiveBaseName.set('TitanCasino')
-    archiveVersion.set('')
-    from sourceSets.main.output
-    
-    destinationDirectory.set(file('output'))
-    
     manifest {
         attributes(
-            // 'Main-Class': 'com.ikingsnipe.TitanCasino', // DreamBot scripts don't need a Main-Class
-            'Implementation-Title': 'Titan Casino',
-            'Implementation-Version': version,
+            'Main-Class': 'com.ikingsnipe.Main',
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
             'Built-By': System.getProperty('user.name'),
-            'Built-Date': new Date().format('yyyy-MM-dd HH:mm:ss')
+            'Build-Timestamp': new Date().format('yyyy-MM-dd\'T\'HH:mm:ss.SSSZ')
         )
     }
 }
 
-// Build task
-build {
-    dependsOn jar
+shadowJar {
+    archiveClassifier = 'fat'
+    manifest {
+        inheritFrom jar.manifest
+    }
+    mergeServiceFiles()
 }
 
-// Compile settings
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-    options.deprecation = true
-    options.compilerArgs << '-Xlint:unchecked'
+tasks.build.dependsOn shadowJar
+
+application {
+    mainClass = 'com.ikingsnipe.Main'
 }
 
-// Clean task
-clean {
-    delete 'build', 'output'
+task wrapper(type: Wrapper) {
+    gradleVersion = '8.5'
 }
 
-// Default tasks
-defaultTasks 'clean', 'build'
+// Compilation settings
+compileJava {
+    options.compilerArgs.add('-parameters')
+}
+
+// Run configuration
+run {
+    standardInput = System.in
+    standardOutput = System.out
+    standardError = System.err
+}
+
+// Test configuration
+test {
+    useJUnit()
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
+}
