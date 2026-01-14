@@ -22,7 +22,7 @@ repositories {
 
 dependencies {
     // DreamBot 4.0+ API
-    implementation 'org.dreambot:dreambot-api:4.+'
+    implementation files('libs/dreambot-api.jar')
     
     // Java Utilities
     implementation 'com.google.guava:guava:31.1-jre'
@@ -72,9 +72,9 @@ application {
     mainClass = 'com.ikingsnipe.Main'
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '8.5'
-}
+// task wrapper(type: Wrapper) {
+//     gradleVersion = '8.5'
+// }
 
 // Compilation settings
 compileJava {
@@ -84,8 +84,6 @@ compileJava {
 // Run configuration
 run {
     standardInput = System.in
-    standardOutput = System.out
-    standardError = System.err
 }
 
 // Test configuration
