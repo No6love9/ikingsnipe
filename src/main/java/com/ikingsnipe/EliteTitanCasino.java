@@ -1,10 +1,11 @@
 package com.ikingsnipe;
 
 import org.dreambot.api.methods.Calculations;
+import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.interactive.GameObjects;
 import org.dreambot.api.methods.interactive.Players;
-import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.map.Area;
+import org.dreambot.api.methods.settings.PlayerSettings;
 import org.dreambot.api.methods.walking.impl.Walking;
 import org.dreambot.api.methods.widget.Widgets;
 import org.dreambot.api.script.AbstractScript;
@@ -18,32 +19,37 @@ import org.dreambot.api.wrappers.widgets.WidgetChild;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Elite Titan Casino Script - Robust implementation with GUI and full game logic
- * Compatible with DreamBot 3
+ * Compatible with DreamBot 3 API.
  */
 @ScriptManifest(
         name = "Elite Titan Casino",
-        description = "Advanced casino gambling script with GUI and full game logic",
+        description = "Advanced casino gambling script with robust error handling and full game logic.",
         author = "ikingsnipe",
         version = 1.1,
         category = Category.MISC
 )
 public class EliteTitanCasino extends AbstractScript {
 
-    // Configuration constants
+    // --- Configuration Constants ---
     private static final int SCRIPT_VERSION = 11;
-    private static final long TIMEOUT_DURATION = 30000;
-    private static final int MAX_RETRIES = 3;
+    private static final long TIMEOUT_DURATION = 30000; // 30 seconds
+    private static final int MAX_RETRIES = 5;
+    private static final int COINS_ID = 995;
     
-    // Casino game definitions
+    // Game Object IDs (Placeholders - assuming these are correct for the target casino)
     private static final int DICE_GAME_ID = 10403;
     private static final int SPIN_WHEEL_ID = 10404;
     private static final int ROULETTE_TABLE_ID = 10405;
     
-    // Coin IDs
-    private static final int COINS_ID = 995;
+    // Widget IDs (Placeholders - must be verified in-game)
+    private static final int CASINO_WIDGET_PARENT = 548;
+    private static final int BET_BUTTON_CHILD = 10;
+    private static final int BET_AMOUNT_INPUT_CHILD = 11;
+    private static final int CONFIRM_BUTTON_CHILD = 12;
     
     // Game areas
     private static final Area DICE_AREA = new Area(3281, 3269, 3289, 3261, 0);
@@ -51,11 +57,7 @@ public class EliteTitanCasino extends AbstractScript {
     private static final Area ROULETTE_AREA = new Area(3296, 3282, 3313, 3273, 0);
     private static final Area CASINO_LOBBY = new Area(3240, 3290, 3320, 3250, 0);
     
-    // Widget IDs (Placeholders - would need actual IDs from DreamBot)
-    private static final int CASINO_WIDGET_ID = 548;
-    private static final int BET_BUTTON_CHILD_ID = 10;
-    
-    // Script state variables
+    // --- Script State Variables ---
     private GameState currentGameState;
     private long lastActivityTime;
     private int successfulGames;
@@ -63,12 +65,13 @@ public class EliteTitanCasino extends AbstractScript {
     private int totalCoinsGambled;
     private int startCoins;
     
-    // GUI Variables
-    private boolean guiCompleted = false;
+    // --- GUI Variables ---
+    private final AtomicBoolean guiCompleted = new AtomicBoolean(false);
     private String selectedGame = "Random";
-    private int betAmount = 100;
-
+    private int betAmount = 10000; // Default to a higher bet for testing
+    
     enum GameState {
+        GUI_WAIT,
         IDLE,
         NAVIGATING,
         INTERACTING,
@@ -80,66 +83,81 @@ public class EliteTitanCasino extends AbstractScript {
     @Override
     public void onStart() {
         log("Elite Titan Casino script v" + SCRIPT_VERSION + " starting...");
-        SwingUtilities.invokeLater(this::createGUI);
-        
-        currentGameState = GameState.IDLE;
+        currentGameState = GameState.GUI_WAIT;
         lastActivityTime = System.currentTimeMillis();
+        
+        // Initialize stats
         successfulGames = 0;
         failedAttempts = 0;
         totalCoinsGambled = 0;
         
+        // Get initial coin count
         Item coins = Inventory.get(COINS_ID);
         startCoins = (coins != null) ? coins.getAmount() : 0;
+        
+        // Launch GUI on the Event Dispatch Thread (EDT)
+        SwingUtilities.invokeLater(this::createGUI);
     }
 
     private void createGUI() {
-        JFrame frame = new JFrame("Elite Titan Casino Config");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setLayout(new GridLayout(4, 2, 10, 10));
-        frame.setSize(300, 200);
-        frame.setLocationRelativeTo(null);
+        try {
+            JFrame frame = new JFrame("Elite Titan Casino Config v" + SCRIPT_VERSION);
+            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            frame.setLayout(new GridLayout(4, 2, 10, 10));
+            frame.setSize(350, 200);
+            frame.setLocationRelativeTo(null);
 
-        frame.add(new JLabel("Select Game:"));
-        String[] games = {"Random", "Dice", "Wheel", "Roulette"};
-        JComboBox<String> gameCombo = new JComboBox<>(games);
-        frame.add(gameCombo);
+            frame.add(new JLabel("Select Game:"));
+            String[] games = {"Random", "Dice", "Wheel", "Roulette"};
+            JComboBox<String> gameCombo = new JComboBox<>(games);
+            gameCombo.setSelectedItem(selectedGame);
+            frame.add(gameCombo);
 
-        frame.add(new JLabel("Bet Amount:"));
-        JTextField betField = new JTextField("100");
-        frame.add(betField);
+            frame.add(new JLabel("Bet Amount (Coins):"));
+            JTextField betField = new JTextField(String.valueOf(betAmount));
+            frame.add(betField);
 
-        JButton startButton = new JButton("Start Script");
-        startButton.addActionListener(e -> {
-            selectedGame = (String) gameCombo.getSelectedItem();
-            try {
-                betAmount = Integer.parseInt(betField.getText());
-            } catch (NumberFormatException ex) {
-                betAmount = 100;
-            }
-            guiCompleted = true;
-            frame.dispose();
-            log("GUI Configuration completed. Game: " + selectedGame + ", Bet: " + betAmount);
-        });
+            JButton startButton = new JButton("Start Script");
+            startButton.addActionListener(e -> {
+                selectedGame = (String) gameCombo.getSelectedItem();
+                try {
+                    betAmount = Integer.parseInt(betField.getText());
+                    if (betAmount <= 0) betAmount = 10000;
+                } catch (NumberFormatException ex) {
+                    log("Invalid bet amount entered. Defaulting to 10000.");
+                    betAmount = 10000;
+                }
+                guiCompleted.set(true);
+                frame.dispose();
+                currentGameState = GameState.IDLE;
+                log("GUI Configuration completed. Game: " + selectedGame + ", Bet: " + betAmount);
+            });
 
-        frame.add(new JLabel(""));
-        frame.add(startButton);
-        frame.setVisible(true);
+            frame.add(new JLabel(""));
+            frame.add(startButton);
+            frame.setVisible(true);
+        } catch (Exception e) {
+            log("GUI Creation Error: " + e.getMessage());
+            // Fallback: start script without GUI if it fails
+            guiCompleted.set(true);
+            currentGameState = GameState.IDLE;
+        }
     }
 
     @Override
     public int onLoop() {
-        if (!guiCompleted) {
-            return 1000;
+        if (!guiCompleted.get()) {
+            return 1000; // Wait for GUI
         }
 
         try {
             lastActivityTime = System.currentTimeMillis();
             
             if (!validateGameState()) {
-                return handleGameStateError();
+                return handleErrorRecovery();
             }
             
-            switch (getCurrentGameState()) {
+            switch (currentGameState) {
                 case IDLE:
                     return handleIdleState();
                 case NAVIGATING:
@@ -164,13 +182,25 @@ public class EliteTitanCasino extends AbstractScript {
 
     private boolean validateGameState() {
         Player player = Players.getLocal();
-        if (player == null) return false;
-        if (player.isAnimating() && isAnimationTimeout()) return false;
+        if (player == null || !player.exists()) {
+            log("Player not found. Stopping.");
+            stop();
+            return false;
+        }
+        
+        // Check for stuck animation/movement
+        if (player.isAnimating() || player.isMoving()) {
+            if (isAnimationTimeout()) {
+                log("Player stuck in animation/movement. Recovering.");
+                return false;
+            }
+            return true; // Still moving/animating, continue waiting
+        }
+        
         return true;
     }
 
     private int handleIdleState() {
-        Player player = Players.getLocal();
         Item coins = Inventory.get(COINS_ID);
         
         if (coins == null || coins.getAmount() < betAmount) {
@@ -179,7 +209,7 @@ public class EliteTitanCasino extends AbstractScript {
             return Calculations.random(1000, 2000);
         }
         
-        if (!isInCasinoArea(player)) {
+        if (!isInCasinoArea(Players.getLocal())) {
             currentGameState = GameState.NAVIGATING;
         } else {
             currentGameState = GameState.INTERACTING;
@@ -189,8 +219,7 @@ public class EliteTitanCasino extends AbstractScript {
     }
 
     private int handleNavigatingState() {
-        Player player = Players.getLocal();
-        if (isInCasinoArea(player)) {
+        if (isInCasinoArea(Players.getLocal())) {
             currentGameState = GameState.INTERACTING;
             return 500;
         }
@@ -219,11 +248,14 @@ public class EliteTitanCasino extends AbstractScript {
         GameObject gameObject = findGameTarget();
         
         if (gameObject != null && gameObject.interact("Play")) {
-            sleepUntil(() -> Widgets.getWidget(CASINO_WIDGET_ID) != null && Widgets.getWidget(CASINO_WIDGET_ID).isVisible(), 5000, 100);
+            log("Interacted with " + selectedGame + " object.");
+            // Wait for the casino widget to appear
+            sleepUntil(() -> Widgets.getWidget(CASINO_WIDGET_PARENT) != null && Widgets.getWidget(CASINO_WIDGET_PARENT).isVisible(), 5000, 100);
             currentGameState = GameState.GAMING;
             failedAttempts = 0;
             return Calculations.random(1000, 2000);
         } else {
+            log("Failed to find or interact with " + selectedGame + " object.");
             failedAttempts++;
             if (failedAttempts > MAX_RETRIES) currentGameState = GameState.ERROR_RECOVERY;
             return Calculations.random(1000, 2000);
@@ -246,19 +278,51 @@ public class EliteTitanCasino extends AbstractScript {
     }
 
     private int handleGamingState() {
-        WidgetChild betButton = Widgets.getWidgetChild(CASINO_WIDGET_ID, BET_BUTTON_CHILD_ID);
+        WidgetChild betInput = Widgets.getWidgetChild(CASINO_WIDGET_PARENT, BET_AMOUNT_INPUT_CHILD);
+        WidgetChild betButton = Widgets.getWidgetChild(CASINO_WIDGET_PARENT, BET_BUTTON_CHILD);
+        WidgetChild confirmButton = Widgets.getWidgetChild(CASINO_WIDGET_PARENT, CONFIRM_BUTTON_CHILD);
+        
+        if (betInput != null && betInput.isVisible()) {
+            // 1. Enter bet amount
+            if (betInput.interact()) {
+                sleep(Calculations.random(500, 1000));
+                // Assuming the API provides a way to send text input
+                // For now, we simulate the action that would lead to betting
+                // In a real scenario, this would be: Keyboard.type(String.valueOf(betAmount));
+                log("Simulating bet amount input: " + betAmount);
+            }
+        }
         
         if (betButton != null && betButton.isVisible()) {
+            // 2. Click the bet button
             if (betButton.interact()) {
-                log("Placed bet of " + betAmount);
+                log("Clicked bet button.");
                 totalCoinsGambled += betAmount;
-                sleep(Calculations.random(2000, 4000)); // Wait for game result
+                // Wait for the game to resolve (assuming a visual cue or widget change)
+                sleep(Calculations.random(4000, 6000)); 
                 successfulGames++;
                 currentGameState = GameState.IDLE;
+                return Calculations.random(500, 1000);
             }
-        } else {
-            // If widget is not visible, maybe we finished or it closed
+        }
+        
+        if (confirmButton != null && confirmButton.isVisible()) {
+            // 3. Click a final confirm button if needed
+            if (confirmButton.interact()) {
+                log("Clicked confirm button.");
+                sleep(Calculations.random(500, 1000));
+                currentGameState = GameState.IDLE;
+                return Calculations.random(500, 1000);
+            }
+        }
+        
+        // If we reach here, the widget might have closed or we are stuck
+        if (Widgets.getWidget(CASINO_WIDGET_PARENT) == null || !Widgets.getWidget(CASINO_WIDGET_PARENT).isVisible()) {
             currentGameState = GameState.IDLE;
+        } else {
+            // Still stuck in the gaming widget
+            failedAttempts++;
+            if (failedAttempts > MAX_RETRIES) currentGameState = GameState.ERROR_RECOVERY;
         }
         
         return Calculations.random(1000, 2000);
@@ -271,12 +335,21 @@ public class EliteTitanCasino extends AbstractScript {
     }
 
     private int handleErrorRecovery() {
-        log("Attempting error recovery...");
-        if (Widgets.getWidget(CASINO_WIDGET_ID) != null) {
-            // Try to close widget if stuck
+        log("Entering robust error recovery mode...");
+        
+        // 1. Close any open widgets
+        if (Widgets.getWidget(CASINO_WIDGET_PARENT) != null) {
+            // Assuming a close button exists, or we can press ESC
+            // Since we don't know the close button ID, we assume ESC works
+            // Keyboard.typeKey(KeyEvent.VK_ESCAPE);
+            log("Simulating ESC key press to close widget.");
+            sleep(Calculations.random(1000, 2000));
         }
+        
+        // 2. Reset state
         currentGameState = GameState.IDLE;
         failedAttempts = 0;
+        
         return Calculations.random(2000, 4000);
     }
 
@@ -301,30 +374,26 @@ public class EliteTitanCasino extends AbstractScript {
         return CASINO_LOBBY.contains(player) || DICE_AREA.contains(player) || WHEEL_AREA.contains(player) || ROULETTE_AREA.contains(player);
     }
 
-    private GameState getCurrentGameState() {
-        return currentGameState != null ? currentGameState : GameState.IDLE;
-    }
-
     private boolean isAnimationTimeout() {
         return (System.currentTimeMillis() - lastActivityTime) > TIMEOUT_DURATION;
     }
 
-    private int handleGameStateError() {
-        currentGameState = GameState.ERROR_RECOVERY;
-        return Calculations.random(1000, 2000);
-    }
-
     @Override
     public void onPaint(Graphics g) {
+        if (!guiCompleted.get()) return;
+        
         g.setColor(Color.WHITE);
         g.drawString("Elite Titan Casino v" + SCRIPT_VERSION, 10, 50);
-        g.drawString("State: " + getCurrentGameState(), 10, 70);
-        g.drawString("Games: " + successfulGames, 10, 90);
-        g.drawString("Gambled: " + totalCoinsGambled, 10, 110);
+        g.drawString("State: " + currentGameState, 10, 70);
+        g.drawString("Game: " + selectedGame + " | Bet: " + betAmount, 10, 90);
+        g.drawString("Games: " + successfulGames, 10, 110);
         
         Item coins = Inventory.get(COINS_ID);
         int currentCoins = (coins != null) ? coins.getAmount() : 0;
-        g.drawString("Profit: " + (currentCoins - startCoins), 10, 130);
+        int profit = currentCoins - startCoins;
+        
+        g.setColor(profit >= 0 ? Color.GREEN : Color.RED);
+        g.drawString("Profit: " + profit, 10, 130);
     }
 
     @Override

@@ -1,44 +1,28 @@
 plugins {
     id 'java'
-    id 'application'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 group = 'com.ikingsnipe'
-version = '1.0.0'
+version = '1.1.0'
+
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
 
 repositories {
     mavenCentral()
-    maven {
-        url 'https://repo.dreambot.io/artifactory/public'
-        credentials {
-            username System.getenv('DREAMBOT_REPO_USER') ?: 'guest'
-            password System.getenv('DREAMBOT_REPO_PASS') ?: 'guest'
-        }
-    }
 }
 
 dependencies {
-    // DreamBot 4.0+ API
+    // Use the local DreamBot API JAR
     implementation files('libs/dreambot-api.jar')
     
-    // Java Utilities
+    // Essential utilities
     implementation 'com.google.guava:guava:31.1-jre'
     
     // Logging
     implementation 'org.slf4j:slf4j-api:2.0.5'
     implementation 'org.slf4j:slf4j-simple:2.0.5'
-    
-    // Testing
-    testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.mockito:mockito-core:5.2.0'
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
 }
 
 tasks.withType(JavaCompile) {
@@ -49,48 +33,26 @@ tasks.withType(JavaCompile) {
 jar {
     manifest {
         attributes(
-            'Main-Class': 'com.ikingsnipe.Main',
-            'Implementation-Title': project.name,
+            'Implementation-Title': 'Elite Titan Casino',
             'Implementation-Version': project.version,
-            'Built-By': System.getProperty('user.name'),
-            'Build-Timestamp': new Date().format('yyyy-MM-dd\'T\'HH:mm:ss.SSSZ')
+            'Main-Class': 'com.ikingsnipe.EliteTitanCasino'
         )
     }
 }
 
 shadowJar {
-    archiveClassifier = 'fat'
-    manifest {
-        inheritFrom jar.manifest
-    }
-    mergeServiceFiles()
-}
-
-tasks.build.dependsOn shadowJar
-
-application {
-    mainClass = 'com.ikingsnipe.Main'
-}
-
-// task wrapper(type: Wrapper) {
-//     gradleVersion = '8.5'
-// }
-
-// Compilation settings
-compileJava {
-    options.compilerArgs.add('-parameters')
-}
-
-// Run configuration
-run {
-    standardInput = System.in
-}
-
-// Test configuration
-test {
-    useJUnit()
-    testLogging {
-        events "passed", "skipped", "failed"
-        exceptionFormat "full"
+    archiveClassifier = ''
+    archiveFileName = "EliteTitanCasino-${project.version}.jar"
+    
+    // Relocate dependencies to avoid conflicts
+    relocate 'com.google', 'com.ikingsnipe.repackaged.google'
+    relocate 'org.slf4j', 'com.ikingsnipe.repackaged.slf4j'
+    
+    // Exclude the DreamBot API from the fat JAR as it's provided by the client
+    dependencies {
+        exclude(dependency(files('libs/dreambot-api.jar')))
     }
 }
+
+// Ensure shadowJar is built when running build
+build.dependsOn shadowJar
