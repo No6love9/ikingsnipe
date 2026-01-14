@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'com.ikingsnipe'
-version = '5.1.0'
+version = '6.0.0'
 
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
@@ -14,50 +14,29 @@ repositories {
 }
 
 dependencies {
-    // Use the local DreamBot API JAR
+    // Local DreamBot API
     implementation files('libs/dreambot-api.jar')
     
-    // Essential utilities
+    // Dependencies to bundle
     implementation 'com.google.guava:guava:31.1-jre'
-    
-    // Logging
     implementation 'org.slf4j:slf4j-api:2.0.5'
     implementation 'org.slf4j:slf4j-simple:2.0.5'
 }
 
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-    options.compilerArgs = ['-Xlint:unchecked', '-Xlint:deprecation']
-}
-
-jar {
-    manifest {
-        attributes(
-            'Implementation-Title': 'Elite Titan Casino PRO',
-            'Implementation-Version': project.version,
-            'Main-Class': 'com.ikingsnipe.EliteTitanCasino'
-        )
-    }
-}
-
 shadowJar {
     archiveClassifier = ''
-    archiveFileName = "EliteTitanCasinoPRO.jar"
+    archiveFileName = "EliteTitanCasino.jar"
     
-    // Relocate dependencies to avoid conflicts
     relocate 'com.google', 'com.ikingsnipe.repackaged.google'
     relocate 'org.slf4j', 'com.ikingsnipe.repackaged.slf4j'
     
-    // Exclude the DreamBot API from the fat JAR as it's provided by the client
     dependencies {
         exclude(dependency(files('libs/dreambot-api.jar')))
     }
 }
 
-// Ensure shadowJar is built when running build
 build.dependsOn shadowJar
 
-// Custom task to copy the JAR to an 'output' folder for convenience
 task copyJar(type: Copy) {
     from shadowJar
     into 'output'
