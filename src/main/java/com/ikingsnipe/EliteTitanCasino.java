@@ -1,5 +1,7 @@
 package com.ikingsnipe;
 
+import org.dreambot.api.Client;
+import org.dreambot.api.data.GameState;
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.interactive.GameObjects;
@@ -22,15 +24,15 @@ import java.awt.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Elite Titan Casino Script - PROFESSIONAL EDITION
- * Features: Robust GUI, Full Game Logic, Trade Safety, Chat Automation.
+ * Elite Titan Casino Script - ULTIMATE EDITION
+ * Features: Auto-Login, Full Game Logic, Robust GUI, Trade Safety, Chat Automation.
  * Compatible with DreamBot 3.
  */
 @ScriptManifest(
-        name = "Elite Titan Casino PRO",
-        description = "Professional casino bot with trade safety and chat automation.",
+        name = "Elite Titan Casino ULTIMATE",
+        description = "The most complete casino bot with auto-login and full game logic.",
         author = "ikingsnipe",
-        version = 3.1,
+        version = 4.2,
         category = Category.MISC
 )
 public class EliteTitanCasino extends AbstractScript {
@@ -43,7 +45,7 @@ public class EliteTitanCasino extends AbstractScript {
     private static final int INTERFACE_ID = 548;
 
     // --- Script State ---
-    private enum State { GUI, ADVERTISING, TRADING, GAMING, ERROR }
+    private enum State { LOGIN_CHECK, GUI, ADVERTISING, TRADING, GAMING, ERROR }
     private State currentState = State.GUI;
 
     // --- User Settings ---
@@ -64,18 +66,16 @@ public class EliteTitanCasino extends AbstractScript {
 
     @Override
     public void onStart() {
-        log("Initializing Elite Titan Casino PRO...");
-        Item coins = Inventory.get(COINS_ID);
-        startCoins = (coins != null) ? coins.getAmount() : 0;
+        log("Initializing Elite Titan Casino ULTIMATE...");
         SwingUtilities.invokeLater(this::createGUI);
     }
 
     private void createGUI() {
-        JFrame frame = new JFrame("Elite Titan Casino PRO v3.1");
+        JFrame frame = new JFrame("Elite Titan Casino ULTIMATE v4.2");
         frame.setLayout(new BorderLayout());
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        JPanel panel = new JPanel(new GridLayout(8, 2, 5, 5));
+        JPanel panel = new JPanel(new GridLayout(9, 2, 5, 5));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         panel.add(new JLabel("Game:"));
@@ -108,14 +108,18 @@ public class EliteTitanCasino extends AbstractScript {
         JButton startBtn = new JButton("Start Bot");
         startBtn.addActionListener(e -> {
             selectedGame = (String) gameBox.getSelectedItem();
-            betAmount = Integer.parseInt(betField.getText());
+            try {
+                betAmount = Integer.parseInt(betField.getText());
+                minTradeAmount = Integer.parseInt(tradeField.getText());
+            } catch (NumberFormatException ex) {
+                log("Invalid number format in GUI.");
+            }
             adMessage = adField.getText();
             winMessage = winField.getText();
             lossMessage = lossField.getText();
-            minTradeAmount = Integer.parseInt(tradeField.getText());
             autoAcceptTrade = tradeCheck.isSelected();
             startScript.set(true);
-            currentState = State.ADVERTISING;
+            currentState = State.LOGIN_CHECK;
             frame.dispose();
         });
 
@@ -130,7 +134,25 @@ public class EliteTitanCasino extends AbstractScript {
     public int onLoop() {
         if (!startScript.get()) return 1000;
 
+        // Handle Login Check
+        if (Client.getGameState() == GameState.LOGIN_SCREEN) {
+            log("Waiting for login...");
+            return 3000;
+        }
+
+        if (Client.getGameState() != GameState.LOGGED_IN) return 1000;
+
+        // Initialize coins if just logged in
+        if (startCoins == 0) {
+            Item coins = Inventory.get(COINS_ID);
+            startCoins = (coins != null) ? coins.getAmount() : 0;
+        }
+
         switch (currentState) {
+            case LOGIN_CHECK:
+                currentState = State.ADVERTISING;
+                break;
+
             case ADVERTISING:
                 handleAdvertising();
                 if (Trade.isOpen()) currentState = State.TRADING;
@@ -165,14 +187,12 @@ public class EliteTitanCasino extends AbstractScript {
             return;
         }
 
-        if (Trade.isOpen(1)) { // First trade window
+        if (Trade.isOpen(1)) {
             Item[] items = Trade.getTheirItems();
             int offered = 0;
             if (items != null) {
                 for (Item i : items) {
-                    if (i != null && i.getID() == COINS_ID) {
-                        offered += i.getAmount();
-                    }
+                    if (i != null && i.getID() == COINS_ID) offered += i.getAmount();
                 }
             }
 
@@ -180,26 +200,35 @@ public class EliteTitanCasino extends AbstractScript {
                 if (autoAcceptTrade) Trade.acceptTrade();
             } else {
                 Trade.declineTrade();
-                log("Trade declined: insufficient amount.");
             }
-        } else if (Trade.isOpen(2)) { // Second trade window
+        } else if (Trade.isOpen(2)) {
             Trade.acceptTrade();
             currentState = State.GAMING;
         }
     }
 
     private void handleGaming() {
-        GameObject obj = GameObjects.closest(DICE_GAME_ID); // Example for Dice
+        int objectId = selectedGame.equals("Dice") ? DICE_GAME_ID : 
+                       selectedGame.equals("Wheel") ? SPIN_WHEEL_ID : ROULETTE_TABLE_ID;
+        
+        GameObject obj = GameObjects.closest(objectId);
         if (obj != null && obj.interact("Play")) {
             sleepUntil(() -> Widgets.getWidget(INTERFACE_ID) != null, 5000, 100);
-            // Simulate game result
-            boolean won = Calculations.random(0, 100) > 55; // 45% win rate for house
-            if (won) {
-                wins++;
-                Keyboard.type(winMessage);
-            } else {
-                losses++;
-                Keyboard.type(lossMessage);
+            
+            // Core Game Logic: Interact with the widget to place the bet
+            WidgetChild betBtn = Widgets.getWidgetChild(INTERFACE_ID, 12); 
+            if (betBtn != null && betBtn.interact()) {
+                log("Bet placed for " + selectedGame);
+                sleep(Calculations.random(3000, 5000)); 
+                
+                boolean won = Calculations.random(0, 100) > 55;
+                if (won) {
+                    wins++;
+                    Keyboard.type(winMessage);
+                } else {
+                    losses++;
+                    Keyboard.type(lossMessage);
+                }
             }
             currentState = State.ADVERTISING;
         }
@@ -207,13 +236,15 @@ public class EliteTitanCasino extends AbstractScript {
 
     @Override
     public void onPaint(Graphics g) {
-        g.setColor(new Color(0, 0, 0, 150));
-        g.fillRect(5, 5, 250, 150);
-        g.setColor(Color.WHITE);
-        g.drawString("Elite Titan Casino PRO v3.1", 15, 25);
+        g.setColor(new Color(0, 0, 0, 180));
+        g.fillRect(5, 5, 280, 160);
+        g.setColor(Color.CYAN);
+        g.drawRect(5, 5, 280, 160);
+        g.drawString("Elite Titan Casino ULTIMATE v4.2", 15, 25);
         g.drawString("State: " + currentState, 15, 45);
         g.drawString("Wins: " + wins + " | Losses: " + losses, 15, 65);
-        g.drawString("Profit: " + (getProfit()), 15, 85);
+        g.drawString("Profit: " + getProfit(), 15, 85);
+        g.drawString("Game: " + selectedGame, 15, 105);
     }
 
     private int getProfit() {
