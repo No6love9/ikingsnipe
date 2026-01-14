@@ -23,14 +23,14 @@ import java.awt.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Elite Titan Casino - PROFESSIONAL EDITION
- * A ground-up reconstruction for maximum stability and performance.
+ * Elite Titan Casino - PROFESSIONAL EDITION v5.1
+ * Optimized for DreamBot 3 stability and performance.
  */
 @ScriptManifest(
     name = "Elite Titan Casino PRO",
     description = "Professional-grade casino bot with advanced trade security and game logic.",
     author = "ikingsnipe",
-    version = 5.0,
+    version = 5.1,
     category = Category.MISC
 )
 public class EliteTitanCasino extends AbstractScript {
@@ -65,12 +65,12 @@ public class EliteTitanCasino extends AbstractScript {
 
     @Override
     public void onStart() {
-        log("Starting Elite Titan Casino PRO Overhaul...");
+        log("Starting Elite Titan Casino PRO v5.1...");
         SwingUtilities.invokeLater(this::initGUI);
     }
 
     private void initGUI() {
-        JFrame frame = new JFrame("Elite Titan Casino PRO v5.0");
+        JFrame frame = new JFrame("Elite Titan Casino PRO v5.1");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setLayout(new BorderLayout(10, 10));
 
@@ -268,7 +268,7 @@ public class EliteTitanCasino extends AbstractScript {
         g2.drawRoundRect(10, 10, 250, 150, 15, 15);
 
         g2.setFont(new Font("Verdana", Font.BOLD, 14));
-        g2.drawString("ELITE CASINO PRO v5.0", 25, 35);
+        g2.drawString("ELITE CASINO PRO v5.1", 25, 35);
         
         g2.setFont(new Font("Verdana", Font.PLAIN, 12));
         g2.setColor(Color.WHITE);

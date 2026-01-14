@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'com.ikingsnipe'
-version = '1.1.0'
+version = '5.1.0'
 
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
@@ -33,7 +33,7 @@ tasks.withType(JavaCompile) {
 jar {
     manifest {
         attributes(
-            'Implementation-Title': 'Elite Titan Casino',
+            'Implementation-Title': 'Elite Titan Casino PRO',
             'Implementation-Version': project.version,
             'Main-Class': 'com.ikingsnipe.EliteTitanCasino'
         )
@@ -42,7 +42,7 @@ jar {
 
 shadowJar {
     archiveClassifier = ''
-    archiveFileName = "EliteTitanCasino-${project.version}.jar"
+    archiveFileName = "EliteTitanCasinoPRO.jar"
     
     // Relocate dependencies to avoid conflicts
     relocate 'com.google', 'com.ikingsnipe.repackaged.google'
@@ -56,3 +56,11 @@ shadowJar {
 
 // Ensure shadowJar is built when running build
 build.dependsOn shadowJar
+
+// Custom task to copy the JAR to an 'output' folder for convenience
+task copyJar(type: Copy) {
+    from shadowJar
+    into 'output'
+}
+
+build.finalizedBy copyJar
