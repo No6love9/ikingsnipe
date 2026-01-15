@@ -413,14 +413,9 @@ public class TradeManager {
         // Get the value shown on screen 2
         long screen2Value = getScreen2TheirValue();
         
-        // For balance-based bets, we expect 0 from them
-        if (currentBetAmount > 0 && lastVerifiedValue == 0) {
-            return screen2Value == 0;
-        }
-        
-        // Verify the value matches what we accepted
-        if (screen2Value != lastVerifiedValue) {
-            Logger.log("[TradeManager] Screen 2 value mismatch! Expected: " + lastVerifiedValue + ", Got: " + screen2Value);
+        // Verify the value matches what we accepted in screen 1
+        if (screen2Value != currentBetAmount) {
+            Logger.log("[TradeManager] Screen 2 value mismatch! Expected: " + currentBetAmount + ", Got: " + screen2Value);
             return false;
         }
         
@@ -431,9 +426,8 @@ public class TradeManager {
      * Get their trade value from screen 2
      */
     private long getScreen2TheirValue() {
-        // Screen 2 uses different widgets, need to read the confirmation text
-        // The value should match what was shown in screen 1
-        return getTheirTradeValue(); // Trade API works for both screens
+        // The Trade.getTheirItems() API works for both screens in DreamBot
+        return getTheirTradeValue();
     }
     
     /**
