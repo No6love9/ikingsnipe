@@ -1,15 +1,19 @@
 package com.ikingsnipe.casino.utils;
-import java.security.MessageDigest; import java.util.UUID;
+
+import java.security.MessageDigest;
+import java.util.UUID;
+
 public class ProvablyFair {
     private String serverSeed;
-    public void newRound(String user) { serverSeed = UUID.randomUUID().toString(); }
-    public String getServerSeedHash() {
+    public void generateNewSeed() { serverSeed = UUID.randomUUID().toString(); }
+    public String getHash() {
         try {
-            MessageDigest d = MessageDigest.getInstance("SHA-256");
-            byte[] h = d.digest(serverSeed.getBytes("UTF-8"));
-            StringBuilder sb = new StringBuilder(); for (byte b : h) sb.append(String.format("%02x", b));
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(serverSeed.getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) sb.append(String.format("%02x", b));
             return sb.toString();
-        } catch (Exception e) { return ""; }
+        } catch (Exception e) { return "ERROR"; }
     }
-    public String revealServerSeed() { return serverSeed; }
+    public String getSeed() { return serverSeed; }
 }

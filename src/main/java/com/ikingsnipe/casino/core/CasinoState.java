@@ -1,5 +1,17 @@
 package com.ikingsnipe.casino.core;
+
 public enum CasinoState {
-    INITIALIZING, WALKING_TO_LOCATION, BANKING, IDLE, TRADE_REQUESTED,
-    TRADING_WINDOW_1, TRADING_WINDOW_2, PROCESSING_GAME, PAYOUT_PENDING, ERROR_RECOVERY
+    INITIALIZING("Initializing Systems"),
+    WALKING_TO_LOCATION("Walking to Location"),
+    BANKING("Banking Operations"),
+    IDLE("Waiting for Players"),
+    TRADING_WINDOW_1("Trade Screen 1"),
+    TRADING_WINDOW_2("Trade Screen 2"),
+    PROCESSING_GAME("Processing Game Logic"),
+    PAYOUT_PENDING("Handling Payout"),
+    ERROR_RECOVERY("Recovering from Error");
+
+    private final String status;
+    CasinoState(String status) { this.status = status; }
+    public String getStatus() { return status; }
 }
