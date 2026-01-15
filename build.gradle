@@ -8,8 +8,15 @@ version = '16.0.0'
 
 java {
     toolchain {
+<<<<<<< Updated upstream
         languageVersion = JavaLanguageVersion.of(17)
     }
+=======
+        // Use JDK 17 (which you have installed)
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+    // DreamBot expects Java 8 bytecode
+>>>>>>> Stashed changes
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 }

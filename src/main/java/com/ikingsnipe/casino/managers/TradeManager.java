@@ -11,7 +11,10 @@ import org.dreambot.api.input.Keyboard;
 =======
 import org.dreambot.api.methods.input.Keyboard;
 import org.dreambot.api.wrappers.widgets.Widget;
+<<<<<<< Updated upstream
 import org.dreambot.api.wrappers.widgets.WidgetChild;
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 import org.dreambot.api.methods.interactive.Players;
 import org.dreambot.api.methods.trade.Trade;
@@ -155,9 +158,15 @@ public class TradeManager {
             Widget tradeWidget = Widgets.getWidget(335);
             if (tradeWidget != null && tradeWidget.isVisible()) {
                 // Try to get child widget with trade request text
+<<<<<<< Updated upstream
                 WidgetChild child = tradeWidget.getChild(4);
                 if (child != null) {
                     String text = child.getText();
+=======
+                Widget widget = Widgets.getWidget(335);
+                if (widget != null && widget.getChild(4) != null) {
+                    String text = widget.getChild(4).getText();
+>>>>>>> Stashed changes
                     if (text != null && text.contains("wishes to trade")) {
                         // Extract player name from "PlayerName wishes to trade with you"
                         return text.split(" ")[0];
