@@ -26,4 +26,8 @@ public class GameManager {
         CasinoConfig.GameSettings settings = config.games.getOrDefault(key, config.games.get("dice"));
         return game.play(bet, settings.multiplier);
     }
+
+    public AbstractGame getGame(String type) {
+        return games.get(type.toLowerCase());
+    }
 }

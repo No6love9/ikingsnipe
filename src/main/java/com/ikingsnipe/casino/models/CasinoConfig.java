@@ -41,11 +41,15 @@ public class CasinoConfig {
     public boolean useProvablyFair = true;
 
     // Messaging
-    public String adMessage = "[Elite Casino] Dice | Flower Poker | Craps | Blackjack | Hot/Cold | Provably Fair! Trade me!";
+    public String adMessage = "[snipes♧scripts] Chasing Craps | Flower Poker | Dice | !c !fp !b2b | Trade me!";
     public int adIntervalSeconds = 30;
-    public String tradeWelcome = "Welcome! Provably Fair Hash: %s";
+    public String tradeWelcome = "Welcome! Type !c or !craps to play Chasing Craps. Hash: %s";
     public String winMessage = "WINNER! %s won %s GP! (Result: %s) [Seed: %s]";
     public String lossMessage = "LOSS! %s lost. (Result: %s)";
+
+    // Discord Webhook
+    public String discordWebhookUrl = "";
+    public boolean discordEnabled = false;
 
     public CasinoConfig() {
         initializeDefaultGames();
@@ -54,7 +58,7 @@ public class CasinoConfig {
     private void initializeDefaultGames() {
         games.put("dice", new GameSettings("Dice Duel", 2.0, true));
         games.put("flower", new GameSettings("Flower Poker", 2.0, true));
-        games.put("craps", new GameSettings("Craps", 2.0, true));
+        games.put("craps", new GameSettings("Chasing Craps", 3.0, true)); // Default x3
         games.put("blackjack", new GameSettings("Blackjack", 2.5, true));
         games.put("hotcold", new GameSettings("Hot/Cold", 2.0, true));
         games.put("55x2", new GameSettings("55x2", 2.0, true));
