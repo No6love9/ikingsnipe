@@ -1,7 +1,7 @@
 package com.ikingsnipe.casino.utils;
 
 import com.ikingsnipe.casino.managers.ProfitTracker;
-import org.dreambot.api.methods.input.Keyboard;
+import org.dreambot.api.input.Keyboard;
 import org.dreambot.api.utilities.Sleep;
 import java.util.HashMap;
 import java.util.Map;

@@ -15,7 +15,7 @@ import com.ikingsnipe.casino.utils.DiscordWebhook;
 import com.ikingsnipe.casino.utils.ProvablyFair;
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
-import org.dreambot.api.methods.input.Keyboard;
+import org.dreambot.api.input.Keyboard;
 import org.dreambot.api.methods.interactive.Players;
 import org.dreambot.api.methods.trade.Trade;
 import org.dreambot.api.methods.widget.Widgets;
