@@ -13,13 +13,13 @@ public class ProfitTracker {
         this.startTime = System.currentTimeMillis();
     }
 
-    public void addWin(long amount, String player) {
-        totalLost += amount; // Bot loses what player wins
-        addWinner(player + " (" + formatGP(amount) + ")");
-    }
-
-    public void addLoss(long amount) {
-        totalWon += amount; // Bot wins what player loses
+    public void addGame(String player, boolean win, long profit) {
+        if (win) {
+            totalLost += profit; // Bot loses what player wins
+            addWinner(player + " (" + formatGP(profit) + ")");
+        } else {
+            totalWon += Math.abs(profit); // Bot wins what player loses
+        }
     }
 
     public long getNetProfit() {

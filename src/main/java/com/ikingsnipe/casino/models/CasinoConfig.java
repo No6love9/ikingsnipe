@@ -57,7 +57,12 @@ public class CasinoConfig {
     public double jackpotContributionPercent = 1.0; // 1% of bets go to jackpot
 
     // Messaging & AI
-    public String adMessage = "[snipes♧scripts] Chasing Craps | Dice War | Jackpot | !c !dw !b2b | Trade me!";
+    public List<String> adMessages = new ArrayList<>(Arrays.asList(
+        "[snipes♧scripts] Chasing Craps | Dice War | Jackpot | !c !dw !b2b | Trade me!",
+        "Elite Casino is OPEN! !c !dw !b2b for big wins!",
+        "Safe & Fast Payouts | Chasing Craps | Dice War | Trade to start!"
+    ));
+    public boolean enableAntiMute = true;
     public int adIntervalSeconds = 30;
     public String tradeWelcome = "Welcome! Type !c for Craps or !dw for Dice War. Hash: %s";
     public String winMessage = "WINNER! %s won %s GP! (Result: %s) [Seed: %s]";

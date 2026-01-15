@@ -1,51 +1,45 @@
 package com.ikingsnipe.casino.gui;
 
 import com.ikingsnipe.casino.models.CasinoConfig;
+
+
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.util.function.Consumer;
 
 public class CasinoGUI extends JFrame {
-    public CasinoGUI(CasinoConfig config, Consumer<Boolean> onComplete) {
-        setTitle("snipes♧scripts - Enterprise Edition");
+    private final CasinoConfig config;
+    private final Consumer<Boolean> onFinish;
+
+    public CasinoGUI(CasinoConfig config, Consumer<Boolean> onFinish) {
+        this.config = config;
+        this.onFinish = onFinish;
+
+        setTitle("snipes♧scripts Enterprise");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(550, 750);
-        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
+        setResizable(false);
 
         JPanel main = new JPanel();
         main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
-        main.setBorder(new EmptyBorder(15, 15, 15, 15));
-        main.setBackground(new Color(20, 20, 25));
-
-        JLabel title = new JLabel("SNIPES ♧ SCRIPTS");
-        title.setFont(new Font("Verdana", Font.BOLD, 32));
-        title.setForeground(new Color(0, 255, 127));
-        title.setAlignmentX(Component.CENTER_ALIGNMENT);
-        main.add(title);
-        
-        JLabel subtitle = new JLabel("Enterprise Casino Management");
-        subtitle.setFont(new Font("Verdana", Font.ITALIC, 14));
-        subtitle.setForeground(Color.GRAY);
-        subtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-        main.add(subtitle);
-        
-        main.add(Box.createRigidArea(new Dimension(0, 20)));
+        main.setBackground(new Color(30, 30, 35));
+        main.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JTabbedPane tabs = new JTabbedPane();
         
         // --- General Tab ---
         JPanel generalTab = createTabPanel();
-        generalTab.add(createLocationPanel(config));
         generalTab.add(createBettingPanel(config));
-        generalTab.add(createAdPanel(config));
         tabs.addTab("General", generalTab);
 
         // --- Games Tab ---
         tabs.addTab("Games", createGamesTab(config));
+        
+        // --- Advertising Tab ---
+        tabs.addTab("Advertising", createAdTab(config));
 
-        // --- Enterprise Tab (Jackpot & Muling) ---
+        // --- Enterprise Tab ---
         JPanel enterpriseTab = createTabPanel();
         enterpriseTab.add(createJackpotPanel(config));
         enterpriseTab.add(createMulingPanel(config));
@@ -61,44 +55,32 @@ public class CasinoGUI extends JFrame {
         main.add(tabs);
         main.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // Start Button
         JButton startBtn = new JButton("LAUNCH ENTERPRISE SYSTEM");
-        startBtn.setBackground(new Color(0, 180, 80));
-        startBtn.setForeground(Color.WHITE);
-        startBtn.setFont(new Font("Arial", Font.BOLD, 16));
-        startBtn.setPreferredSize(new Dimension(300, 50));
         startBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        startBtn.setBackground(new Color(0, 255, 127));
+        startBtn.setForeground(Color.BLACK);
+        startBtn.setFont(new Font("Arial", Font.BOLD, 14));
         startBtn.addActionListener(e -> {
-            onComplete.accept(true);
+            onFinish.accept(true);
             dispose();
         });
         main.add(startBtn);
 
         add(main);
+        pack();
+        setLocationRelativeTo(null);
+        setVisible(true);
     }
 
     private JPanel createTabPanel() {
         JPanel p = new JPanel();
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
         p.setBackground(new Color(30, 30, 35));
-        p.setBorder(new EmptyBorder(10, 10, 10, 10));
-        return p;
-    }
-
-    private JPanel createLocationPanel(CasinoConfig config) {
-        JPanel p = createSection("Location & Movement");
-        JComboBox<CasinoConfig.LocationPreset> locCombo = new JComboBox<>(CasinoConfig.LocationPreset.values());
-        locCombo.setSelectedItem(config.locationPreset);
-        p.add(new JLabel("Preset:")); p.add(locCombo);
-        JCheckBox walkCb = new JCheckBox("Walk on Start", config.walkOnStart);
-        p.add(walkCb);
-        locCombo.addActionListener(e -> config.locationPreset = (CasinoConfig.LocationPreset) locCombo.getSelectedItem());
-        walkCb.addActionListener(e -> config.walkOnStart = walkCb.isSelected());
         return p;
     }
 
     private JPanel createBettingPanel(CasinoConfig config) {
-        JPanel p = createSection("Betting Limits (GP)");
+        JPanel p = createSection("Betting Limits");
         JTextField minField = new JTextField(String.valueOf(config.minBet), 10);
         JTextField maxField = new JTextField(String.valueOf(config.maxBet), 10);
         p.add(new JLabel("Min:")); p.add(minField);
@@ -108,57 +90,70 @@ public class CasinoGUI extends JFrame {
         return p;
     }
 
-    private JPanel createAdPanel(CasinoConfig config) {
-        JPanel p = createSection("Advertising");
-        JTextField adField = new JTextField(config.adMessage, 20);
-        p.add(new JLabel("Msg:")); p.add(adField);
-        adField.addActionListener(e -> config.adMessage = adField.getText());
+    private JPanel createAdTab(CasinoConfig config) {
+        JPanel p = createTabPanel();
+        JPanel section = createSection("Anti-Mute Advertising");
+        JCheckBox antiMute = new JCheckBox("Enable Anti-Mute Variations", config.enableAntiMute);
+        antiMute.addActionListener(e -> config.enableAntiMute = antiMute.isSelected());
+        section.add(antiMute);
+        
+        DefaultListModel<String> model = new DefaultListModel<>();
+        config.adMessages.forEach(model::addElement);
+        JList<String> list = new JList<>(model);
+        JScrollPane scroll = new JScrollPane(list);
+        scroll.setPreferredSize(new Dimension(450, 100));
+        section.add(scroll);
+        
+        JTextField newAd = new JTextField(20);
+        JButton addBtn = new JButton("Add");
+        addBtn.addActionListener(e -> {
+            if (!newAd.getText().isEmpty()) {
+                config.adMessages.add(newAd.getText());
+                model.addElement(newAd.getText());
+                newAd.setText("");
+            }
+        });
+        section.add(newAd); section.add(addBtn);
+        p.add(section);
         return p;
     }
 
     private JPanel createGamesTab(CasinoConfig config) {
         JPanel p = new JPanel(new GridLayout(0, 2, 10, 10));
         p.setBackground(new Color(30, 30, 35));
-        p.setBorder(new EmptyBorder(10, 10, 10, 10));
-        for (String key : config.games.keySet()) {
-            CasinoConfig.GameSettings gs = config.games.get(key);
-            JPanel gp = new JPanel(new BorderLayout());
-            gp.setBackground(new Color(45, 45, 50));
-            JCheckBox cb = new JCheckBox(gs.name, gs.enabled);
-            cb.addActionListener(e -> gs.enabled = cb.isSelected());
-            gp.add(cb, BorderLayout.WEST);
-            p.add(gp);
-        }
+        config.games.forEach((id, settings) -> {
+            JPanel gamePanel = createSection(settings.name);
+            JCheckBox enabled = new JCheckBox("Enabled", settings.enabled);
+            JTextField mult = new JTextField(String.valueOf(settings.multiplier), 5);
+            gamePanel.add(enabled);
+            gamePanel.add(new JLabel("x")); gamePanel.add(mult);
+            enabled.addActionListener(e -> settings.enabled = enabled.isSelected());
+            mult.addActionListener(e -> settings.multiplier = Double.parseDouble(mult.getText()));
+            p.add(gamePanel);
+        });
         return p;
     }
 
     private JPanel createJackpotPanel(CasinoConfig config) {
         JPanel p = createSection("Global Jackpot");
-        JCheckBox enabled = new JCheckBox("Enable Jackpot", config.jackpotEnabled);
-        JTextField percent = new JTextField(String.valueOf(config.jackpotContributionPercent), 4);
-        p.add(enabled);
-        p.add(new JLabel("Contribution %:")); p.add(percent);
-        enabled.addActionListener(e -> config.jackpotEnabled = enabled.isSelected());
-        percent.addActionListener(e -> config.jackpotContributionPercent = Double.parseDouble(percent.getText()));
+        JTextField contrib = new JTextField(String.valueOf(config.jackpotContributionPercent), 5);
+        p.add(new JLabel("Contrib %:")); p.add(contrib);
+        contrib.addActionListener(e -> config.jackpotContributionPercent = Double.parseDouble(contrib.getText()));
         return p;
     }
 
     private JPanel createMulingPanel(CasinoConfig config) {
         JPanel p = createSection("Auto-Muling");
-        JCheckBox enabled = new JCheckBox("Enable Muling", config.autoMule);
-        JTextField name = new JTextField(config.muleName, 10);
+        JCheckBox enabled = new JCheckBox("Enable", config.autoMule);
         JTextField threshold = new JTextField(String.valueOf(config.muleThreshold), 10);
-        p.add(enabled);
-        p.add(new JLabel("Mule Name:")); p.add(name);
-        p.add(new JLabel("Threshold:")); p.add(threshold);
+        p.add(enabled); p.add(new JLabel("Threshold:")); p.add(threshold);
         enabled.addActionListener(e -> config.autoMule = enabled.isSelected());
-        name.addActionListener(e -> config.muleName = name.getText());
         threshold.addActionListener(e -> config.muleThreshold = Long.parseLong(threshold.getText()));
         return p;
     }
 
     private JPanel createHumanizationPanel(CasinoConfig config) {
-        JPanel p = createSection("Humanization & AI");
+        JPanel p = createSection("Humanization");
         JCheckBox chatAi = new JCheckBox("Enable Chat AI", config.chatAIEnabled);
         p.add(chatAi);
         chatAi.addActionListener(e -> config.chatAIEnabled = chatAi.isSelected());
@@ -179,22 +174,6 @@ public class CasinoGUI extends JFrame {
 
     private JPanel createAdvancedTab(CasinoConfig config) {
         JPanel p = createTabPanel();
-        
-        // Muling Section
-        JPanel muleSection = createSection("Auto-Muling");
-        JCheckBox muleEnabled = new JCheckBox("Enable Muling", config.autoMule);
-        JTextField muleName = new JTextField(config.muleName, 10);
-        JTextField muleThreshold = new JTextField(String.valueOf(config.muleThreshold), 10);
-        muleSection.add(muleEnabled);
-        muleSection.add(new JLabel("Mule Name:")); muleSection.add(muleName);
-        muleSection.add(new JLabel("Threshold:")); muleSection.add(muleThreshold);
-        
-        muleEnabled.addActionListener(e -> config.autoMule = muleEnabled.isSelected());
-        muleName.addActionListener(e -> config.muleName = muleName.getText());
-        muleThreshold.addActionListener(e -> config.muleThreshold = Long.parseLong(muleThreshold.getText()));
-        p.add(muleSection);
-
-        // Humanization Section
         JPanel humanSection = createSection("Advanced Anti-Ban");
         JCheckBox breakEnabled = new JCheckBox("Micro-Breaks", config.enableMicroBreaks);
         JCheckBox jitterEnabled = new JCheckBox("Camera Jitter", config.enableCameraJitter);
@@ -202,22 +181,19 @@ public class CasinoGUI extends JFrame {
         humanSection.add(breakEnabled);
         humanSection.add(jitterEnabled);
         humanSection.add(fatigueEnabled);
-        
         breakEnabled.addActionListener(e -> config.enableMicroBreaks = breakEnabled.isSelected());
         jitterEnabled.addActionListener(e -> config.enableCameraJitter = jitterEnabled.isSelected());
         fatigueEnabled.addActionListener(e -> config.enableMouseFatigue = fatigueEnabled.isSelected());
         p.add(humanSection);
-
         return p;
     }
 
     private JPanel createSection(String title) {
         JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        p.setBackground(new Color(45, 45, 50));
         TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.GRAY), title);
-        border.setTitleColor(new Color(0, 255, 127));
+        border.setTitleColor(Color.WHITE);
         p.setBorder(border);
-        p.setBackground(new Color(40, 40, 45));
-        p.setMaximumSize(new Dimension(520, 100));
         return p;
     }
 }
