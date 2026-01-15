@@ -4,6 +4,7 @@ import com.ikingsnipe.casino.core.CasinoState;
 import com.ikingsnipe.casino.models.CasinoConfig;
 import com.ikingsnipe.casino.utils.DreamBotAdapter;
 import com.ikingsnipe.casino.utils.ProvablyFair;
+import com.ikingsnipe.casino.gui.CasinoPanel;
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.trade.Trade;
 import org.dreambot.api.methods.container.impl.bank.Bank;
@@ -14,11 +15,12 @@ import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.wrappers.items.Item;
 import org.dreambot.api.utilities.Sleep;
 
+import javax.swing.*;
 import java.awt.*;
 
 @ScriptManifest(
     name = "Elite Titan Casino v12.0",
-    description = "Ultra-robust casino host with Multi-Currency support and full configurability.",
+    description = "Ultra-robust casino host with Multi-Currency support, full configurability, and GUI control.",
     author = "ikingsnipe",
     version = 12.0,
     category = Category.MISC
@@ -28,6 +30,7 @@ public class EliteTitanCasino extends AbstractScript {
     private CasinoConfig config;
     private DreamBotAdapter adapter;
     private ProvablyFair pf;
+    private CasinoPanel gui;
     private CasinoState state = CasinoState.IDLE;
     
     private String currentPlayer = null;
@@ -38,7 +41,6 @@ public class EliteTitanCasino extends AbstractScript {
     
     private int wins = 0;
     private int losses = 0;
-    private long totalProfit = 0;
 
     @Override
     public void onStart() {
@@ -46,6 +48,13 @@ public class EliteTitanCasino extends AbstractScript {
         config = new CasinoConfig();
         adapter = new DreamBotAdapter();
         pf = new ProvablyFair();
+        
+        // Launch GUI on the Event Dispatch Thread
+        SwingUtilities.invokeLater(() -> {
+            gui = new CasinoPanel(config);
+            gui.setVisible(true);
+        });
+
         state = CasinoState.IDLE;
         stateStartTime = System.currentTimeMillis();
         scriptStartTime = System.currentTimeMillis();
@@ -54,7 +63,6 @@ public class EliteTitanCasino extends AbstractScript {
 
     @Override
     public int onLoop() {
-        // Robust Error Handling: State Timeout
         if (state != CasinoState.IDLE && System.currentTimeMillis() - stateStartTime > config.tradeTimeoutMs) {
             log("State timeout: " + state + ". Resetting...");
             resetState();
@@ -98,13 +106,11 @@ public class EliteTitanCasino extends AbstractScript {
             return;
         }
 
-        // Configurable Advertising Interval
         if (System.currentTimeMillis() - lastAdTime > config.adIntervalMs) {
             adapter.speak(config.adMessage);
             lastAdTime = System.currentTimeMillis();
         }
 
-        // Auto-Restock Check
         if (config.autoRestock && getInventoryValue() < config.restockThreshold) {
             handleRestock();
         }
@@ -150,9 +156,7 @@ public class EliteTitanCasino extends AbstractScript {
     private void handleGameResolution() {
         Sleep.sleepUntil(() -> !Trade.isOpen(), 3000);
         
-        // Provably Fair Roll
         int total = pf.generateRoll(2, 12);
-        
         CasinoConfig.GameSettings settings = config.games.get("craps");
         boolean win = settings.winningNumbers.contains(total);
         
@@ -205,6 +209,13 @@ public class EliteTitanCasino extends AbstractScript {
         currentPlayer = null;
         messagedWelcome = false;
         stateStartTime = System.currentTimeMillis();
+    }
+
+    @Override
+    public void onExit() {
+        if (gui != null) {
+            gui.dispose();
+        }
     }
 
     @Override
