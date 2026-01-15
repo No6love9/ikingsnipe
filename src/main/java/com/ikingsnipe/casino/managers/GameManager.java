@@ -18,6 +18,7 @@ public class GameManager {
         games.put("hotcold", new HotColdGame());
         games.put("55x2", new FiftyFiveGame());
         games.put("craps", new CrapsGame());
+        games.put("dicewar", new DiceWarGame());
     }
 
     public GameResult play(String type, long bet) {

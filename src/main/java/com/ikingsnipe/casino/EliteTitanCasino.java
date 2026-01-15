@@ -6,8 +6,7 @@ import com.ikingsnipe.casino.games.impl.CrapsGame;
 import com.ikingsnipe.casino.gui.CasinoGUI;
 import com.ikingsnipe.casino.managers.*;
 import com.ikingsnipe.casino.models.*;
-import com.ikingsnipe.casino.utils.ProvablyFair;
-import com.ikingsnipe.casino.utils.DiscordWebhook;
+import com.ikingsnipe.casino.utils.*;
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.container.impl.bank.Bank;
@@ -27,10 +26,10 @@ import javax.swing.*;
 import java.awt.*;
 
 @ScriptManifest(
-    name = "snipes♧scripts Chasing Edition",
-    description = "Robust Enterprise-grade OSRS Casino Host Bot with Chasing Craps",
+    name = "snipes♧scripts Enterprise",
+    description = "Ultimate Enterprise-grade OSRS Casino Host Bot",
     author = "ikingsnipe",
-    version = 15.0,
+    version = 16.0,
     category = Category.MISC
 )
 public class EliteTitanCasino extends AbstractScript implements ChatListener {
@@ -43,6 +42,8 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
     private LocationManager locationManager;
     private ProvablyFair provablyFair;
     private DiscordWebhook webhook;
+    private ProfitTracker profitTracker;
+    private ChatAI chatAI;
 
     private String currentPlayer;
     private long currentBet;
@@ -72,9 +73,12 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         bankingManager = new BankingManager(config);
         locationManager = new LocationManager(config);
         provablyFair = new ProvablyFair();
+        profitTracker = new ProfitTracker();
+        chatAI = new ChatAI();
+        
         if (config.discordEnabled && !config.discordWebhookUrl.isEmpty()) {
             webhook = new DiscordWebhook(config.discordWebhookUrl);
-            webhook.send("✅ **snipes♧scripts Chasing Edition** started!");
+            webhook.send("🚀 **snipes♧scripts Enterprise** is now ONLINE!");
         }
         state = CasinoState.INITIALIZING;
     }
@@ -85,10 +89,10 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         if (!startScript) { stop(); return 0; }
 
         try {
-            if (state != CasinoState.IDLE && !Players.getLocal().exists()) {
-                log("Player disconnected or invalid state. Resetting.");
-                reset();
-                return 1000;
+            // Auto-Muling Check
+            if (config.autoMule && getInventoryValue() >= config.muleThreshold) {
+                log("Mule threshold reached! Please handle muling manually or implement auto-trade logic.");
+                // For safety, we just log it for now to prevent accidental losses
             }
 
             switch (state) {
@@ -146,15 +150,15 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
             return 500;
         }
         
-        // Proactively check for incoming trade requests
         Player trader = Players.closest(p -> p != null && p.isInteracting(Players.getLocal()));
         if (trader != null && !Trade.isOpen()) {
-            log("Accepting trade request from: " + trader.getName());
             trader.interact("Trade with");
-            if (Sleep.sleepUntil(Trade::isOpen, 5000)) {
-                // Optional: Small delay to let the window stabilize
-                Sleep.sleep(600, 1000);
-            }
+            Sleep.sleepUntil(Trade::isOpen, 3000);
+        }
+
+        // Humanization: Occasional random movement
+        if (Calculations.random(1, 100) == 1) {
+            locationManager.walkToLocation();
         }
 
         if (System.currentTimeMillis() - lastAdTime > config.adIntervalSeconds * 1000L) {
@@ -165,75 +169,52 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
     }
 
     private int handleTrade1() {
-        if (!Trade.isOpen(1)) { 
-            if (!Trade.isOpen()) reset(); 
-            return 500; 
-        }
-        
-        // 30 second timeout
+        if (!Trade.isOpen(1)) { if (!Trade.isOpen()) reset(); return 500; }
         if (System.currentTimeMillis() - tradeStartTime > 30000) {
-            log("Trade timeout reached. Declining.");
-            Trade.declineTrade();
-            reset();
-            return 1000;
+            Trade.declineTrade(); reset(); return 1000;
         }
 
         if (!welcomeSent) {
-            String greeting = String.format("Hello %s, you are now in a secure trade window. It is safe to proceed with your bet or command.", currentPlayer);
+            String greeting = String.format("Hello %s, you are now in a secure trade window. It is safe to proceed.", currentPlayer);
             Keyboard.type(greeting, true);
-            Sleep.sleep(1200, 1800); // Wait for message to send
+            Sleep.sleep(1000, 1500);
             Keyboard.type(String.format(config.tradeWelcome, provablyFair.getHash().substring(0, 12)), true);
             welcomeSent = true;
         }
         
         long tradeVal = getTradeValue();
-        
-        // If they have a balance and typed a command, we might not need physical items
-        if (currentBet > 0 && tradeVal == 0) {
-            if (currentSession.getBalance() >= currentBet) {
-                // Using balance
-                Trade.acceptTrade();
-                Sleep.sleepUntil(() -> Trade.isOpen(2), 5000);
-            }
+        if (currentBet > 0 && tradeVal == 0 && currentSession.getBalance() >= currentBet) {
+            Trade.acceptTrade();
+            Sleep.sleepUntil(() -> Trade.isOpen(2), 5000);
         } else if (tradeVal > 0) {
             if (tradeVal < config.minBet || tradeVal > config.maxBet) {
                 Keyboard.type("Bet must be between " + formatGP(config.minBet) + " and " + formatGP(config.maxBet), true);
-                Trade.declineTrade();
-                reset();
-                return 1000;
+                Trade.declineTrade(); reset(); return 1000;
             }
             currentBet = tradeVal;
-            if (Trade.acceptTrade()) {
-                Sleep.sleepUntil(() -> Trade.isOpen(2), 5000);
-            }
+            if (Trade.acceptTrade()) Sleep.sleepUntil(() -> Trade.isOpen(2), 5000);
         }
         return 1000;
     }
 
     private int handleTrade2() {
-        if (!Trade.isOpen(2)) { 
-            if (!Trade.isOpen()) state = CasinoState.PROCESSING_GAME; 
-            return 500; 
-        }
-        
-        // Anti-scam: Verify value again in window 2 if physical items used
+        if (!Trade.isOpen(2)) { if (!Trade.isOpen()) state = CasinoState.PROCESSING_GAME; return 500; }
         if (getTradeValue() > 0 && getTradeValue() != currentBet) {
-            log("SCAM DETECTED: Value changed in Window 2!");
-            Trade.declineTrade();
-            reset();
-            return 1000;
+            Trade.declineTrade(); reset(); return 1000;
         }
-        
-        if (Trade.acceptTrade()) {
-            Sleep.sleepUntil(() -> !Trade.isOpen(), 5000);
-        }
+        if (Trade.acceptTrade()) Sleep.sleepUntil(() -> !Trade.isOpen(), 5000);
         return 1000;
     }
 
     private int handleGame() {
-        // Handle balance deduction if physical items weren't used
         if (getTradeValue() == 0 && currentSession.getBalance() >= currentBet) {
             currentSession.subtractBalance(currentBet);
+        }
+
+        // Jackpot Logic
+        if (config.jackpotEnabled) {
+            long contribution = (long)(currentBet * (config.jackpotContributionPercent / 100.0));
+            config.currentJackpot += contribution;
         }
 
         GameResult r = gameManager.play(selectedGame, currentBet);
@@ -241,23 +222,20 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         
         String logMsg;
         if (r.isWin()) {
+            profitTracker.addWin(r.getPayout(), currentPlayer);
             logMsg = String.format(config.winMessage, currentPlayer, formatGP(r.getPayout()), r.getDescription(), seed);
             Keyboard.type(logMsg, true);
-            
-            // Add to balance instead of physical payout if preferred, or just set owed
             currentSession.addBalance(r.getPayout());
-            currentSession.setOwedAmount(currentSession.getBalance()); // Sync for payout
+            currentSession.setOwedAmount(currentSession.getBalance());
             state = CasinoState.PAYOUT_PENDING;
         } else {
+            profitTracker.addLoss(currentBet);
             logMsg = String.format(config.lossMessage, currentPlayer, r.getDescription());
             Keyboard.type(logMsg, true);
             reset();
         }
         
-        if (webhook != null) {
-            webhook.send("🎮 **Game Result**: " + logMsg);
-        }
-        
+        if (webhook != null) webhook.send("🎮 **Game Result**: " + logMsg);
         return 1000;
     }
 
@@ -284,18 +262,10 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         return 1000;
     }
 
-    private int handleRecovery() { 
-        Widgets.closeAll(); 
-        if (Trade.isOpen()) Trade.declineTrade();
-        reset(); 
-        return 1000; 
-    }
+    private int handleRecovery() { Widgets.closeAll(); if (Trade.isOpen()) Trade.declineTrade(); reset(); return 1000; }
 
     private void reset() {
-        state = CasinoState.IDLE; 
-        currentPlayer = null; 
-        currentBet = 0; 
-        welcomeSent = false;
+        state = CasinoState.IDLE; currentPlayer = null; currentBet = 0; welcomeSent = false;
         selectedGame = config.defaultGame;
     }
 
@@ -304,25 +274,20 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         String txt = msg.getMessage().toLowerCase();
         String sender = msg.getUsername();
         
+        if (config.chatAIEnabled && !sender.equals(Players.getLocal().getName())) {
+            chatAI.handleChat(txt);
+        }
+
         if (state == CasinoState.TRADING_WINDOW_1 && sender.equals(currentPlayer)) {
-            if (txt.startsWith("!c") || txt.startsWith("!craps")) {
-                selectedGame = "craps";
-                parseBet(txt);
-                Keyboard.type("Game set to Chasing Craps!", true);
-            } else if (txt.startsWith("!b2b")) {
+            if (txt.startsWith("!c")) { selectedGame = "craps"; parseBet(txt); }
+            else if (txt.startsWith("!dw")) { selectedGame = "dicewar"; parseBet(txt); }
+            else if (txt.startsWith("!b2b")) {
                 selectedGame = "craps";
                 CrapsGame cg = (CrapsGame) gameManager.getGame("craps");
                 cg.setB2B(true);
-                
-                // Check for prediction
                 if (txt.contains("7")) cg.setPredictedNumber(7);
                 else if (txt.contains("9")) cg.setPredictedNumber(9);
                 else if (txt.contains("12")) cg.setPredictedNumber(12);
-                
-                parseBet(txt);
-                Keyboard.type("B2B Chasing Craps activated!", true);
-            } else if (txt.startsWith("!fp")) {
-                selectedGame = "flower";
                 parseBet(txt);
             }
         }
@@ -375,19 +340,31 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
     public void onPaint(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setColor(new Color(0, 0, 0, 150));
-        g2.fillRect(5, 5, 220, 120);
+        
+        // Main Panel
+        g2.setColor(new Color(0, 0, 0, 180));
+        g2.fillRoundRect(5, 5, 240, 160, 15, 15);
         g2.setColor(new Color(0, 255, 127));
-        g2.drawRect(5, 5, 220, 120);
-        g2.setFont(new Font("Verdana", Font.BOLD, 14));
-        g2.drawString("snipes♧scripts Chasing", 15, 25);
+        g2.setStroke(new BasicStroke(2));
+        g2.drawRoundRect(5, 5, 240, 160, 15, 15);
+        
+        g2.setFont(new Font("Verdana", Font.BOLD, 16));
+        g2.drawString("snipes♧scripts Enterprise", 15, 30);
+        
         g2.setFont(new Font("Verdana", Font.PLAIN, 12));
         g2.setColor(Color.WHITE);
-        g2.drawString("Status: " + state.getStatus(), 15, 45);
-        g2.drawString("Game: " + selectedGame, 15, 65);
-        g2.drawString("Inventory: " + formatGP(getInventoryValue()), 15, 85);
-        if (currentPlayer != null) {
-            g2.drawString("Player: " + currentPlayer, 15, 105);
+        g2.drawString("Runtime: " + profitTracker.getRuntime(), 15, 55);
+        g2.drawString("Net Profit: " + formatGP(profitTracker.getNetProfit()), 15, 75);
+        g2.drawString("Jackpot: " + formatGP(config.currentJackpot), 15, 95);
+        g2.drawString("Status: " + state.getStatus(), 15, 115);
+        
+        // Recent Winners
+        g2.setColor(new Color(0, 255, 127, 100));
+        g2.drawString("Recent Winners:", 15, 135);
+        int y = 155;
+        for (String winner : profitTracker.getRecentWinners()) {
+            g2.drawString("• " + winner, 20, y);
+            y += 15;
         }
     }
 }

@@ -1,9 +1,10 @@
 plugins {
     id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 group = 'com.ikingsnipe'
-version = '13.0.0'
+version = '16.0.0'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -15,42 +16,16 @@ repositories {
 }
 
 dependencies {
-    // Use local DreamBot API jar
     compileOnly files('libs/dreambot-api.jar')
-    
-    // Test dependencies
-    testImplementation 'junit:junit:4.13.2'
+}
+
+shadowJar {
+    archiveBaseName.set('snipes_scripts_enterprise')
+    archiveClassifier.set('')
+    archiveVersion.set('')
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.compilerArgs += ['-Xlint:deprecation', '-Xlint:unchecked', '-parameters']
-}
-
-jar {
-    archiveBaseName.set('EliteTitanCasino')
-    archiveVersion.set(project.version.toString())
-    
-    manifest {
-        attributes(
-            'Implementation-Title': 'Elite Titan Casino',
-            'Implementation-Version': project.version,
-            'Built-By': System.getProperty('user.name'),
-            'Build-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
-        )
-    }
-    
-    from(sourceSets.main.output)
-}
-
-task copyJar(type: Copy) {
-    from jar
-    into 'output'
-    rename { String fileName -> 'EliteTitanCasino.jar' }
-}
-
-build.finalizedBy copyJar
-
-clean.doFirst {
-    delete 'output'
 }

@@ -9,142 +9,178 @@ import java.util.function.Consumer;
 
 public class CasinoGUI extends JFrame {
     public CasinoGUI(CasinoConfig config, Consumer<Boolean> onComplete) {
-        setTitle("snipes♧scripts - Casino Enterprise");
+        setTitle("snipes♧scripts - Enterprise Edition");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(500, 700);
+        setSize(550, 750);
         setLocationRelativeTo(null);
 
         JPanel main = new JPanel();
         main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
         main.setBorder(new EmptyBorder(15, 15, 15, 15));
-        main.setBackground(new Color(25, 25, 30));
+        main.setBackground(new Color(20, 20, 25));
 
         JLabel title = new JLabel("SNIPES ♧ SCRIPTS");
-        title.setFont(new Font("Verdana", Font.BOLD, 28));
+        title.setFont(new Font("Verdana", Font.BOLD, 32));
         title.setForeground(new Color(0, 255, 127));
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
         main.add(title);
         
-        JLabel subtitle = new JLabel("Casino Enterprise Edition");
-        subtitle.setFont(new Font("Verdana", Font.PLAIN, 12));
-        subtitle.setForeground(Color.LIGHT_GRAY);
+        JLabel subtitle = new JLabel("Enterprise Casino Management");
+        subtitle.setFont(new Font("Verdana", Font.ITALIC, 14));
+        subtitle.setForeground(Color.GRAY);
         subtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         main.add(subtitle);
         
         main.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // Tabbed Pane for organization
         JTabbedPane tabs = new JTabbedPane();
         
-        // General Settings Tab
-        JPanel generalTab = new JPanel();
-        generalTab.setLayout(new BoxLayout(generalTab, BoxLayout.Y_AXIS));
-        generalTab.setBackground(new Color(35, 35, 40));
-        
-        JPanel locPanel = createSection("Location & Movement");
-        JComboBox<CasinoConfig.LocationPreset> locCombo = new JComboBox<>(CasinoConfig.LocationPreset.values());
-        locCombo.setSelectedItem(config.locationPreset);
-        locPanel.add(new JLabel("Preset:"));
-        locPanel.add(locCombo);
-        JCheckBox walkCb = new JCheckBox("Walk on Start", config.walkOnStart);
-        locPanel.add(walkCb);
-        generalTab.add(locPanel);
-
-        JPanel betPanel = createSection("Betting Limits (GP)");
-        JTextField minField = new JTextField(String.valueOf(config.minBet), 10);
-        JTextField maxField = new JTextField(String.valueOf(config.maxBet), 10);
-        betPanel.add(new JLabel("Min:")); betPanel.add(minField);
-        betPanel.add(new JLabel("Max:")); betPanel.add(maxField);
-        generalTab.add(betPanel);
-        
-        JPanel adPanel = createSection("Advertising");
-        JTextField adField = new JTextField(config.adMessage, 20);
-        JSpinner adInterval = new JSpinner(new SpinnerNumberModel(config.adIntervalSeconds, 5, 300, 5));
-        adPanel.add(new JLabel("Msg:")); adPanel.add(adField);
-        adPanel.add(new JLabel("Sec:")); adPanel.add(adInterval);
-        generalTab.add(adPanel);
-
+        // --- General Tab ---
+        JPanel generalTab = createTabPanel();
+        generalTab.add(createLocationPanel(config));
+        generalTab.add(createBettingPanel(config));
+        generalTab.add(createAdPanel(config));
         tabs.addTab("General", generalTab);
 
-        // Games Tab
-        JPanel gamesTab = new JPanel();
-        gamesTab.setLayout(new GridLayout(0, 2, 10, 10));
-        gamesTab.setBackground(new Color(35, 35, 40));
-        gamesTab.setBorder(new EmptyBorder(10, 10, 10, 10));
-        for (String gameKey : config.games.keySet()) {
-            CasinoConfig.GameSettings gs = config.games.get(gameKey);
-            JPanel p = new JPanel(new BorderLayout());
-            p.setBackground(new Color(45, 45, 50));
-            p.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
-            JCheckBox cb = new JCheckBox(gs.name, gs.enabled);
-            cb.setForeground(Color.WHITE); cb.setBackground(new Color(45, 45, 50));
-            p.add(cb, BorderLayout.WEST);
-            JTextField mult = new JTextField(String.valueOf(gs.multiplier), 3);
-            p.add(mult, BorderLayout.EAST);
-            gamesTab.add(p);
-            
-            cb.addActionListener(e -> gs.enabled = cb.isSelected());
-            mult.addActionListener(e -> {
-                try { gs.multiplier = Double.parseDouble(mult.getText()); } catch(Exception ex) {}
-            });
-        }
-        tabs.addTab("Games", gamesTab);
+        // --- Games Tab ---
+        tabs.addTab("Games", createGamesTab(config));
 
-        // Discord Tab
-        JPanel discordTab = new JPanel();
-        discordTab.setLayout(new BoxLayout(discordTab, BoxLayout.Y_AXIS));
-        discordTab.setBackground(new Color(35, 35, 40));
-        JPanel webhookPanel = createSection("Discord Integration");
-        JCheckBox discordEnabled = new JCheckBox("Enable Webhook", config.discordEnabled);
-        JTextField webhookUrl = new JTextField(config.discordWebhookUrl, 30);
-        webhookPanel.add(discordEnabled);
-        webhookPanel.add(new JLabel("URL:"));
-        webhookPanel.add(webhookUrl);
-        discordTab.add(webhookPanel);
-        tabs.addTab("Discord", discordTab);
+        // --- Enterprise Tab (Jackpot & Muling) ---
+        JPanel enterpriseTab = createTabPanel();
+        enterpriseTab.add(createJackpotPanel(config));
+        enterpriseTab.add(createMulingPanel(config));
+        enterpriseTab.add(createHumanizationPanel(config));
+        tabs.addTab("Enterprise", enterpriseTab);
+
+        // --- Discord Tab ---
+        tabs.addTab("Discord", createDiscordTab(config));
 
         main.add(tabs);
         main.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // Buttons
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
-        btnPanel.setOpaque(false);
-        JButton startBtn = new JButton("START SNIPES♧SCRIPTS");
+        // Start Button
+        JButton startBtn = new JButton("LAUNCH ENTERPRISE SYSTEM");
         startBtn.setBackground(new Color(0, 180, 80));
         startBtn.setForeground(Color.WHITE);
-        startBtn.setFont(new Font("Arial", Font.BOLD, 14));
-        startBtn.setPreferredSize(new Dimension(250, 40));
+        startBtn.setFont(new Font("Arial", Font.BOLD, 16));
+        startBtn.setPreferredSize(new Dimension(300, 50));
+        startBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
         startBtn.addActionListener(e -> {
-            try {
-                config.locationPreset = (CasinoConfig.LocationPreset) locCombo.getSelectedItem();
-                config.walkOnStart = walkCb.isSelected();
-                config.minBet = Long.parseLong(minField.getText().replaceAll("[^0-9]", ""));
-                config.maxBet = Long.parseLong(maxField.getText().replaceAll("[^0-9]", ""));
-                config.adMessage = adField.getText();
-                config.adIntervalSeconds = (Integer) adInterval.getValue();
-                config.discordEnabled = discordEnabled.isSelected();
-                config.discordWebhookUrl = webhookUrl.getText();
-                onComplete.accept(true);
-                dispose();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Invalid input: " + ex.getMessage());
-            }
+            onComplete.accept(true);
+            dispose();
         });
-
-        btnPanel.add(startBtn);
-        main.add(btnPanel);
+        main.add(startBtn);
 
         add(main);
     }
 
-    private JPanel createSection(String title) {
+    private JPanel createTabPanel() {
         JPanel p = new JPanel();
-        p.setLayout(new FlowLayout(FlowLayout.LEFT));
-        TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(100, 100, 100)), title);
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+        p.setBackground(new Color(30, 30, 35));
+        p.setBorder(new EmptyBorder(10, 10, 10, 10));
+        return p;
+    }
+
+    private JPanel createLocationPanel(CasinoConfig config) {
+        JPanel p = createSection("Location & Movement");
+        JComboBox<CasinoConfig.LocationPreset> locCombo = new JComboBox<>(CasinoConfig.LocationPreset.values());
+        locCombo.setSelectedItem(config.locationPreset);
+        p.add(new JLabel("Preset:")); p.add(locCombo);
+        JCheckBox walkCb = new JCheckBox("Walk on Start", config.walkOnStart);
+        p.add(walkCb);
+        locCombo.addActionListener(e -> config.locationPreset = (CasinoConfig.LocationPreset) locCombo.getSelectedItem());
+        walkCb.addActionListener(e -> config.walkOnStart = walkCb.isSelected());
+        return p;
+    }
+
+    private JPanel createBettingPanel(CasinoConfig config) {
+        JPanel p = createSection("Betting Limits (GP)");
+        JTextField minField = new JTextField(String.valueOf(config.minBet), 10);
+        JTextField maxField = new JTextField(String.valueOf(config.maxBet), 10);
+        p.add(new JLabel("Min:")); p.add(minField);
+        p.add(new JLabel("Max:")); p.add(maxField);
+        minField.addActionListener(e -> config.minBet = Long.parseLong(minField.getText()));
+        maxField.addActionListener(e -> config.maxBet = Long.parseLong(maxField.getText()));
+        return p;
+    }
+
+    private JPanel createAdPanel(CasinoConfig config) {
+        JPanel p = createSection("Advertising");
+        JTextField adField = new JTextField(config.adMessage, 20);
+        p.add(new JLabel("Msg:")); p.add(adField);
+        adField.addActionListener(e -> config.adMessage = adField.getText());
+        return p;
+    }
+
+    private JPanel createGamesTab(CasinoConfig config) {
+        JPanel p = new JPanel(new GridLayout(0, 2, 10, 10));
+        p.setBackground(new Color(30, 30, 35));
+        p.setBorder(new EmptyBorder(10, 10, 10, 10));
+        for (String key : config.games.keySet()) {
+            CasinoConfig.GameSettings gs = config.games.get(key);
+            JPanel gp = new JPanel(new BorderLayout());
+            gp.setBackground(new Color(45, 45, 50));
+            JCheckBox cb = new JCheckBox(gs.name, gs.enabled);
+            cb.addActionListener(e -> gs.enabled = cb.isSelected());
+            gp.add(cb, BorderLayout.WEST);
+            p.add(gp);
+        }
+        return p;
+    }
+
+    private JPanel createJackpotPanel(CasinoConfig config) {
+        JPanel p = createSection("Global Jackpot");
+        JCheckBox enabled = new JCheckBox("Enable Jackpot", config.jackpotEnabled);
+        JTextField percent = new JTextField(String.valueOf(config.jackpotContributionPercent), 4);
+        p.add(enabled);
+        p.add(new JLabel("Contribution %:")); p.add(percent);
+        enabled.addActionListener(e -> config.jackpotEnabled = enabled.isSelected());
+        percent.addActionListener(e -> config.jackpotContributionPercent = Double.parseDouble(percent.getText()));
+        return p;
+    }
+
+    private JPanel createMulingPanel(CasinoConfig config) {
+        JPanel p = createSection("Auto-Muling");
+        JCheckBox enabled = new JCheckBox("Enable Muling", config.autoMule);
+        JTextField name = new JTextField(config.muleName, 10);
+        JTextField threshold = new JTextField(String.valueOf(config.muleThreshold), 10);
+        p.add(enabled);
+        p.add(new JLabel("Mule Name:")); p.add(name);
+        p.add(new JLabel("Threshold:")); p.add(threshold);
+        enabled.addActionListener(e -> config.autoMule = enabled.isSelected());
+        name.addActionListener(e -> config.muleName = name.getText());
+        threshold.addActionListener(e -> config.muleThreshold = Long.parseLong(threshold.getText()));
+        return p;
+    }
+
+    private JPanel createHumanizationPanel(CasinoConfig config) {
+        JPanel p = createSection("Humanization & AI");
+        JCheckBox chatAi = new JCheckBox("Enable Chat AI", config.chatAIEnabled);
+        p.add(chatAi);
+        chatAi.addActionListener(e -> config.chatAIEnabled = chatAi.isSelected());
+        return p;
+    }
+
+    private JPanel createDiscordTab(CasinoConfig config) {
+        JPanel p = createTabPanel();
+        JPanel section = createSection("Discord Webhook");
+        JCheckBox enabled = new JCheckBox("Enable", config.discordEnabled);
+        JTextField url = new JTextField(config.discordWebhookUrl, 25);
+        section.add(enabled); section.add(new JLabel("URL:")); section.add(url);
+        enabled.addActionListener(e -> config.discordEnabled = enabled.isSelected());
+        url.addActionListener(e -> config.discordWebhookUrl = url.getText());
+        p.add(section);
+        return p;
+    }
+
+    private JPanel createSection(String title) {
+        JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        TitledBorder border = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.GRAY), title);
         border.setTitleColor(new Color(0, 255, 127));
         p.setBorder(border);
         p.setBackground(new Color(40, 40, 45));
-        p.setMaximumSize(new Dimension(480, 120));
+        p.setMaximumSize(new Dimension(520, 100));
         return p;
     }
 }
