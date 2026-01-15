@@ -20,15 +20,7 @@ public class GameManager {
         AbstractGame game = games.get(gameType.toLowerCase());
         if (game == null) return null;
         
-        Map<String, Object> gameConfig;
-        switch (gameType.toLowerCase()) {
-            case "craps": gameConfig = config.crapsConfig; break;
-            case "dice": gameConfig = config.diceDuelConfig; break;
-            case "flower": gameConfig = config.flowerPokerConfig; break;
-            default: return null;
-        }
-        
-        return game.play(betAmount, gameConfig);
+        return game.play(betAmount, config.gameSettings);
     }
 
     public String getRules(String gameType) {

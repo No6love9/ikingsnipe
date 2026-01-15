@@ -5,34 +5,32 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CasinoConfig {
-    public int minBet = 1000000; // 1M default
-    public int maxBet = 1000000000; // 1B default
-    public boolean autoAcceptTrades = true;
-    public int tradeTimeoutSeconds = 30;
-    public int chatCooldownMs = 5000;
+    // Betting Limits
+    public int minBet = 1000000; // 1M
+    public int maxBet = 2147000000; // Max GP
     
-    // Advertising
-    public String adMessage = "Elite Casino | Fast Payouts | Dice, Flower, Craps! Trade me to start!";
+    // Timing & Safety
+    public int tradeTimeoutMs = 45000;
+    public int adIntervalMs = 15000;
+    public boolean autoAccept = true;
     
-    // Trade Window Messages
-    public String tradeWelcomeMsg = "Welcome to Elite Casino! Please offer your bet.";
-    public String tradeSafetyMsg = "It is safe to accept. I will roll immediately after the trade!";
-    public String tradeConfirmMsg = "Bet received! Good luck!";
+    // Professional Messaging
+    public String adMessage = "Elite Casino | Fast Payouts | Dice, Flower, Craps! Trade me to play!";
+    public String tradeWelcome = "Welcome to Elite Casino! Please offer your bet.";
+    public String tradeSafety = "Trade is safe. I will roll immediately after confirmation!";
+    public String tradeConfirm = "Bet received! Rolling now, good luck!";
     
-    // Game Messages
-    public String winMsg = "Congratulations %s! You won %d GP with a roll of %d!";
-    public String lossMsg = "Better luck next time %s. You rolled %d.";
-    
-    public Map<String, Object> crapsConfig = new HashMap<>();
-    public Map<String, Object> diceDuelConfig = new HashMap<>();
-    public Map<String, Object> flowerPokerConfig = new HashMap<>();
+    public String winAnnouncement = "Congratulations %s! You won %d GP with a %d!";
+    public String lossAnnouncement = "Better luck next time %s. You rolled a %d.";
+    public String errorAnnouncement = "An error occurred. Please trade me again for a refund if needed.";
+
+    // Game Specifics
+    public Map<String, Object> gameSettings = new HashMap<>();
 
     public CasinoConfig() {
-        crapsConfig.put("payoutMultiplier", 3);
-        crapsConfig.put("winningNumbers", Arrays.asList(7, 9, 12));
-        
-        diceDuelConfig.put("payoutMultiplier", 2);
-        
-        flowerPokerConfig.put("payoutMultiplier", 2);
+        gameSettings.put("craps_multiplier", 3);
+        gameSettings.put("craps_wins", Arrays.asList(7, 9, 12));
+        gameSettings.put("dice_multiplier", 2);
+        gameSettings.put("flower_multiplier", 2);
     }
 }
