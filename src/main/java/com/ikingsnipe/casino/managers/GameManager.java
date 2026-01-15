@@ -20,7 +20,15 @@ public class GameManager {
         AbstractGame game = games.get(gameType.toLowerCase());
         if (game == null) return null;
         
-        return game.play(betAmount, config.gameSettings);
+        CasinoConfig.GameSettings settings = config.games.get(gameType.toLowerCase());
+        if (settings == null) return null;
+
+        // Create a temporary map for the game logic to consume
+        Map<String, Object> gameConfig = new HashMap<>();
+        gameConfig.put("payoutMultiplier", settings.multiplier);
+        gameConfig.put("winningNumbers", settings.winningNumbers);
+        
+        return game.play(betAmount, gameConfig);
     }
 
     public String getRules(String gameType) {
