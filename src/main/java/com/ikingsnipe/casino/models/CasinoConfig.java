@@ -76,6 +76,13 @@ public class CasinoConfig {
     public boolean discordNotifyLosses = true;
     public boolean discordShowSeeds = true;
 
+    // ==================== TRADE CONFIGURATION ====================
+    /** Trade-specific configuration */
+    public TradeConfig tradeConfig = new TradeConfig();
+    
+    /** Selected trade preset */
+    public TradeConfig.TradePreset tradePreset = TradeConfig.TradePreset.BALANCED;
+
     public CasinoConfig() {
         initializeDefaultGames();
     }
@@ -92,6 +99,14 @@ public class CasinoConfig {
 
     public Tile getTargetTile() {
         return locationPreset == LocationPreset.CUSTOM ? new Tile(customX, customY, customZ) : locationPreset.getTile();
+    }
+    
+    /**
+     * Apply a trade preset to the trade configuration
+     */
+    public void applyTradePreset(TradeConfig.TradePreset preset) {
+        this.tradePreset = preset;
+        this.tradeConfig = TradeConfig.fromPreset(preset);
     }
 
     public static class GameSettings {
