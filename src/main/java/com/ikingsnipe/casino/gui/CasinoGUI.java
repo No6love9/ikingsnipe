@@ -591,6 +591,10 @@ public class CasinoGUI extends JFrame {
         JCheckBox autoBank = new JCheckBox("Auto-Bank", config.autoBank);
         styleCheckbox(autoBank);
         autoBank.addActionListener(e -> config.autoBank = autoBank.isSelected());
+
+        JCheckBox skipBanking = new JCheckBox("Skip Banking (Bypass)", config.skipBanking);
+        styleCheckbox(skipBanking);
+        skipBanking.addActionListener(e -> config.skipBanking = skipBanking.isSelected());
         
         JTextField restockThreshold = new JTextField(String.valueOf(config.restockThreshold), 12);
         JTextField restockAmount = new JTextField(String.valueOf(config.restockAmount), 12);
@@ -607,6 +611,7 @@ public class CasinoGUI extends JFrame {
         });
         
         bankSection.add(autoBank);
+        bankSection.add(skipBanking);
         bankSection.add(createLabel("Threshold:"));
         bankSection.add(restockThreshold);
         bankSection.add(createLabel("Amount:"));

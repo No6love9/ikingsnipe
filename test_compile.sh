@@ -21,7 +21,7 @@ javac -encoding UTF-8 \
       -target 1.8 \
       -cp "$DREAMBOT_JAR" \
       -d build_test \
-      src/main/java/com/ikingsnipe/EliteTitanCasino.java 2>&1
+      $(find src/main/java -name "*.java") 2>&1
 
 if [ $? -eq 0 ]; then
     echo "✓ Compilation successful!"

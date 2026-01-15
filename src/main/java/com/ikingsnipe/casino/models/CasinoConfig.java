@@ -32,6 +32,7 @@ public class CasinoConfig {
 
     // Banking & Muling Settings
     public boolean autoBank = true;
+    public boolean skipBanking = false;
     public long restockThreshold = 10_000_000L;
     public long restockAmount = 100_000_000L;
     public boolean autoMule = false;

@@ -180,7 +180,12 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
         if (config.walkOnStart && !locationManager.isAtLocation()) {
             state = CasinoState.WALKING_TO_LOCATION;
         } else if (config.autoBank && Inventory.count(CasinoConfig.COINS_ID) < config.restockThreshold) {
-            state = CasinoState.BANKING;
+            if (config.skipBanking) {
+                log("Skip Banking option enabled. Bypassing banking check and proceeding to IDLE.");
+                state = CasinoState.IDLE;
+            } else {
+                state = CasinoState.BANKING;
+            }
         } else {
             state = CasinoState.IDLE;
         }
