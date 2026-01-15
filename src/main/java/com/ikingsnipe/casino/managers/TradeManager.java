@@ -146,17 +146,21 @@ public class TradeManager {
         try {
             // Check various widget locations for trade request text
             // Widget 335 is the trade interface
-            if (Widgets.getWidget(335) != null && Widgets.getWidget(335).isVisible()) {
+            var tradeWidget = Widgets.getWidget(335);
+            if (tradeWidget != null && tradeWidget.isVisible()) {
                 // Try to get child widget with trade request text
-                var widget = Widgets.getWidget(335);
-                if (widget != null && widget.getChild(4) != null) {
-                    String text = widget.getChild(4).getText();
+                var child = tradeWidget.getChild(4);
+                if (child != null) {
+                    String text = child.getText();
                     if (text != null && text.contains("wishes to trade")) {
                         // Extract player name from "PlayerName wishes to trade with you"
                         return text.split(" ")[0];
                     }
                 }
             }
+            
+            // Alternative: Check chat messages for trade requests if widget fails
+            // This is handled by TradeRequestListener, but we can also check here
         } catch (Exception e) {
             Logger.log("Error getting trade request name: " + e.getMessage());
         }
