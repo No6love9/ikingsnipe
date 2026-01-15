@@ -8,8 +8,10 @@ version = '16.0.0'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(11)
+        languageVersion = JavaLanguageVersion.of(17)
     }
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 repositories {
@@ -17,7 +19,6 @@ repositories {
 }
 
 dependencies {
-    // Local DreamBot API - Ensure this file exists in your project's libs/ folder
     compileOnly files('libs/dreambot-api.jar')
 }
 
@@ -25,8 +26,7 @@ shadowJar {
     archiveBaseName.set('snipes_scripts_enterprise')
     archiveClassifier.set('')
     archiveVersion.set('')
-    
-    // Ensure the manifest is correctly set for DreamBot
+
     manifest {
         attributes(
             'Implementation-Title': 'snipes♧scripts Enterprise',
@@ -40,5 +40,4 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += ['-Xlint:deprecation', '-Xlint:unchecked', '-parameters']
 }
 
-// Ensure the jar task is replaced by shadowJar for the final output
 tasks.build.dependsOn tasks.shadowJar

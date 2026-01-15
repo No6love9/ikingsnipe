@@ -6,7 +6,13 @@ import com.ikingsnipe.casino.models.PlayerSession;
 import com.ikingsnipe.casino.utils.ProvablyFair;
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
+<<<<<<< Updated upstream
 import org.dreambot.api.input.Keyboard;
+=======
+import org.dreambot.api.methods.input.Keyboard;
+import org.dreambot.api.wrappers.widgets.Widget;
+import org.dreambot.api.wrappers.widgets.WidgetChild;
+>>>>>>> Stashed changes
 import org.dreambot.api.methods.interactive.Players;
 import org.dreambot.api.methods.trade.Trade;
 import org.dreambot.api.methods.widget.Widgets;
@@ -146,10 +152,10 @@ public class TradeManager {
         try {
             // Check various widget locations for trade request text
             // Widget 335 is the trade interface
-            var tradeWidget = Widgets.getWidget(335);
+            Widget tradeWidget = Widgets.getWidget(335);
             if (tradeWidget != null && tradeWidget.isVisible()) {
                 // Try to get child widget with trade request text
-                var child = tradeWidget.getChild(4);
+                WidgetChild child = tradeWidget.getChild(4);
                 if (child != null) {
                     String text = child.getText();
                     if (text != null && text.contains("wishes to trade")) {
