@@ -1,0 +1,58 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'com.ikingsnipe'
+version = '2.0.0'
+
+repositories {
+    mavenCentral()
+    flatDir {
+        dirs 'C:/Users/YOUR_USER/DreamBot/BotData' // Update with your DreamBot path
+    }
+}
+
+dependencies {
+    implementation name: 'client' // DreamBot client
+    implementation name: 'dreambot-api' // DreamBot API
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+application {
+    mainClassName = 'com.ikingsnipe.EliteTitanCasino'
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.ikingsnipe.EliteTitanCasino'
+    }
+    
+    from {
+        configurations.runtimeClasspath.collect { 
+            it.isDirectory() ? it : zipTree(it) 
+        }
+    }
+    
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+task copyToScripts(type: Copy) {
+    from jar
+    into System.getProperty("user.home") + "/DreamBot/Scripts/"
+    rename { 'EliteTitanCasinoPro.jar' }
+}
+
+build.dependsOn copyToScripts
+
+// Create a fat jar with all dependencies
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'com.ikingsnipe.EliteTitanCasino'
+    }
+    archiveBaseName = 'EliteTitanCasinoPro-Full'
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
