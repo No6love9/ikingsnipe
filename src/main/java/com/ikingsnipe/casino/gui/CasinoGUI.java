@@ -55,6 +55,9 @@ public class CasinoGUI extends JFrame {
         // --- Discord Tab ---
         tabs.addTab("Discord", createDiscordTab(config));
 
+        // --- Advanced Tab ---
+        tabs.addTab("Advanced", createAdvancedTab(config));
+
         main.add(tabs);
         main.add(Box.createRigidArea(new Dimension(0, 20)));
 
@@ -171,6 +174,40 @@ public class CasinoGUI extends JFrame {
         enabled.addActionListener(e -> config.discordEnabled = enabled.isSelected());
         url.addActionListener(e -> config.discordWebhookUrl = url.getText());
         p.add(section);
+        return p;
+    }
+
+    private JPanel createAdvancedTab(CasinoConfig config) {
+        JPanel p = createTabPanel();
+        
+        // Muling Section
+        JPanel muleSection = createSection("Auto-Muling");
+        JCheckBox muleEnabled = new JCheckBox("Enable Muling", config.autoMule);
+        JTextField muleName = new JTextField(config.muleName, 10);
+        JTextField muleThreshold = new JTextField(String.valueOf(config.muleThreshold), 10);
+        muleSection.add(muleEnabled);
+        muleSection.add(new JLabel("Mule Name:")); muleSection.add(muleName);
+        muleSection.add(new JLabel("Threshold:")); muleSection.add(muleThreshold);
+        
+        muleEnabled.addActionListener(e -> config.autoMule = muleEnabled.isSelected());
+        muleName.addActionListener(e -> config.muleName = muleName.getText());
+        muleThreshold.addActionListener(e -> config.muleThreshold = Long.parseLong(muleThreshold.getText()));
+        p.add(muleSection);
+
+        // Humanization Section
+        JPanel humanSection = createSection("Advanced Anti-Ban");
+        JCheckBox breakEnabled = new JCheckBox("Micro-Breaks", config.enableMicroBreaks);
+        JCheckBox jitterEnabled = new JCheckBox("Camera Jitter", config.enableCameraJitter);
+        JCheckBox fatigueEnabled = new JCheckBox("Mouse Fatigue", config.enableMouseFatigue);
+        humanSection.add(breakEnabled);
+        humanSection.add(jitterEnabled);
+        humanSection.add(fatigueEnabled);
+        
+        breakEnabled.addActionListener(e -> config.enableMicroBreaks = breakEnabled.isSelected());
+        jitterEnabled.addActionListener(e -> config.enableCameraJitter = jitterEnabled.isSelected());
+        fatigueEnabled.addActionListener(e -> config.enableMouseFatigue = fatigueEnabled.isSelected());
+        p.add(humanSection);
+
         return p;
     }
 

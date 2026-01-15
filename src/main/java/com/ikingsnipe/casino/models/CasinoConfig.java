@@ -37,6 +37,14 @@ public class CasinoConfig {
     public boolean autoMule = false;
     public String muleName = "";
     public long muleThreshold = 500_000_000L;
+    public long muleKeepAmount = 50_000_000L;
+
+    // Humanization Settings
+    public boolean enableMicroBreaks = true;
+    public int breakFrequencyMinutes = 60;
+    public int breakDurationMinutes = 5;
+    public boolean enableCameraJitter = true;
+    public boolean enableMouseFatigue = true;
 
     // Game Settings
     public String defaultGame = "dice";

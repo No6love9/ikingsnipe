@@ -44,6 +44,8 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
     private DiscordWebhook webhook;
     private ProfitTracker profitTracker;
     private ChatAI chatAI;
+    private MuleManager muleManager;
+    private HumanizationManager humanizationManager;
 
     private String currentPlayer;
     private long currentBet;
@@ -80,6 +82,9 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         provablyFair = new ProvablyFair();
         profitTracker = new ProfitTracker();
         chatAI = new ChatAI();
+        chatAI.setProfitTracker(profitTracker);
+        muleManager = new MuleManager(config);
+        humanizationManager = new HumanizationManager(config);
         
         if (config.discordEnabled && !config.discordWebhookUrl.isEmpty()) {
             webhook = new DiscordWebhook(config.discordWebhookUrl);
@@ -94,20 +99,27 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         if (!startScript) { stop(); return 0; }
 
         try {
+            // Humanization: Micro-Breaks
+            if (humanizationManager.shouldTakeBreak()) {
+                humanizationManager.takeBreak();
+                return 1000;
+            }
+
+            // Auto-Muling Check
+            if (muleManager.shouldMule() || muleManager.isMulingInProgress()) {
+                muleManager.handleMuling();
+                return 1000;
+            }
+
             // Stuck Detection Logic
             if (state == lastState) {
-                if (System.currentTimeMillis() - lastStateChangeTime > 60000) { // 60 seconds in same state
+                if (System.currentTimeMillis() - lastStateChangeTime > 60000) {
                     log("Stuck detection triggered in state: " + state + ". Recovering...");
                     state = CasinoState.ERROR_RECOVERY;
                 }
             } else {
                 lastState = state;
                 lastStateChangeTime = System.currentTimeMillis();
-            }
-
-            // Auto-Muling Check
-            if (config.autoMule && getInventoryValue() >= config.muleThreshold) {
-                log("Mule threshold reached! Please handle muling manually.");
             }
 
             switch (state) {
@@ -171,7 +183,9 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
             Sleep.sleepUntil(Trade::isOpen, 3000);
         }
 
-        // Humanization: Occasional random movement
+        // Humanization: Idle behaviors
+        humanizationManager.applyIdleHumanization();
+        
         if (Calculations.random(1, 100) == 1) {
             locationManager.walkToLocation();
         }
