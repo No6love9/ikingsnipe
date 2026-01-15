@@ -62,7 +62,6 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
     private PlayerSession currentSession;
     private long lastAdTime;
     private long tradeStartTime;
-    private boolean welcomeSent;
     private volatile boolean guiFinished, startScript;
     
     private CasinoState lastState;
@@ -218,7 +217,6 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
                 tradeManager.initializeTradeSession(currentPlayer);
                 currentSession = sessionManager.getSession(currentPlayer);
                 tradeStartTime = System.currentTimeMillis();
-                welcomeSent = false;
                 selectedGame = config.defaultGame;
                 
                 // Record trade attempt in statistics
@@ -263,267 +261,76 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
 
     private void sendRotatingAd() {
         if (config.adMessages.isEmpty()) return;
-        String msg = config.adMessages.get(adIndex);
+        
+        String ad = config.adMessages.get(adIndex);
         if (config.enableAntiMute) {
-            msg += " " + generateRandomString(3);
+            ad = applyAntiMute(ad);
         }
-        Keyboard.type(msg, true);
+        
+        Keyboard.type(ad, true);
         adIndex = (adIndex + 1) % config.adMessages.size();
     }
 
-    private String generateRandomString(int length) {
-        String chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < length; i++) {
-            sb.append(chars.charAt(Calculations.random(0, chars.length() - 1)));
-        }
-        return sb.toString();
+    private String applyAntiMute(String ad) {
+        // Add random variations to avoid mute
+        String[] variations = {"", ".", "!", " ", ".."};
+        return ad + variations[Calculations.random(0, variations.length - 1)];
     }
 
     /**
-     * Enhanced Trade Screen 1 handling with anti-scam verification
+     * Handle Trade Screen 1 using TradeManager
      */
     private int handleTrade1() {
-        if (!Trade.isOpen(1)) { 
-            if (!Trade.isOpen()) {
-                log("[Trade1] Trade closed unexpectedly");
-                tradeStatistics.recordFailedTrade(currentPlayer, "Trade closed");
-                reset(); 
-            }
-            return 500; 
-        }
+        TradeManager.TradeAction action = tradeManager.handleTradeScreen1(currentSession);
         
-        // Check for trade timeout
-        if (System.currentTimeMillis() - tradeStartTime > config.tradeConfig.tradeTimeout) {
-            log("[Trade1] Trade timed out with: " + currentPlayer);
-            Keyboard.type("Trade timed out. Please trade again!", true);
-            Trade.declineTrade();
-            tradeStatistics.recordDeclinedTrade(currentPlayer, "Timeout");
-            reset();
-            return 1000;
-        }
-
-        // Send welcome message if not sent
-        if (!welcomeSent) {
-            sendWelcomeMessage();
-            welcomeSent = true;
-            return 500;
-        }
-        
-        long tradeVal = getTradeValue();
-        
-        // Handle case where player is using existing balance
-        if (currentBet > 0 && tradeVal == 0 && currentSession.getBalance() >= currentBet) {
-            confirmToClanChat();
-            if (acceptTradeScreen1()) {
-                return 500;
-            }
-        } 
-        // Handle new bet from trade
-        else if (tradeVal > 0) {
-            // Validate bet limits
-            if (tradeVal < config.minBet || tradeVal > config.maxBet) {
-                String limitMsg = "Bet must be between " + formatGP(config.minBet) + " and " + formatGP(config.maxBet);
-                Keyboard.type(limitMsg, true);
-                Trade.declineTrade();
-                tradeStatistics.recordDeclinedTrade(currentPlayer, "Outside bet limits");
-                reset();
-                return 1000;
-            }
-            
-            // Anti-Scam Verification: Check value stability
-            if (verifyTradeValue(tradeVal)) {
-                currentBet = tradeVal;
-                tradeManager.setCurrentBetAmount(tradeVal);
-                
-                // Send confirmation
-                if (config.tradeConfig.sendConfirmationMessages) {
-                    Keyboard.type("Bet confirmed: " + formatGP(currentBet) + ". Good luck!", true);
-                    Sleep.sleep(300, 500);
-                }
-                
-                confirmToClanChat();
-                if (acceptTradeScreen1()) {
-                    return 500;
-                }
-            }
-        }
-        
-        return Calculations.random(400, 600);
-    }
-    
-    /**
-     * Send welcome message to trader
-     */
-    private void sendWelcomeMessage() {
-        String greeting = config.tradeConfig.customWelcomeMessage
-            .replace("{player}", currentPlayer != null ? currentPlayer : "Player")
-            .replace("{hash}", provablyFair.getHash().substring(0, 12))
-            .replace("{min}", formatGP(config.minBet))
-            .replace("{max}", formatGP(config.maxBet));
-        
-        Keyboard.type(greeting, true);
-        Sleep.sleep(400, 600);
-        
-        if (config.tradeConfig.sendGameCommands) {
-            Keyboard.type("Commands: !c (Craps) !dw (Dice War) !fp (Flower Poker) !b2b", true);
-        }
-    }
-    
-    /**
-     * Verify trade value hasn't changed (anti-scam)
-     */
-    private long lastVerifiedValue = 0;
-    private int verificationCount = 0;
-    private long lastValueChangeTime = 0;
-    
-    private boolean verifyTradeValue(long currentValue) {
-        long now = System.currentTimeMillis();
-        
-        // If value changed, reset verification
-        if (currentValue != lastVerifiedValue) {
-            if (lastVerifiedValue > 0 && config.tradeConfig.enableAntiScam) {
-                log("[AntiScam] Value changed from " + lastVerifiedValue + " to " + currentValue);
-                tradeStatistics.recordScamAttempt(currentPlayer, "VALUE_CHANGE");
-            }
-            lastVerifiedValue = currentValue;
-            lastValueChangeTime = now;
-            verificationCount = 0;
-            return false;
-        }
-        
-        // Check if value has been stable long enough
-        long stableTime = now - lastValueChangeTime;
-        if (stableTime >= config.tradeConfig.valueStabilityTime) {
-            verificationCount++;
-            
-            // Get required verification count based on value
-            int requiredChecks = getRequiredVerificationChecks(currentValue);
-            
-            if (verificationCount >= requiredChecks) {
-                // Final verification delay
-                Sleep.sleep(config.tradeConfig.minVerifyDelay, config.tradeConfig.maxVerifyDelay);
-                
-                // Double-check value hasn't changed
-                long finalCheck = getTradeValue();
-                if (finalCheck != currentValue) {
-                    log("[AntiScam] Final check failed! Expected: " + currentValue + ", Got: " + finalCheck);
-                    tradeStatistics.recordScamAttempt(currentPlayer, "FINAL_CHECK_FAIL");
-                    Keyboard.type("Please don't change the trade amount!", true);
-                    verificationCount = 0;
-                    return false;
-                }
-                
-                return true;
-            }
-        }
-        
-        return false;
-    }
-    
-    /**
-     * Get required verification checks based on bet size
-     */
-    private int getRequiredVerificationChecks(long value) {
-        if (!config.tradeConfig.enableAntiScam) return 1;
-        
-        // Check if player is trusted (reduced verification)
-        if (config.tradeConfig.reducedVerifyForTrusted && 
-            tradeStatistics.isPlayerTrusted(currentPlayer, config.tradeConfig.trustedPlayerTradeCount)) {
-            return 1;
-        }
-        
-        if (value >= config.tradeConfig.highValueThreshold) {
-            return config.tradeConfig.highValueVerifyCount;
-        } else if (value >= config.tradeConfig.mediumValueThreshold) {
-            return config.tradeConfig.mediumValueVerifyCount;
-        }
-        return config.tradeConfig.lowValueVerifyCount;
-    }
-    
-    /**
-     * Accept trade screen 1 and transition to screen 2
-     */
-    private boolean acceptTradeScreen1() {
-        if (Trade.acceptTrade()) {
-            boolean screen2Opened = Sleep.sleepUntil(() -> Trade.isOpen(2), config.tradeConfig.screen2WaitTime);
-            if (screen2Opened) {
+        switch (action) {
+            case ACCEPTED_SCREEN1:
                 state = CasinoState.TRADING_WINDOW_2;
-                return true;
-            }
+                return 500;
+            case DECLINED:
+                tradeStatistics.recordDeclinedTrade(currentPlayer, "Screen 1 Declined");
+                reset();
+                return 1000;
+            case TRADE_CLOSED:
+                reset();
+                return 500;
+            case WAIT:
+                // Update current bet from trade manager if it changed
+                currentBet = tradeManager.getCurrentBetAmount();
+                return 500;
         }
-        return false;
+        
+        return 500;
     }
 
     /**
-     * Enhanced Trade Screen 2 handling with double-check verification
+     * Handle Trade Screen 2 using TradeManager
      */
-    private long screen2StartTime = 0;
-    private boolean screen2Verified = false;
-    
     private int handleTrade2() {
-        if (!Trade.isOpen(2)) { 
-            if (!Trade.isOpen()) {
-                log("[Trade2] Trade closed unexpectedly");
-                tradeStatistics.recordFailedTrade(currentPlayer, "Trade closed on screen 2");
-                reset(); 
-            } else if (Trade.isOpen(1)) {
-                // Went back to screen 1
-                log("[Trade2] Returned to screen 1");
-                screen2Verified = false;
-                state = CasinoState.TRADING_WINDOW_1;
-            }
-            return 500; 
-        }
+        TradeManager.TradeAction action = tradeManager.handleTradeScreen2(currentSession);
         
-        // Initialize screen 2 timer on first entry
-        if (screen2StartTime == 0) {
-            screen2StartTime = System.currentTimeMillis();
-        }
-        
-        // Check for screen 2 timeout
-        if (System.currentTimeMillis() - screen2StartTime > config.tradeConfig.screen2Timeout) {
-            log("[Trade2] Screen 2 timed out");
-            Keyboard.type("Trade confirmation timed out!", true);
-            Trade.declineTrade();
-            tradeStatistics.recordDeclinedTrade(currentPlayer, "Screen 2 timeout");
-            reset();
-            return 1000;
-        }
-        
-        // Perform screen 2 verification if enabled
-        if (!screen2Verified && config.tradeConfig.enableScreen2Verification) {
-            Sleep.sleep(config.tradeConfig.screen2VerifyDelay, config.tradeConfig.screen2VerifyDelay + 100);
-            
-            // Verify the value matches what we accepted in screen 1
-            long screen2Value = getTradeValue();
-            if (screen2Value != lastVerifiedValue && lastVerifiedValue > 0) {
-                log("[AntiScam] Screen 2 value mismatch! Expected: " + lastVerifiedValue + ", Got: " + screen2Value);
-                tradeStatistics.recordScamAttempt(currentPlayer, "SCREEN2_MISMATCH");
-                Keyboard.type("Trade verification failed. Please try again.", true);
-                Trade.declineTrade();
-                tradeStatistics.recordDeclinedTrade(currentPlayer, "Screen 2 mismatch");
-                reset();
-                return 1000;
-            }
-            screen2Verified = true;
-        }
-        
-        // Accept trade
-        if (Trade.acceptTrade()) {
-            boolean tradeComplete = Sleep.sleepUntil(() -> !Trade.isOpen(), config.tradeConfig.tradeCompleteWaitTime);
-            if (tradeComplete) {
+        switch (action) {
+            case TRADE_COMPLETE:
                 log("[Trade2] Trade completed successfully with: " + currentPlayer);
-                
-                // Record successful trade
                 long tradeDuration = System.currentTimeMillis() - tradeStartTime;
                 tradeStatistics.recordCompletedTrade(currentPlayer, currentBet, tradeDuration, false);
-                
                 state = CasinoState.PROCESSING_GAME;
-            }
+                return 500;
+            case BACK_TO_SCREEN1:
+                state = CasinoState.TRADING_WINDOW_1;
+                return 500;
+            case DECLINED:
+                tradeStatistics.recordDeclinedTrade(currentPlayer, "Screen 2 Declined");
+                reset();
+                return 1000;
+            case TRADE_CLOSED:
+                reset();
+                return 500;
+            case WAIT:
+                return 500;
         }
         
-        return Calculations.random(400, 600);
+        return 500;
     }
 
     private int handleGame() {
@@ -552,11 +359,6 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
 
         profitTracker.addGame(currentPlayer, result.isWin(), result.isWin() ? result.getPayout() - currentBet : -currentBet);
         
-        // Update trade statistics
-        if (config.tradeConfig.trackTradeStats) {
-            // Already recorded as completed, update win status
-        }
-        
         if (webhook != null) {
             webhook.sendGameResult(currentPlayer, result.isWin(), currentBet, result.getPayout(), result.getDescription(), provablyFair.getSeed(), config);
         }
@@ -583,14 +385,12 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
             if (payoutAttempts >= MAX_PAYOUT_ATTEMPTS) {
                 log("[Payout] Max attempts reached. Player may have left.");
                 Keyboard.type(currentPlayer + ", please trade me to collect your " + formatGP(currentSession.getBalance()) + " winnings!", true);
-                // Keep session balance for when they return
                 reset();
             }
             return 2000;
         }
         
         if (!Trade.isOpen()) {
-            // Initiate trade with winner
             Sleep.sleep(config.tradeConfig.payoutInitDelay, config.tradeConfig.payoutInitDelay + 500);
             p.interact("Trade with");
             if (Sleep.sleepUntil(Trade::isOpen, config.tradeConfig.tradeAcceptTimeout)) {
@@ -603,7 +403,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
         
         if (Trade.isOpen(1)) {
             long toPay = currentSession.getBalance();
-            addPayoutItems(toPay);
+            tradeManager.addPayoutItems(toPay);
             Sleep.sleep(300, 500);
             
             if (config.tradeConfig.sendConfirmationMessages) {
@@ -627,27 +427,6 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
         return Calculations.random(600, 1000);
     }
 
-    private void addPayoutItems(long amount) {
-        long rem = amount;
-        if (rem >= 1000) {
-            int tokens = (int)(rem / 1000);
-            int available = Inventory.count(CasinoConfig.PLATINUM_TOKEN_ID);
-            int toAdd = Math.min(tokens, available);
-            if (toAdd > 0) {
-                Trade.addItem(CasinoConfig.PLATINUM_TOKEN_ID, toAdd);
-                rem -= (long)toAdd * 1000L;
-                Sleep.sleep(200, 400);
-            }
-        }
-        if (rem > 0) {
-            int available = Inventory.count(CasinoConfig.COINS_ID);
-            int toAdd = (int)Math.min(rem, available);
-            if (toAdd > 0) {
-                Trade.addItem(CasinoConfig.COINS_ID, toAdd);
-            }
-        }
-    }
-
     private int handleRecovery() { 
         log("[Recovery] Entering recovery mode");
         Widgets.closeAll(); 
@@ -657,14 +436,8 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
         return 1000; 
     }
 
-    private void confirmToClanChat() {
-        String msg = String.format("/Confirming %s's bet of %s. Safe to accept!", currentPlayer, formatGP(currentBet));
-        Keyboard.type(msg, true);
-    }
-
     @Override
     public void onMessage(Message msg) {
-        // Forward to trade request listener
         if (tradeRequestListener != null) {
             tradeRequestListener.onMessage(msg);
         }
@@ -749,32 +522,8 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
         currentPlayer = null;
         currentBet = 0;
         state = CasinoState.IDLE;
-        welcomeSent = false;
-        lastVerifiedValue = 0;
-        verificationCount = 0;
-        lastValueChangeTime = 0;
-        screen2StartTime = 0;
-        screen2Verified = false;
         payoutAttempts = 0;
         tradeManager.resetTradeState();
-    }
-
-    private long getTradeValue() {
-        long total = 0;
-        try {
-            for (Item item : Trade.getTheirItems()) {
-                if (item != null) {
-                    if (item.getID() == CasinoConfig.PLATINUM_TOKEN_ID) {
-                        total += item.getAmount() * 1000L;
-                    } else if (item.getID() == CasinoConfig.COINS_ID) {
-                        total += item.getAmount();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log("Error getting trade value: " + e.getMessage());
-        }
-        return total;
     }
 
     private String formatGP(long a) {
@@ -788,95 +537,53 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
     public void onPaint(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
-        // Main panel
-        g2.setColor(new Color(0, 0, 0, 200));
-        g2.fillRoundRect(10, 10, 240, 220, 15, 15);
+
+        // Background
+        g2.setColor(new Color(0, 0, 0, 180));
+        g2.fillRoundRect(10, 30, 220, 200, 15, 15);
         g2.setColor(new Color(0, 255, 127));
         g2.setStroke(new BasicStroke(2));
-        g2.drawRoundRect(10, 10, 240, 220, 15, 15);
-        
+        g2.drawRoundRect(10, 30, 220, 200, 15, 15);
+
         // Title
         g2.setFont(new Font("Arial", Font.BOLD, 14));
-        g2.drawString("snipes♧scripts Enterprise v4.0", 15, 30);
-        
+        g2.drawString("snipes♧scripts Enterprise", 25, 55);
         g2.setFont(new Font("Arial", Font.PLAIN, 11));
         g2.setColor(Color.WHITE);
+        g2.drawString("State: " + state, 25, 75);
+        g2.drawString("Player: " + (currentPlayer != null ? currentPlayer : "None"), 25, 90);
+        g2.drawString("Bet: " + formatGP(currentBet), 25, 105);
+        g2.drawString("Game: " + selectedGame, 25, 120);
         
-        int y = 48;
-        g2.drawString("Runtime: " + profitTracker.getRuntime(), 15, y); y += 16;
-        g2.drawString("Net Profit: " + formatGP(profitTracker.getNetProfit()), 15, y); y += 16;
-        g2.drawString("Jackpot: " + formatGP(config.currentJackpot), 15, y); y += 16;
+        // Stats
+        g2.drawString("Profit: " + formatGP(profitTracker.getNetProfit()), 25, 145);
+        g2.drawString("Runtime: " + profitTracker.getRuntime(), 25, 160);
         
-        // Trade statistics
+        // Trade Stats
         g2.setColor(new Color(0, 255, 127));
-        g2.drawString("Trade Stats:", 15, y); y += 14;
-        g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Arial", Font.PLAIN, 10));
-        g2.drawString("Completed: " + tradeStatistics.getTotalTradesCompleted() + 
-                     " | Success: " + String.format("%.1f%%", tradeStatistics.getTradeSuccessRate()), 15, y); y += 13;
-        g2.drawString("Scam Blocked: " + tradeStatistics.getScamAttemptsDetected() + 
-                     " | Avg Time: " + (tradeStatistics.getAverageTradeTime() / 1000) + "s", 15, y); y += 16;
-        
-        // Status
-        g2.setFont(new Font("Arial", Font.PLAIN, 11));
-        String status = state.getStatus();
-        if (state == CasinoState.BANKING) {
-            status = bankingManager.getStatus();
-        } else if (state == CasinoState.TRADING_WINDOW_1 || state == CasinoState.TRADING_WINDOW_2) {
-            status += " (" + currentPlayer + ")";
-        }
-        g2.drawString("Status: " + status, 15, y); y += 16;
-        
-        // Current trade info
-        if (currentPlayer != null && currentBet > 0) {
-            g2.setColor(new Color(255, 215, 0));
-            g2.drawString("Trading: " + currentPlayer + " - " + formatGP(currentBet), 15, y);
-            y += 14;
-        }
-        
-        // Recent winners
-        g2.setColor(new Color(0, 255, 127, 150));
-        g2.drawString("Recent Winners:", 15, y); y += 13;
-        g2.setFont(new Font("Arial", Font.ITALIC, 10));
-        g2.setColor(Color.LIGHT_GRAY);
-        List<String> winners = profitTracker.getRecentWinners();
-        for (int i = 0; i < Math.min(winners.size(), 2); i++) {
-            g2.drawString("• " + winners.get(i), 18, y);
-            y += 12;
-        }
-        
+        g2.drawString("Trades: " + tradeStatistics.getTotalTradesCompleted(), 25, 185);
+        g2.drawString("Scams Blocked: " + tradeStatistics.getScamAttemptsDetected(), 120, 185);
+
         // Buttons
-        g2.setFont(new Font("Arial", Font.BOLD, 10));
         drawButton(g2, adBtn, "AD", new Color(0, 150, 255));
-        drawButton(g2, bankBtn, "BANK", new Color(255, 165, 0));
-        drawButton(g2, resetBtn, "RESET", new Color(255, 80, 80));
+        drawButton(g2, bankBtn, "BANK", new Color(255, 150, 0));
+        drawButton(g2, resetBtn, "RESET", new Color(255, 50, 50));
     }
-    
+
     private void drawButton(Graphics2D g2, Rectangle rect, String text, Color color) {
-        g2.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 150));
-        g2.fillRoundRect(rect.x, rect.y, rect.width, rect.height, 5, 5);
         g2.setColor(color);
-        g2.drawRoundRect(rect.x, rect.y, rect.width, rect.height, 5, 5);
+        g2.fill(rect);
         g2.setColor(Color.WHITE);
-        FontMetrics fm = g2.getFontMetrics();
-        int textX = rect.x + (rect.width - fm.stringWidth(text)) / 2;
-        int textY = rect.y + ((rect.height - fm.getHeight()) / 2) + fm.getAscent();
-        g2.drawString(text, textX, textY);
+        g2.setFont(new Font("Arial", Font.BOLD, 10));
+        g2.drawString(text, rect.x + (rect.width / 2) - 10, rect.y + 14);
     }
 
     @Override
     public void mouseClicked(MouseEvent e) {
         Point p = e.getPoint();
-        if (adBtn.contains(p)) {
-            sendRotatingAd();
-            lastAdTime = System.currentTimeMillis();
-        } else if (bankBtn.contains(p)) {
-            state = CasinoState.BANKING;
-        } else if (resetBtn.contains(p)) {
-            if (Trade.isOpen()) Trade.declineTrade();
-            reset();
-        }
+        if (adBtn.contains(p)) sendRotatingAd();
+        if (bankBtn.contains(p)) state = CasinoState.BANKING;
+        if (resetBtn.contains(p)) state = CasinoState.ERROR_RECOVERY;
     }
 
     @Override public void mousePressed(MouseEvent e) {}
