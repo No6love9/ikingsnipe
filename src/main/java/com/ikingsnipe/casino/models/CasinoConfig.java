@@ -72,6 +72,9 @@ public class CasinoConfig {
     // Discord Webhook
     public String discordWebhookUrl = "";
     public boolean discordEnabled = false;
+    public boolean discordNotifyWins = true;
+    public boolean discordNotifyLosses = true;
+    public boolean discordShowSeeds = true;
 
     public CasinoConfig() {
         initializeDefaultGames();

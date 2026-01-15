@@ -1,5 +1,6 @@
 package com.ikingsnipe.casino.utils;
 
+import com.ikingsnipe.casino.models.CasinoConfig;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -36,5 +37,31 @@ public class DiscordWebhook {
                 // Silently fail to avoid script interruption
             }
         }).start();
+    }
+
+    public void sendGameResult(String player, boolean win, long bet, long payout, String result, String seed, CasinoConfig config) {
+        if (!config.discordEnabled || url == null || url.isEmpty()) return;
+        if (win && !config.discordNotifyWins) return;
+        if (!win && !config.discordNotifyLosses) return;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(win ? "✅ **WINNER**" : "❌ **LOSS**").append("\\n");
+        sb.append("**Player:** ").append(player).append("\\n");
+        sb.append("**Bet:** ").append(formatGP(bet)).append("\\n");
+        if (win) sb.append("**Payout:** ").append(formatGP(payout)).append("\\n");
+        sb.append("**Result:** ").append(result).append("\\n");
+        
+        if (config.discordShowSeeds && seed != null) {
+            sb.append("**Verification Seed:** `").append(seed).append("`\\n");
+            sb.append("_Verify this roll in our Discord server using the seed pairing system._");
+        }
+
+        send(sb.toString());
+    }
+
+    private String formatGP(long a) {
+        if (a >= 1_000_000) return (a / 1_000_000) + "M";
+        if (a >= 1_000) return (a / 1_000) + "K";
+        return String.valueOf(a);
     }
 }

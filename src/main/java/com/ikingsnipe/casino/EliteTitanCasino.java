@@ -25,13 +25,16 @@ import org.dreambot.api.wrappers.widgets.message.Message;
 import org.dreambot.api.utilities.Sleep;
 import org.dreambot.api.wrappers.items.Item;
 import org.dreambot.api.script.listener.ChatListener;
+import org.dreambot.api.script.listener.PaintListener;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.List;
 
 @ScriptManifest(name = "snipes♧scripts Enterprise", author = "ikingsnipe", version = 3.0, category = Category.MONEYMAKING, description = "Enterprise Casino System")
-public class EliteTitanCasino extends AbstractScript implements ChatListener {
+public class EliteTitanCasino extends AbstractScript implements ChatListener, PaintListener, MouseListener {
 
     private CasinoConfig config;
     private CasinoState state = CasinoState.INITIALIZING;
@@ -58,6 +61,11 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
     private CasinoState lastState;
     private long lastStateChangeTime;
     private int adIndex = 0;
+
+    // Overlay Buttons
+    private final Rectangle adBtn = new Rectangle(15, 160, 60, 20);
+    private final Rectangle bankBtn = new Rectangle(80, 160, 60, 20);
+    private final Rectangle resetBtn = new Rectangle(145, 160, 60, 20);
 
     @Override
     public void onStart() {
@@ -226,16 +234,24 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         long tradeVal = getTradeValue();
         if (currentBet > 0 && tradeVal == 0 && currentSession.getBalance() >= currentBet) {
             confirmToClanChat();
-            Trade.acceptTrade();
-            Sleep.sleepUntil(() -> Trade.isOpen(2), 5000);
+            if (Trade.acceptTrade()) {
+                Sleep.sleepUntil(() -> Trade.isOpen(2), 5000);
+            }
         } else if (tradeVal > 0) {
             if (tradeVal < config.minBet || tradeVal > config.maxBet) {
                 Keyboard.type("Bet must be between " + formatGP(config.minBet) + " and " + formatGP(config.maxBet), true);
                 Trade.declineTrade(); reset(); return 1000;
             }
+            
+            // Anti-Scam: Verify value hasn't changed before accepting
+            Sleep.sleep(600, 1000);
+            if (getTradeValue() != tradeVal) return 500; 
+            
             currentBet = tradeVal;
             confirmToClanChat();
-            if (Trade.acceptTrade()) Sleep.sleepUntil(() -> Trade.isOpen(2), 5000);
+            if (Trade.acceptTrade()) {
+                Sleep.sleepUntil(() -> Trade.isOpen(2), 5000);
+            }
         }
         return 1000;
     }
@@ -258,8 +274,19 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
             String.format(config.lossMessage, currentPlayer, result.getDescription());
         
         Keyboard.type(logMsg, true);
+        
+        // Clan Chat Broadcast for Big Wins
+        if (result.isWin() && currentBet >= 10_000_000L) {
+            String clanMsg = String.format("/HUGE WIN! %s just won %s on %s!", currentPlayer, formatGP(result.getPayout()), selectedGame);
+            Keyboard.type(clanMsg, true);
+        }
+
         profitTracker.addGame(currentPlayer, result.isWin(), result.isWin() ? result.getPayout() - currentBet : -currentBet);
         
+        if (webhook != null) {
+            webhook.sendGameResult(currentPlayer, result.isWin(), currentBet, result.getPayout(), result.getDescription(), provablyFair.getSeed(), config);
+        }
+
         if (result.isWin()) {
             currentSession.addBalance(result.getPayout());
             state = CasinoState.PAYOUT_PENDING;
@@ -422,5 +449,39 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         for (int i = 0; i < Math.min(winners.size(), 3); i++) {
             g2.drawString("- " + winners.get(i), 20, 155 + (i * 15));
         }
+
+        // Draw Buttons
+        drawButton(g2, adBtn, "AD", Color.BLUE);
+        drawButton(g2, bankBtn, "BANK", Color.ORANGE);
+        drawButton(g2, resetBtn, "RESET", Color.RED);
     }
+
+    private void drawButton(Graphics2D g2, Rectangle rect, String text, Color color) {
+        g2.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 150));
+        g2.fill(rect);
+        g2.setColor(Color.WHITE);
+        g2.draw(rect);
+        g2.setFont(new Font("Arial", Font.BOLD, 10));
+        g2.drawString(text, rect.x + 5, rect.y + 14);
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        Point p = e.getPoint();
+        if (adBtn.contains(p)) {
+            sendRotatingAd();
+            log("Manual Ad triggered via Overlay.");
+        } else if (bankBtn.contains(p)) {
+            state = CasinoState.BANKING;
+            log("Manual Banking triggered via Overlay.");
+        } else if (resetBtn.contains(p)) {
+            handleRecovery();
+            log("Manual Reset triggered via Overlay.");
+        }
+    }
+
+    @Override public void mousePressed(MouseEvent e) {}
+    @Override public void mouseReleased(MouseEvent e) {}
+    @Override public void mouseEntered(MouseEvent e) {}
+    @Override public void mouseExited(MouseEvent e) {}
 }
