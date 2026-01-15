@@ -40,11 +40,9 @@ dependencies {
 application {
     // Not used by DreamBot, but keeps tooling happy
     mainClass = 'com.ikingsnipe.EliteTitanCasino'
-}
-
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-    options.compilerArgs = ['-Xlint:deprecation', '-Xlint:unchecked', '-parameters']
+    options.compilerArgs += ['-Xlint:deprecation', '-Xlint:unchecked', '-parameters']
 }
 
 jar {
