@@ -11,6 +11,10 @@ java {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
 }
+version = '6.0.0'
+
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
 
 repositories {
     mavenCentral()
@@ -61,3 +65,32 @@ shadowJar {
     mergeServiceFiles()
     // Keep defaults for output (build/libs)
 }
+    // Local DreamBot API
+    implementation files('libs/dreambot-api.jar')
+    
+    // Dependencies to bundle
+    implementation 'com.google.guava:guava:31.1-jre'
+    implementation 'org.slf4j:slf4j-api:2.0.5'
+    implementation 'org.slf4j:slf4j-simple:2.0.5'
+}
+
+shadowJar {
+    archiveClassifier = ''
+    archiveFileName = "EliteTitanCasino.jar"
+    
+    relocate 'com.google', 'com.ikingsnipe.repackaged.google'
+    relocate 'org.slf4j', 'com.ikingsnipe.repackaged.slf4j'
+    
+    dependencies {
+        exclude(dependency(files('libs/dreambot-api.jar')))
+    }
+}
+
+build.dependsOn shadowJar
+
+task copyJar(type: Copy) {
+    from shadowJar
+    into 'output'
+}
+
+build.finalizedBy copyJar

@@ -1,380 +1,227 @@
-# 🎰 Titan Casino v14.0 - Modern DreamBot Script
+# Elite Titan Casino - Full Implementation
 
-**Complete casino system with 13 games for OSRS via DreamBot**
-
-**✅ Fully compatible with DreamBot 2025/2026 API**
-
----
-
-## 🚀 Quick Start (3 Steps!)
-
-### Step 1: Get DreamBot Client JAR
-
-1. Download DreamBot: https://dreambot.org/download.php
-2. Run it once (then close)
-3. Find `client-X.X.X.jar` in: `%USERPROFILE%\.dreambot\cache\`
-4. Copy it to the `libs\` folder in this project
-
-### Step 2: Build
-
-Double-click **`BUILD.bat`**
-
-### Step 3: Install
-
-Double-click **`INSTALL.bat`**
-
-**Done!** Open DreamBot → Scripts → "Titan Casino v14.0" → Start 🎉
-
----
-
-## ✨ What's New in v14.0
-
-### Complete Rewrite for Modern DreamBot API
-- ✅ **100% compatible** with DreamBot 2025/2026
-- ✅ **Clean, modern code** - completely rewritten from scratch
-- ✅ **Guaranteed compilation** - uses only current API methods
-- ✅ **Simplified structure** - easier to understand and modify
-- ✅ **Better performance** - optimized for current DreamBot
-
-### Modern API Usage
-- Uses `org.dreambot.api.methods.clan.chat.ClanChat` (current path)
-- Uses `org.dreambot.api.methods.input.Keyboard` for chat
-- Uses modern `Trade` API methods
-- Uses `Sleep.sleepUntil()` with proper syntax
-- All deprecated methods removed
-
-### Improved Features
-- **Cleaner GUI** - Modern admin panel
-- **Better trade handling** - Reliable deposit/withdrawal system
-- **Provably fair RNG** - HMAC-SHA256 implementation
-- **Real-time statistics** - Paint overlay with live stats
-- **Persistent database** - Saves player balances automatically
-
----
+A professional-grade OSRS casino bot for DreamBot 3/4, featuring complete logic for **Dice, Wheel, Roulette, and Craps** games.
 
 ## 🎮 Features
 
-### Casino Games (4 Core Games)
-1. **Dice** - Roll 55+ to win 2x
-2. **Flower Poker** - Beat the house hand
-3. **Blackjack** - Get closer to 21 than house
-4. **55x2** - Classic 55+ doubles your bet
+### Game Modes
+- **Dice** - Classic dice rolling game
+- **Wheel** - Spinning wheel of fortune
+- **Roulette** - OSRS roulette table
+- **🎲 Craps** - NEW! Provably fair dice game with 3x payouts
 
-*Easy to add more games - framework is extensible!*
+### Core Features
+- ✅ **Full Game Logic**: Complete interaction steps for all games
+- ✅ **Trade Safety**: Automatic verification of trade amounts and safe acceptance
+- ✅ **Configurable GUI**: Set your game, bet amount, and custom messages on startup
+- ✅ **Auto-Advertising**: Built-in chat automation to attract players
+- ✅ **Session Recovery**: Handles logins and state resets automatically
+- ✅ **Real-time Stats**: Paint overlay showing wins, losses, and profit
+- ✅ **Provably Fair RNG**: Craps game uses cryptographic seed verification
 
-### Player Commands
-- `!dice <amount>` - Play dice game
-- `!fp <amount>` - Play flower poker
-- `!bj <amount>` - Play blackjack
-- `!55x2 <amount>` - Play 55x2
-- `!balance` - Check your balance
-- `!withdraw` - Withdraw your winnings
-- `!help` - Show all commands
+## 🎲 Craps Game Highlights
 
-### Admin Features
-- **Control Panel GUI** - Configure clan chat, view players
-- **Player Management** - View all balances, manage blacklist
-- **Real-time Stats** - Games played, profit, runtime
-- **Database** - Automatic saving and loading
-- **Paint Overlay** - On-screen statistics
+The **Craps game** is a fully-featured addition with professional implementation:
+
+### Game Rules
+- **Win**: Roll 7, 9, or 12 → **3x payout**
+- **Loss**: Any other total
+- **Provably Fair**: SHA-256 seed hashing for transparency
+- **Double or Nothing**: Optional feature to re-bet winnings
 
 ### Technical Features
-- **Provably Fair RNG** - HMAC-SHA256 cryptographic random
-- **Persistent Storage** - Player data saved to disk
-- **Trade System** - Automatic deposits and withdrawals
-- **Clan Chat Integration** - Announce games in CC
-- **Anti-Ban** - Random tab switching and delays
-- **Error Handling** - Robust exception management
+- Secure RNG with player-specific seeds
+- Full verification logging
+- State machine for reliable execution
+- DreamBot API 4 compatible
 
----
+📖 **[Read Full Craps Game Guide](CRAPS_GAME_GUIDE.md)**
 
 ## 📁 Project Structure
 
 ```
 ikingsnipe/
 ├── src/main/java/com/ikingsnipe/
-│   └── TitanCasino.java        # Complete casino (800+ lines)
+│   └── EliteTitanCasino.java       # Core script logic v7.0 (Fully Implemented)
 ├── libs/
-│   └── (DreamBot JAR goes here)
+│   └── dreambot-api.jar            # DreamBot 3/4 API dependency
 ├── output/
-│   └── TitanCasino-14.0.0.jar  # Compiled script
-├── BUILD.bat                    # Windows build script
-├── INSTALL.bat                  # Windows install script
-├── SETUP.bat                    # First-time setup
-├── build.gradle                 # Gradle config (optional)
-└── README.md                    # This file
+│   └── EliteTitanCasino.jar        # Compiled JAR (17 MB)
+├── build.gradle                    # Gradle build configuration
+├── CRAPS_GAME_GUIDE.md             # Detailed Craps game documentation
+└── README.md                       # This file
 ```
 
----
+## 🚀 Setup Instructions
 
-## 🔧 Requirements
+### Prerequisites
+- **Java JDK 11** or higher
+- **DreamBot Client** installed
+- **OSRS Account** with casino access
 
-1. **Java 8+** - Download from https://www.java.com/
-2. **DreamBot Client JAR** - From `%USERPROFILE%\.dreambot\cache\`
-3. **Windows** - Batch scripts for Windows (Mac/Linux use Gradle)
+### Method 1: Quick Start (Pre-compiled)
+1. Download `EliteTitanCasino.jar` from `output/` directory
+2. Copy to your DreamBot scripts folder:
+   - Windows: `C:\Users\YourName\DreamBot\Scripts\`
+   - Mac/Linux: `~/DreamBot/Scripts/`
+3. Open DreamBot client and log in to OSRS
+4. Start the script from the script manager
+5. Configure settings in the popup GUI
+6. Click **Start Script**
 
----
+### Method 2: Build from Source
 
-## 📝 Detailed Instructions
-
-### Windows Users
-
-1. **Download this repository**
-   - Clone or download ZIP from GitHub
-   - Extract to `C:\Users\YourName\DreamBotProjects\ikingsnipe\`
-
-2. **Get DreamBot JAR**
-   ```cmd
-   # Open this folder:
-   explorer %USERPROFILE%\.dreambot\cache
-   
-   # Copy client-X.X.X.jar to your project's libs\ folder
-   ```
-
-3. **Run SETUP.bat** (first time only)
-   - Checks Java installation
-   - Verifies DreamBot JAR exists
-   - Creates necessary directories
-
-4. **Run BUILD.bat**
-   - Compiles the Java code
-   - Creates `output\TitanCasino-14.0.0.jar`
-   - Takes about 5-10 seconds
-
-5. **Run INSTALL.bat**
-   - Copies JAR to DreamBot scripts folder
-   - Automatic installation
-
-6. **Start in DreamBot**
-   - Open DreamBot
-   - Click "Scripts"
-   - Find "Titan Casino v14.0"
-   - Click "Start"
-   - Configure in the GUI that appears
-
-### Mac/Linux Users
-
+#### Linux/Mac
 ```bash
-# Make sure you have Java 8+
-java -version
-
-# Get DreamBot JAR
-cp ~/.dreambot/cache/client-*.jar libs/
-
-# Build with Gradle
+cd ikingsnipe
 ./gradlew clean build
-
-# Install
-cp output/TitanCasino-14.0.0.jar ~/.dreambot/scripts/
-
-# Start in DreamBot
 ```
 
----
-
-## 🎯 Configuration
-
-### Via Admin GUI (Recommended)
-
-When you start the script, an admin panel appears:
-
-1. **Set Clan Chat** - Enter clan name and click "Set"
-2. **View Players** - See all player balances
-3. **Save Data** - Manually save database
-
-### Via Code
-
-Edit `TitanCasino.java` to modify:
-- Game rules and payouts
-- Bet limits
-- Win conditions
-- New game types
-
----
-
-## 🔍 Troubleshooting
-
-### "Java not found"
-**Fix**: Install Java from https://www.java.com/ and restart
-
-### "DreamBot JAR not found"
-**Fix**: 
-1. Run DreamBot once
-2. Go to `%USERPROFILE%\.dreambot\cache\`
-3. Copy `client-X.X.X.jar` to `libs\` folder
-
-### "Compilation failed"
-**Fix**:
-1. Make sure DreamBot JAR is in `libs\`
-2. Check Java version: `java -version` (need 8+)
-3. Delete `build` and `output` folders
-4. Run BUILD.bat again
-
-### "Script doesn't appear in DreamBot"
-**Fix**:
-1. Make sure you ran INSTALL.bat
-2. Check `%USERPROFILE%\.dreambot\scripts\` for the JAR
-3. Restart DreamBot
-4. Click "Refresh" in scripts menu
-
-### "Compilation errors about API"
-**Fix**: This version uses the current 2025/2026 DreamBot API. If you still get errors:
-1. Make sure you have the latest DreamBot client
-2. Update your DreamBot JAR from `~/.dreambot/cache/`
-3. The code is written for modern DreamBot - no changes needed
-
----
-
-## 💡 How It Works
-
-### Architecture
-
-```
-TitanCasino (Main Script)
-    ├── CasinoEngine (Core Logic)
-    │   ├── PlayerDatabase (Data Storage)
-    │   ├── FairnessEngine (RNG)
-    │   ├── TradeManager (Deposits/Withdrawals)
-    │   ├── GameProcessor (Game Logic)
-    │   └── AdminPanel (GUI)
-    └── Paint Overlay (Statistics)
+#### Windows
+```batch
+BUILD.bat
 ```
 
-### Game Flow
+The compiled JAR will be in `output/EliteTitanCasino.jar`
 
-1. Player sends command (e.g., `!dice 100k`)
-2. GameProcessor validates bet and balance
-3. FairnessEngine generates random result
-4. Payout calculated based on game rules
-5. PlayerDatabase updated
-6. Result announced in chat
-7. Statistics updated
+## ⚙️ Configuration
 
-### Trade Flow
+When you start the script, a GUI will appear with these options:
 
-1. Player trades casino bot
-2. TradeManager detects trade
-3. If depositing: Accept coins, credit balance
-4. If withdrawing: Give coins, deduct balance
-5. Database saved automatically
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Select Game** | Choose: Dice, Wheel, Roulette, or Craps | Dice |
+| **Bet Amount** | Minimum bet amount in GP | 1,000,000 |
+| **Min Trade** | Minimum trade to accept | 1,000,000 |
+| **Ad Message** | Custom advertising message | "Elite Casino \| Fast Payouts..." |
+| **Win Message** | Message sent when player wins | "Congratulations! You won!" |
+| **Loss Message** | Message sent when player loses | "Better luck next time!" |
+| **Auto Accept Trades** | Automatically accept valid trades | ✅ Enabled |
+| **Enable Double or Nothing** | Offer re-bet after Craps wins | ✅ Enabled |
 
----
+## 🎯 How to Use
 
-## 🛡️ Security & Fairness
+### Step 1: Start Script
+1. Load EliteTitanCasino in DreamBot
+2. Configure your preferred game and settings
+3. Click "Start Script"
 
-### Provably Fair System
-- Uses HMAC-SHA256 for random number generation
-- Server seed + client seed = verifiable randomness
-- Cannot be manipulated or predicted
-
-### Data Security
-- Player balances saved to encrypted file
-- Automatic backups on every change
-- Blacklist system for problem players
-
-### Anti-Ban
-- Random delays between actions
-- Tab switching for human-like behavior
-- No predictable patterns
-
----
-
-## 🎨 Customization
-
-### Adding New Games
-
-```java
-// In GameProcessor class
-private void playNewGame(String player, String command) {
-    // Parse bet
-    long bet = parseBet(command.split(" ")[1]);
-    
-    // Deduct bet
-    engine.getDatabase().deductBalance(player, bet);
-    
-    // Game logic
-    int result = engine.getFairness().rollDice();
-    long payout = (result > 50) ? bet * 2 : 0;
-    
-    // Record result
-    engine.recordGame(player, bet, payout, "NewGame");
-}
+### Step 2: Advertising
+The bot will automatically advertise in chat:
+```
+Elite Casino | Fast Payouts | Dice, Wheel, Roulette, Craps!
 ```
 
-### Changing Payouts
+### Step 3: Accept Trades
+- Players trade you their bet amount
+- Bot validates amount >= minimum bet
+- Trade accepted automatically (if enabled)
 
-```java
-// In playDice method, change this line:
-if (roll >= 55) {
-    payout = bet * 2;  // Change multiplier here
-}
+### Step 4: Play Game
+- Bot interacts with game objects
+- Rolls dice, spins wheel, or plays roulette
+- For Craps: Announces dice roll and results
+
+### Step 5: Payout
+- Winners receive payouts automatically
+- Results announced in chat
+- Stats updated on paint overlay
+
+## 🎲 Craps Game Example
+
+```
+Player trades 10M GP
+🎲 Rolling craps for PlayerName... Bet: 10,000,000 GP
+🎲 Dice: 4 + 3 = 7
+🎉 PlayerName WINS! Payout: 30,000,000 GP (3x)
+💰 Double or Nothing? Trade me 30,000,000 GP to roll again!
+🔐 Verify: a3f5d8e2c1b4f6a9...
 ```
 
-### Modifying Win Conditions
+## 📊 Paint Overlay
 
-```java
-// Change the win threshold:
-if (roll >= 55) {  // Change 55 to any number 1-100
-    payout = bet * 2;
-}
+Real-time information displayed on screen:
+```
+Elite Titan Casino v7.0
+State: IDLE
+Game: Craps
+Wins: 15 | Losses: 42
+Current Player: PlayerName
+Current Bet: 10,000,000 GP
+Profit: +125,000,000 GP
 ```
 
+## 🔧 Troubleshooting
+
+### Build Issues
+```bash
+# Check Java version
+java -version  # Should be 11+
+
+# Clean build
+./gradlew clean build --refresh-dependencies
+```
+
+### Script Issues
+- **Not accepting trades**: Enable "Auto Accept Trades" in GUI
+- **State stuck**: Script auto-recovers after 45 seconds
+- **Dice not rolling**: Verify CRAPS_DICE_ID (15098) is correct
+
+### Compilation Errors
+See `COMPILATION_FIXES.md` and `DREAMBOT3_API_FIXES.md` for resolved issues.
+
+## 📚 Documentation
+
+- **[CRAPS_GAME_GUIDE.md](CRAPS_GAME_GUIDE.md)** - Complete Craps game documentation
+- **[COMPILATION_FIXES.md](COMPILATION_FIXES.md)** - Compilation error fixes
+- **[DREAMBOT3_API_FIXES.md](DREAMBOT3_API_FIXES.md)** - DreamBot 3 API compatibility
+- **[README_ELITE.md](README_ELITE.md)** - Elite edition documentation
+- **[WINDOWS_SETUP.md](WINDOWS_SETUP.md)** - Windows-specific setup guide
+
+## 🔐 Security & Fair Play
+
+### Provably Fair RNG (Craps)
+- **Seed Generation**: Player name + timestamp + secure random hex
+- **SHA-256 Hashing**: Seed hashed before roll
+- **Verification**: Full seed revealed after roll
+- **Transparency**: All rolls can be independently verified
+
+### Trade Safety
+- Validates trade amounts before acceptance
+- Automatic decline of invalid trades
+- Timeout protection for stuck states
+- Full logging for audit trails
+
+## 📈 Version History
+
+### v7.0 (Current) - January 2026
+- ✨ **NEW**: Craps game with provably fair RNG
+- ✨ **NEW**: Double or Nothing feature
+- ✨ **NEW**: SHA-256 seed verification
+- 🔧 Enhanced GUI with more options
+- 🔧 Improved state machine reliability
+- 🔧 Better error handling and recovery
+- 📚 Comprehensive documentation
+
+### v6.0
+- Full implementation of Dice, Wheel, Roulette
+- Trade safety features
+- Auto-advertising
+- Session recovery
+
+## 📄 License
+
+This project is open source. See [LICENSE](LICENSE) for details.
+
+## 📞 Support
+
+For issues or feature requests:
+1. Open an issue on [GitHub](https://github.com/No6love9/ikingsnipe)
+2. Check documentation in repository
+3. Review [DreamBot API docs](https://dreambot.org/javadocs/)
+
 ---
 
-## 📊 Statistics
+**Made with ❤️ for the OSRS community**
 
-The paint overlay shows:
-- **Runtime** - How long the script has been running
-- **Games Played** - Total number of games
-- **Total Profit** - Net profit/loss
-- **Players** - Number of unique players
-
----
-
-## ⚠️ Disclaimer
-
-**For educational purposes only.**
-
-- Use at your own risk
-- May violate game terms of service
-- No warranty or guarantee provided
-- Author not responsible for bans or issues
-
----
-
-## 📧 Support
-
-- **GitHub**: https://github.com/No6love9/ikingsnipe
-- **Issues**: https://github.com/No6love9/ikingsnipe/issues
-
----
-
-## 🎉 Summary
-
-### What You Get
-- ✅ Modern DreamBot script (v14.0)
-- ✅ 4 working casino games
-- ✅ Complete player management
-- ✅ Admin GUI
-- ✅ Provably fair RNG
-- ✅ Persistent database
-- ✅ Easy to build and deploy
-
-### What You Need
-1. Java 8+
-2. DreamBot client JAR
-3. 5 minutes to build and install
-
-### What You Do
-1. Get DreamBot JAR
-2. Run BUILD.bat
-3. Run INSTALL.bat
-4. Start in DreamBot
-
-**That's it!** Your casino is running! 🎰
-
----
-
-**Made with ❤️ by iKingSnipe**
-
-**Titan Casino v14.0 - Modern, Clean, Working** ✨
+**Elite Titan Casino v7.0** - *The most advanced OSRS casino bot with provably fair Craps!* 🎲🎰
