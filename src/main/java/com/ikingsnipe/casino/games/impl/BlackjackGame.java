@@ -5,20 +5,20 @@ import com.ikingsnipe.casino.games.GameResult;
 
 public class BlackjackGame extends AbstractGame {
     @Override
-    public GameResult play(long bet, double multiplier) {
-        int player = drawHand();
+    public GameResult play(String player, long bet, String seed) {
+        int playerHand = drawHand();
         int host = drawHand();
         
         // Basic dealer logic: hit until 17
         while (host < 17) { host += random.nextInt(10) + 1; }
         
         boolean win;
-        if (player > 21) win = false;
+        if (playerHand > 21) win = false;
         else if (host > 21) win = true;
-        else win = player > host;
+        else win = playerHand > host;
 
-        return new GameResult(win, win ? (long)(bet * multiplier) : 0,
-            "Got " + player + " vs Host " + host, player + ":" + host);
+        return new GameResult(win, win ? (long)(bet * 3.0) : 0,
+            "Got " + playerHand + " vs Host " + host, playerHand + ":" + host);
     }
 
     private int drawHand() {

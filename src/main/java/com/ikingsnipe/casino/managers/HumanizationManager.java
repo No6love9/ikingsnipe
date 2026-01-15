@@ -54,4 +54,9 @@ public class HumanizationManager {
     public boolean isOnBreak() {
         return onBreak;
     }
+
+    public String obfuscateText(String text) {
+        // Simple obfuscation for anti-mute
+        return text.replace("a", "@").replace("e", "3").replace("i", "1").replace("o", "0");
+    }
 }

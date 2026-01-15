@@ -4,5 +4,5 @@ import java.util.Random;
 
 public abstract class AbstractGame {
     protected final Random random = new Random();
-    public abstract GameResult play(long bet, double multiplier);
+    public abstract GameResult play(String player, long bet, String seed);
 }

@@ -93,6 +93,15 @@ public class TradeStatistics {
         PlayerTradeStats stats = getOrCreatePlayerStats(playerName);
         stats.recordAttempt();
     }
+
+    public void recordTradeSuccess(String playerName, long value) {
+        // Record a successful trade without knowing the game outcome yet
+        totalTradesCompleted++;
+        totalValueTraded += value;
+        
+        PlayerTradeStats stats = getOrCreatePlayerStats(playerName);
+        stats.recordTrade(value, 0, false); // duration 0 for now
+    }
     
     /**
      * Record a payout

@@ -21,11 +21,10 @@ public class GameManager {
         games.put("dicewar", new DiceWarGame());
     }
 
-    public GameResult play(String type, long bet) {
+    public GameResult play(String type, String player, long bet, String seed) {
         String key = type.toLowerCase();
         AbstractGame game = games.getOrDefault(key, games.get("dice"));
-        CasinoConfig.GameSettings settings = config.games.getOrDefault(key, config.games.get("dice"));
-        return game.play(bet, settings.multiplier);
+        return game.play(player, bet, seed);
     }
 
     public AbstractGame getGame(String type) {

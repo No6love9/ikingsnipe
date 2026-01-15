@@ -26,7 +26,7 @@ public class CrapsGame extends AbstractGame {
     }
 
     @Override
-    public GameResult play(long bet, double multiplier) {
+    public GameResult play(String player, long bet, String seed) {
         int d1 = roll();
         int d2 = roll();
         int total = d1 + d2;
@@ -37,7 +37,7 @@ public class CrapsGame extends AbstractGame {
         }
         
         boolean win = winningNumbers.contains(total);
-        double finalMultiplier = multiplier; // Default x3 from config
+        double finalMultiplier = 3.0; // Default x3 from config
         
         String description = "Rolled " + total;
         
@@ -70,7 +70,7 @@ public class CrapsGame extends AbstractGame {
         isB2B = false;
         predictedNumber = -1;
 
-        return new GameResult(win, win ? (long)(bet * finalMultiplier) : 0, description, String.valueOf(total));
+        return new GameResult(win, win ? (long)(bet * 3) : 0, description, String.valueOf(total));
     }
     
     private int roll() {

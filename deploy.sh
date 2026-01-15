@@ -2,8 +2,9 @@
 # DreamBot Script Deployment Script for Linux
 
 # Configuration
-SCRIPT_NAME="TitanCasino"
+SCRIPT_NAME="snipes_scripts_enterprise"
 DREAMBOT_SCRIPTS_DIR="$HOME/DreamBot/Scripts"
+BUILD_JAR="build/libs/snipes_scripts_enterprise.jar"
 
 # Build the project
 echo "Building $SCRIPT_NAME..."
@@ -18,7 +19,7 @@ if [ $? -eq 0 ]; then
     
     # Copy the JAR to DreamBot scripts folder
     echo "Deploying to $DREAMBOT_SCRIPTS_DIR..."
-    cp output/TitanCasino.jar "$DREAMBOT_SCRIPTS_DIR/"
+    cp "$BUILD_JAR" "$DREAMBOT_SCRIPTS_DIR/"
     
     echo "Deployment complete! You can now find '$SCRIPT_NAME' in your DreamBot client."
 else

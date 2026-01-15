@@ -51,4 +51,11 @@ public class PlayerSession {
     public int getGamesPlayed() {
         return gamesPlayed;
     }
+
+    public void addGame(com.ikingsnipe.casino.games.GameResult result) {
+        this.gamesPlayed++;
+        if (result.isWin()) {
+            this.balance += result.getPayout();
+        }
+    }
 }

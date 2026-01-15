@@ -5,11 +5,11 @@ import com.ikingsnipe.casino.games.GameResult;
 
 public class HotColdGame extends AbstractGame {
     @Override
-    public GameResult play(long bet, double multiplier) {
+    public GameResult play(String player, long bet, String seed) {
         boolean isHot = random.nextBoolean();
         boolean win = random.nextBoolean(); // 50/50
         String outcome = isHot ? "Hot" : "Cold";
-        return new GameResult(win, win ? (long)(bet * multiplier) : 0,
+        return new GameResult(win, win ? (long)(bet * 3.0) : 0,
             (win ? "Correct! " : "Incorrect. ") + "Outcome was " + outcome, outcome);
     }
 }

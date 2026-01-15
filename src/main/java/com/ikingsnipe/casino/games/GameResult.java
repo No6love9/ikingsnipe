@@ -14,4 +14,5 @@ public class GameResult {
     public long getPayout() { return payout; }
     public String getDescription() { return description; }
     public String getRawOutcome() { return rawOutcome; }
+    public String getRoll() { return rawOutcome; }
 }

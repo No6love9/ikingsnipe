@@ -6,16 +6,9 @@ import com.ikingsnipe.casino.models.PlayerSession;
 import com.ikingsnipe.casino.utils.ProvablyFair;
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
-<<<<<<< Updated upstream
-import org.dreambot.api.input.Keyboard;
-=======
 import org.dreambot.api.methods.input.Keyboard;
-import org.dreambot.api.wrappers.widgets.Widget;
-<<<<<<< Updated upstream
+import org.dreambot.api.methods.widget.Widget;
 import org.dreambot.api.wrappers.widgets.WidgetChild;
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import org.dreambot.api.methods.interactive.Players;
 import org.dreambot.api.methods.trade.Trade;
 import org.dreambot.api.methods.widget.Widgets;
@@ -158,15 +151,9 @@ public class TradeManager {
             Widget tradeWidget = Widgets.getWidget(335);
             if (tradeWidget != null && tradeWidget.isVisible()) {
                 // Try to get child widget with trade request text
-<<<<<<< Updated upstream
                 WidgetChild child = tradeWidget.getChild(4);
                 if (child != null) {
                     String text = child.getText();
-=======
-                Widget widget = Widgets.getWidget(335);
-                if (widget != null && widget.getChild(4) != null) {
-                    String text = widget.getChild(4).getText();
->>>>>>> Stashed changes
                     if (text != null && text.contains("wishes to trade")) {
                         // Extract player name from "PlayerName wishes to trade with you"
                         return text.split(" ")[0];
@@ -275,12 +262,10 @@ public class TradeManager {
                 return TradeAction.DECLINED;
             }
             
-            // Anti-scam verification
-            if (verifyTradeValue(currentValue)) {
-                currentBetAmount = currentValue;
-                if (verifyAndAcceptScreen1(currentValue, false)) {
-                    return TradeAction.ACCEPTED_SCREEN1;
-                }
+            // Verify stability and accept
+            if (verifyAndAcceptScreen1(currentValue, false)) {
+                this.currentBetAmount = currentValue;
+                return TradeAction.ACCEPTED_SCREEN1;
             }
         }
         
@@ -288,303 +273,142 @@ public class TradeManager {
     }
     
     /**
-     * Verify trade value hasn't changed (anti-scam)
-     * Fast but thorough verification
+     * Handle Trade Screen 2 - Final confirmation screen
      */
-    private boolean verifyTradeValue(long currentValue) {
-        long now = System.currentTimeMillis();
+    public TradeAction handleTradeScreen2() {
+        if (!Trade.isOpen(2)) {
+            if (!Trade.isOpen()) {
+                return TradeAction.TRADE_CLOSED;
+            }
+            return TradeAction.WAIT;
+        }
         
-        // If value changed, reset verification
+        // Anti-scam: Wait for a moment on screen 2 to ensure no last-second changes
+        if (screen2StartTime == 0) {
+            screen2StartTime = System.currentTimeMillis();
+            return TradeAction.WAIT;
+        }
+        
+        long elapsed = System.currentTimeMillis() - screen2StartTime;
+        if (elapsed < tradeConfig.screen2VerifyDelay) {
+            return TradeAction.WAIT;
+        }
+        
+        // Final verification of value on screen 2
+        long screen2Value = getTheirTradeValue();
+        if (screen2Value != currentBetAmount && currentBetAmount > 0) {
+            Logger.log("[TradeManager] SCAM DETECTED: Value changed on screen 2!");
+            declineTrade("Scam attempt");
+            return TradeAction.DECLINED;
+        }
+        
+        // Accept screen 2
+        // In DreamBot, Trade.accept() is used for both screens
+        if (Trade.acceptTrade()) {
+            Logger.log("[TradeManager] Trade screen 2 accepted.");
+            return TradeAction.COMPLETED;
+        }
+        
+        return TradeAction.WAIT;
+    }
+    
+    /**
+     * Verify stability of trade value and accept screen 1
+     */
+    private boolean verifyAndAcceptScreen1(long currentValue, boolean balanceBet) {
+        // If value changed, reset stability check
         if (currentValue != lastVerifiedValue) {
             lastVerifiedValue = currentValue;
-            lastValueChangeTime = now;
+            lastValueChangeTime = System.currentTimeMillis();
             verificationCount = 0;
             valueStable = false;
             return false;
         }
         
-        // Check if value has been stable long enough
-        long stableTime = now - lastValueChangeTime;
+        // Check if value has been stable for required time
+        long stableTime = System.currentTimeMillis() - lastValueChangeTime;
         if (stableTime >= tradeConfig.valueStabilityTime) {
+            valueStable = true;
+        }
+        
+        if (valueStable) {
+            // Increment verification count (multiple checks for security)
             verificationCount++;
             
-            // Require multiple verification checks for large bets
-            int requiredChecks = getRequiredVerificationChecks(currentValue);
-            if (verificationCount >= requiredChecks) {
-                valueStable = true;
-                return true;
+            int requiredChecks = tradeConfig.lowValueVerifyCount;
+            if (currentValue >= tradeConfig.highValueThreshold) {
+                requiredChecks = tradeConfig.highValueVerifyCount;
+            } else if (currentValue >= tradeConfig.mediumValueThreshold) {
+                requiredChecks = tradeConfig.mediumValueVerifyCount;
             }
-        }
-        
-        return false;
-    }
-    
-    /**
-     * Get required verification checks based on bet size
-     */
-    private int getRequiredVerificationChecks(long value) {
-        if (!tradeConfig.enableAntiScam) return 1;
-        
-        if (value >= tradeConfig.highValueThreshold) {
-            return tradeConfig.highValueVerifyCount;
-        } else if (value >= tradeConfig.mediumValueThreshold) {
-            return tradeConfig.mediumValueVerifyCount;
-        }
-        return tradeConfig.lowValueVerifyCount;
-    }
-    
-    /**
-     * Verify and accept trade screen 1
-     */
-    private boolean verifyAndAcceptScreen1(long value, boolean usingBalance) {
-        // Final verification check
-        if (!usingBalance && value > 0) {
-            Sleep.sleep(tradeConfig.minVerifyDelay, tradeConfig.maxVerifyDelay);
-            long finalCheck = getTheirTradeValue();
-            if (finalCheck != value) {
-                Logger.log("[TradeManager] Value changed during final verification! Expected: " + value + ", Got: " + finalCheck);
-                sendTradeMessage("Please don't change the trade amount!");
-                return false;
-            }
-        }
-        
-        // Send confirmation message
-        if (tradeConfig.sendConfirmationMessages) {
-            String confirmMsg = String.format("Confirmed %s bet. Accepting trade...", formatGP(value > 0 ? value : currentBetAmount));
-            sendTradeMessage(confirmMsg);
-        }
-        
-        // Accept trade
-        if (Trade.acceptTrade()) {
-            boolean screen2Opened = Sleep.sleepUntil(() -> Trade.isOpen(2), tradeConfig.screen2WaitTime);
-            if (screen2Opened) {
-                screen2StartTime = System.currentTimeMillis();
-                return true;
-            }
-        }
-        
-        return false;
-    }
-    
-    /**
-     * Handle Trade Screen 2 - Final confirmation screen
-     * Includes double-check anti-scam verification
-     */
-    public TradeAction handleTradeScreen2(PlayerSession session) {
-        if (!Trade.isOpen(2)) {
-            if (!Trade.isOpen()) {
-                return TradeAction.TRADE_CLOSED;
-            }
-            // Might have gone back to screen 1
-            if (Trade.isOpen(1)) {
-                screen2Verified = false;
-                screen2VerifyAttempts = 0;
-                return TradeAction.BACK_TO_SCREEN1;
-            }
-            return TradeAction.WAIT;
-        }
-        
-        // Check for screen 2 timeout
-        if (System.currentTimeMillis() - screen2StartTime > tradeConfig.screen2Timeout) {
-            sendTradeMessage("Trade confirmation timed out!");
-            declineTrade("Screen2 Timeout");
-            return TradeAction.DECLINED;
-        }
-        
-        // Perform screen 2 verification
-        if (!screen2Verified && tradeConfig.enableScreen2Verification) {
-            if (!verifyScreen2()) {
-                screen2VerifyAttempts++;
-                if (screen2VerifyAttempts >= tradeConfig.maxScreen2VerifyAttempts) {
-                    sendTradeMessage("Trade verification failed. Please try again.");
-                    declineTrade("Screen2 Verification Failed");
-                    return TradeAction.DECLINED;
-                }
-                return TradeAction.WAIT;
-            }
-            screen2Verified = true;
-        }
-        
-        // Accept the trade
-        if (Trade.acceptTrade()) {
-            // Wait for trade to complete
-            boolean tradeComplete = Sleep.sleepUntil(() -> !Trade.isOpen(), tradeConfig.tradeCompleteWaitTime);
-            if (tradeComplete) {
-                Logger.log("[TradeManager] Trade completed successfully with: " + currentTrader);
-                return TradeAction.TRADE_COMPLETE;
-            }
-        }
-        
-        return TradeAction.WAIT;
-    }
-    
-    /**
-     * Verify trade screen 2 values match screen 1
-     */
-    private boolean verifyScreen2() {
-        // Small delay for screen to fully load
-        Sleep.sleep(tradeConfig.screen2VerifyDelay, tradeConfig.screen2VerifyDelay + 100);
-        
-        // Get the value shown on screen 2
-        long screen2Value = getScreen2TheirValue();
-        
-        // Verify the value matches what we accepted in screen 1
-        if (screen2Value != currentBetAmount) {
-            Logger.log("[TradeManager] Screen 2 value mismatch! Expected: " + currentBetAmount + ", Got: " + screen2Value);
-            return false;
-        }
-        
-        return true;
-    }
-    
-    /**
-     * Get their trade value from screen 2
-     */
-    private long getScreen2TheirValue() {
-        // The Trade.getTheirItems() API works for both screens in DreamBot
-        return getTheirTradeValue();
-    }
-    
-    /**
-     * Validate bet is within configured limits
-     */
-    private boolean validateBetLimits(long value) {
-        if (value < config.minBet) {
-            sendTradeMessage("Minimum bet is " + formatGP(config.minBet) + "!");
-            declineTrade("Below minimum");
-            return false;
-        }
-        
-        if (value > config.maxBet) {
-            sendTradeMessage("Maximum bet is " + formatGP(config.maxBet) + "!");
-            declineTrade("Above maximum");
-            return false;
-        }
-        
-        // Check if we have enough to pay out potential winnings
-        if (tradeConfig.checkPayoutCapacity) {
-            double maxMultiplier = getMaxGameMultiplier();
-            long potentialPayout = (long)(value * maxMultiplier);
-            long ourValue = getOurTotalValue();
             
-            if (potentialPayout > ourValue) {
-                sendTradeMessage("Bet too large for current bank. Max bet: " + formatGP((long)(ourValue / maxMultiplier)));
-                declineTrade("Insufficient bank");
-                return false;
-            }
-        }
-        
-        return true;
-    }
-    
-    /**
-     * Get maximum game multiplier for payout calculation
-     */
-    private double getMaxGameMultiplier() {
-        double max = 2.0;
-        for (CasinoConfig.GameSettings game : config.games.values()) {
-            if (game.enabled && game.multiplier > max) {
-                max = game.multiplier;
-            }
-        }
-        return max;
-    }
-    
-    /**
-     * Get our total value (inventory)
-     */
-    private long getOurTotalValue() {
-        long coins = Inventory.count(CasinoConfig.COINS_ID);
-        long tokens = Inventory.count(CasinoConfig.PLATINUM_TOKEN_ID) * CasinoConfig.TOKEN_VALUE;
-        return coins + tokens;
-    }
-    
-    /**
-     * Get their trade value (coins + tokens)
-     */
-    public long getTheirTradeValue() {
-        long total = 0;
-        try {
-            for (Item item : Trade.getTheirItems()) {
-                if (item != null) {
-                    if (item.getID() == CasinoConfig.PLATINUM_TOKEN_ID) {
-                        total += item.getAmount() * CasinoConfig.TOKEN_VALUE;
-                    } else if (item.getID() == CasinoConfig.COINS_ID) {
-                        total += item.getAmount();
+            if (verificationCount >= requiredChecks) {
+                // Final check: did they accept?
+                // Note: DreamBot API might have different method names, 
+                // but based on common usage:
+                if (Trade.hasAcceptedTrade(org.dreambot.api.methods.trade.TradeUser.THEM)) {
+                    if (Trade.acceptTrade()) {
+                        Logger.log("[TradeManager] Trade screen 1 accepted. Value: " + currentValue);
+                        return true;
                     }
                 }
             }
-        } catch (Exception e) {
-            Logger.log("[TradeManager] Error getting trade value: " + e.getMessage());
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Get the total value of items they have offered
+     */
+    private long getTheirTradeValue() {
+        Item[] items = Trade.getTheirItems();
+        if (items == null) return 0;
+        
+        long total = 0;
+        for (Item item : items) {
+            if (item != null) {
+                if (item.getID() == 995) {
+                    total += item.getAmount();
+                }
+            }
         }
         return total;
     }
     
     /**
-     * Send welcome message to trader
+     * Validate if the bet is within allowed limits
      */
-    private void sendWelcomeMessage() {
-        String greeting = tradeConfig.customWelcomeMessage
-            .replace("{player}", currentTrader != null ? currentTrader : "Player")
-            .replace("{hash}", provablyFair.getHash().substring(0, 12))
-            .replace("{min}", formatGP(config.minBet))
-            .replace("{max}", formatGP(config.maxBet));
-        
-        sendTradeMessage(greeting);
-        
-        // Send game commands info if enabled
-        if (tradeConfig.sendGameCommands) {
-            Sleep.sleep(300, 500);
-            sendTradeMessage("Commands: !c (Craps) !dw (Dice War) !fp (Flower Poker)");
+    private boolean validateBetLimits(long amount) {
+        if (amount < config.minBet) {
+            sendTradeMessage("Bet too low! Min: " + formatAmount(config.minBet));
+            declineTrade("Bet too low");
+            return false;
         }
+        if (amount > config.maxBet) {
+            sendTradeMessage("Bet too high! Max: " + formatAmount(config.maxBet));
+            declineTrade("Bet too high");
+            return false;
+        }
+        return true;
     }
     
     /**
-     * Send a message in trade chat
-     */
-    public void sendTradeMessage(String message) {
-        if (message == null || message.isEmpty()) return;
-        Keyboard.type(message, true);
-        Sleep.sleep(200, 400);
-    }
-    
-    /**
-     * Decline trade with reason logging
+     * Decline the current trade
      */
     public void declineTrade(String reason) {
-        Logger.log("[TradeManager] Declining trade with " + currentTrader + ". Reason: " + reason);
-        
-        if (currentTrader != null) {
-            recentlyDeclined.add(currentTrader.toLowerCase());
-        }
-        
+        Logger.log("[TradeManager] Declining trade. Reason: " + reason);
         if (Trade.isOpen()) {
             Trade.declineTrade();
         }
-        
+        if (currentTrader != null) {
+            recentlyDeclined.add(currentTrader.toLowerCase());
+        }
         resetTradeState();
     }
     
     /**
-     * Check if trade has timed out
-     */
-    private boolean isTradeTimedOut() {
-        return System.currentTimeMillis() - tradeStartTime > tradeConfig.tradeTimeout;
-    }
-    
-    /**
-     * Clean up recently declined players list
-     */
-    private void cleanupDeclinedPlayers() {
-        long now = System.currentTimeMillis();
-        if (now - lastDeclineCleanup > tradeConfig.declineCooldown) {
-            recentlyDeclined.clear();
-            lastDeclineCleanup = now;
-        }
-    }
-    
-    /**
-     * Reset trade state
+     * Reset trade manager state
      */
     public void resetTradeState() {
         currentTrader = null;
@@ -594,118 +418,118 @@ public class TradeManager {
         lastVerifiedValue = 0;
         verificationCount = 0;
         valueStable = false;
+        screen2StartTime = 0;
         screen2Verified = false;
-        screen2VerifyAttempts = 0;
     }
     
     /**
-     * Add items to trade for payout
+     * Check if the trade has timed out
      */
-    public boolean addPayoutItems(long amount) {
-        if (!Trade.isOpen(1)) return false;
-        
-        long remaining = amount;
-        
-        // Add platinum tokens first (more efficient)
-        if (remaining >= CasinoConfig.TOKEN_VALUE) {
-            int tokensNeeded = (int)(remaining / CasinoConfig.TOKEN_VALUE);
-            int tokensAvailable = Inventory.count(CasinoConfig.PLATINUM_TOKEN_ID);
-            int tokensToAdd = Math.min(tokensNeeded, tokensAvailable);
-            
-            if (tokensToAdd > 0) {
-                Trade.addItem(CasinoConfig.PLATINUM_TOKEN_ID, tokensToAdd);
-                remaining -= (long)tokensToAdd * CasinoConfig.TOKEN_VALUE;
-                Sleep.sleep(200, 400);
-            }
-        }
-        
-        // Add remaining coins
-        if (remaining > 0) {
-            int coinsAvailable = Inventory.count(CasinoConfig.COINS_ID);
-            int coinsToAdd = (int)Math.min(remaining, coinsAvailable);
-            
-            if (coinsToAdd > 0) {
-                Trade.addItem(CasinoConfig.COINS_ID, coinsToAdd);
-            }
-        }
-        
-        return true;
+    private boolean isTradeTimedOut() {
+        if (tradeStartTime == 0) return false;
+        return (System.currentTimeMillis() - tradeStartTime) > tradeConfig.tradeTimeout;
     }
     
     /**
-     * Queue a trade request for later processing
+     * Send a message to the player via trade chat or public chat
      */
-    public void queueTradeRequest(String playerName) {
-        if (playerName != null && !playerName.isEmpty()) {
-            pendingTradeRequests.offer(new TradeRequest(playerName, System.currentTimeMillis()));
+    private void sendTradeMessage(String message) {
+        if (Trade.isOpen()) {
+            Keyboard.type(message, true);
         }
     }
     
     /**
-     * Format GP value for display
+     * Send the welcome message to the player
      */
-    private String formatGP(long amount) {
-        if (amount >= 1_000_000_000) return String.format("%.1fB", amount / 1_000_000_000.0);
-        if (amount >= 1_000_000) return String.format("%.1fM", amount / 1_000_000.0);
-        if (amount >= 1_000) return String.format("%.1fK", amount / 1_000.0);
+    private void sendWelcomeMessage() {
+        String msg = "Welcome to Elite Titan Casino! Current game: " + selectedGame;
+        sendTradeMessage(msg);
+        Sleep.sleep(600, 1000);
+        sendTradeMessage("Min bet: " + formatAmount(config.minBet) + " | Max: " + formatAmount(config.maxBet));
+    }
+    
+    /**
+     * Format currency amounts (e.g., 1000000 -> 1M)
+     */
+    private String formatAmount(long amount) {
+        if (amount >= 1000000) return (amount / 1000000) + "M";
+        if (amount >= 1000) return (amount / 1000) + "K";
         return String.valueOf(amount);
     }
     
-    // Getters
-    public String getCurrentTrader() { return currentTrader; }
-    public long getCurrentBetAmount() { return currentBetAmount; }
-    public void setCurrentBetAmount(long amount) { this.currentBetAmount = amount; }
-    public String getSelectedGame() { return selectedGame; }
-    public void setSelectedGame(String game) { this.selectedGame = game; }
-    public boolean isWelcomeSent() { return welcomeSent; }
-    public long getLastVerifiedValue() { return lastVerifiedValue; }
-    
     /**
-     * Trade detection result
+     * Clean up the recently declined players list
      */
+    private void cleanupDeclinedPlayers() {
+        if (System.currentTimeMillis() - lastDeclineCleanup > 300000) { // 5 minutes
+            recentlyDeclined.clear();
+            lastDeclineCleanup = System.currentTimeMillis();
+        }
+    }
+
+    // Missing methods called by other classes
+    public void setSelectedGame(String game) {
+        this.selectedGame = game;
+    }
+
+    public void setCurrentBetAmount(long amount) {
+        this.currentBetAmount = amount;
+    }
+
+    public long getCurrentBetAmount() {
+        return this.currentBetAmount;
+    }
+
+    public void queueTradeRequest(String playerName) {
+        if (pendingTradeRequests.size() < tradeConfig.maxQueuedRequests) {
+            pendingTradeRequests.add(new TradeRequest(playerName));
+            Logger.log("[TradeManager] Queued trade request from: " + playerName);
+        }
+    }
+    
+    // Helper classes and enums
+    
+    public enum TradeAction {
+        WAIT,
+        ACCEPTED_SCREEN1,
+        ACCEPTED_SCREEN2,
+        COMPLETED,
+        DECLINED,
+        TRADE_CLOSED
+    }
+    
+    public enum TradeDetectionType {
+        NO_REQUEST,
+        ACCEPTED_REQUEST,
+        QUEUED_REQUEST,
+        TRADE_WINDOW_OPEN,
+        RECENTLY_DECLINED
+    }
+    
     public static class TradeDetectionResult {
-        public final boolean detected;
+        public final boolean success;
         public final String playerName;
         public final TradeDetectionType type;
         
-        public TradeDetectionResult(boolean detected, String playerName, TradeDetectionType type) {
-            this.detected = detected;
+        public TradeDetectionResult(boolean success, String playerName, TradeDetectionType type) {
+            this.success = success;
             this.playerName = playerName;
             this.type = type;
         }
     }
     
-    public enum TradeDetectionType {
-        NO_REQUEST,
-        TRADE_WINDOW_OPEN,
-        ACCEPTED_REQUEST,
-        QUEUED_REQUEST,
-        RECENTLY_DECLINED
-    }
-    
-    public enum TradeAction {
-        WAIT,
-        ACCEPTED_SCREEN1,
-        BACK_TO_SCREEN1,
-        TRADE_COMPLETE,
-        TRADE_CLOSED,
-        DECLINED
-    }
-    
-    /**
-     * Trade request holder
-     */
     private static class TradeRequest {
-        final String playerName;
-        final long timestamp;
+        public final String playerName;
+        public final long timestamp;
         
-        TradeRequest(String playerName, long timestamp) {
+        public TradeRequest(String playerName) {
             this.playerName = playerName;
-            this.timestamp = timestamp;
+            this.timestamp = System.currentTimeMillis();
         }
         
-        boolean isExpired() {
-            return System.currentTimeMillis() - timestamp > 30000; // 30 second expiry
+        public boolean isExpired() {
+            return (System.currentTimeMillis() - timestamp) > 30000; // 30 seconds
         }
     }
 }

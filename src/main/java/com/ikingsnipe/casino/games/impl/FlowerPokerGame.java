@@ -8,14 +8,14 @@ public class FlowerPokerGame extends AbstractGame {
     private static final String[] FLOWERS = {"Red", "Blue", "Yellow", "Purple", "Orange", "White", "Black"};
 
     @Override
-    public GameResult play(long bet, double multiplier) {
+    public GameResult play(String player, long bet, String seed) {
         Hand playerHand = generateHand();
         Hand hostHand = generateHand();
         
         // In Flower Poker, player must beat host. Ties go to host.
         boolean win = playerHand.rank > hostHand.rank;
         
-        return new GameResult(win, win ? (long)(bet * multiplier) : 0,
+        return new GameResult(win, win ? (long)(bet * 3.0) : 0,
             "You: " + playerHand.name + " | Host: " + hostHand.name, 
             playerHand.rank + ":" + hostHand.rank);
     }

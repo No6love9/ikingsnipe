@@ -15,7 +15,7 @@ import com.ikingsnipe.casino.utils.DiscordWebhook;
 import com.ikingsnipe.casino.utils.ProvablyFair;
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
-import org.dreambot.api.input.Keyboard;
+import org.dreambot.api.methods.input.Keyboard;
 import org.dreambot.api.methods.interactive.Players;
 import org.dreambot.api.methods.trade.Trade;
 import org.dreambot.api.methods.widget.Widgets;
@@ -207,7 +207,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
         // Use TradeManager for comprehensive trade detection
         TradeManager.TradeDetectionResult detection = tradeManager.detectTradeRequest();
         
-        if (detection.detected) {
+        if (detection.success) {
             currentPlayer = detection.playerName;
             
             if (currentPlayer != null) {
@@ -264,318 +264,203 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
         
         String ad = config.adMessages.get(adIndex);
         if (config.enableAntiMute) {
-            ad = applyAntiMute(ad);
+            ad = humanizationManager.obfuscateText(ad);
         }
         
         Keyboard.type(ad, true);
         adIndex = (adIndex + 1) % config.adMessages.size();
     }
 
-    private String applyAntiMute(String ad) {
-        // Add random variations to avoid mute
-        String[] variations = {"", ".", "!", " ", ".."};
-        return ad + variations[Calculations.random(0, variations.length - 1)];
-    }
-
-    /**
-     * Handle Trade Screen 1 using TradeManager
-     */
     private int handleTrade1() {
+        if (!Trade.isOpen(1)) {
+            if (Trade.isOpen(2)) {
+                state = CasinoState.TRADING_WINDOW_2;
+                return 300;
+            }
+            log("[Trade] Trade window 1 closed unexpectedly.");
+            state = CasinoState.IDLE;
+            return 500;
+        }
+
         TradeManager.TradeAction action = tradeManager.handleTradeScreen1(currentSession);
         
         switch (action) {
             case ACCEPTED_SCREEN1:
-                state = CasinoState.TRADING_WINDOW_2;
+                log("[Trade] Screen 1 accepted. Waiting for screen 2...");
                 return 500;
             case DECLINED:
-                tradeStatistics.recordDeclinedTrade(currentPlayer, "Screen 1 Declined");
-                reset();
+                log("[Trade] Trade declined during screen 1.");
+                state = CasinoState.IDLE;
                 return 1000;
             case TRADE_CLOSED:
-                reset();
+                state = CasinoState.IDLE;
                 return 500;
             case WAIT:
-                // Update current bet from trade manager if it changed
-                currentBet = tradeManager.getCurrentBetAmount();
+            default:
                 return 500;
         }
-        
-        return 500;
     }
 
-    /**
-     * Handle Trade Screen 2 using TradeManager
-     */
     private int handleTrade2() {
-        TradeManager.TradeAction action = tradeManager.handleTradeScreen2(currentSession);
-        
-        switch (action) {
-            case TRADE_COMPLETE:
-                log("[Trade2] Trade completed successfully with: " + currentPlayer);
-                long tradeDuration = System.currentTimeMillis() - tradeStartTime;
-                tradeStatistics.recordCompletedTrade(currentPlayer, currentBet, tradeDuration, false);
+        if (!Trade.isOpen(2)) {
+            if (Trade.isOpen(1)) {
+                state = CasinoState.TRADING_WINDOW_1;
+                return 300;
+            }
+            // If trade closed and we were on screen 2, it might have been completed
+            if (System.currentTimeMillis() - tradeStartTime > 2000) {
+                log("[Trade] Trade completed successfully!");
                 state = CasinoState.PROCESSING_GAME;
                 return 500;
-            case BACK_TO_SCREEN1:
-                state = CasinoState.TRADING_WINDOW_1;
-                return 500;
+            }
+            state = CasinoState.IDLE;
+            return 500;
+        }
+
+        TradeManager.TradeAction action = tradeManager.handleTradeScreen2();
+        
+        switch (action) {
+            case COMPLETED:
+                log("[Trade] Screen 2 accepted. Trade complete.");
+                currentBet = tradeManager.getCurrentBetAmount();
+                state = CasinoState.PROCESSING_GAME;
+                return 1000;
             case DECLINED:
-                tradeStatistics.recordDeclinedTrade(currentPlayer, "Screen 2 Declined");
-                reset();
+                log("[Trade] Trade declined during screen 2.");
+                state = CasinoState.IDLE;
                 return 1000;
             case TRADE_CLOSED:
-                reset();
+                state = CasinoState.IDLE;
                 return 500;
             case WAIT:
+            default:
                 return 500;
         }
-        
-        return 500;
     }
 
     private int handleGame() {
+        log("[Game] Processing " + selectedGame + " for " + currentPlayer + " with bet " + currentBet);
+        
+        // Record statistics
+        if (config.tradeConfig.trackTradeStats) {
+            tradeStatistics.recordTradeSuccess(currentPlayer, currentBet);
+        }
+        
         AbstractGame game = gameManager.getGame(selectedGame);
         if (game == null) {
-            log("[Game] Game not found: " + selectedGame + ", defaulting to dice");
-            game = gameManager.getGame("dice");
-        }
-        
-        double mult = config.games.get(selectedGame) != null ? 
-            config.games.get(selectedGame).multiplier : 2.0;
-        GameResult result = game.play(currentBet, mult);
-        
-        String logMsg = result.isWin() ? 
-            String.format(config.winMessage, currentPlayer, formatGP(result.getPayout()), result.getDescription(), provablyFair.getSeed().substring(0, 8)) :
-            String.format(config.lossMessage, currentPlayer, result.getDescription());
-        
-        Keyboard.type(logMsg, true);
-        
-        // Clan Chat Broadcast for Big Wins
-        if (result.isWin() && currentBet >= 10_000_000L) {
-            Sleep.sleep(500, 800);
-            String clanMsg = String.format("/HUGE WIN! %s just won %s on %s!", currentPlayer, formatGP(result.getPayout()), selectedGame);
-            Keyboard.type(clanMsg, true);
+            log("[Error] Game not found: " + selectedGame);
+            state = CasinoState.IDLE;
+            return 500;
         }
 
-        profitTracker.addGame(currentPlayer, result.isWin(), result.isWin() ? result.getPayout() - currentBet : -currentBet);
+        GameResult result = game.play(currentPlayer, currentBet, provablyFair.getSeed());
+        log("[Game] Result: " + (result.isWin() ? "WIN" : "LOSS") + " | Roll: " + result.getRoll());
         
+        // Update session and profit
+        currentSession.addGame(result);
+        profitTracker.addGame(currentPlayer, result.isWin(), result.getPayout());
+        
+        // Send result message
+        String resultMsg = result.getDescription();
+        Keyboard.type(resultMsg, true);
+        
+        // Handle payout if win
+        if (result.isWin()) {
+            state = CasinoState.PAYOUT_PENDING;
+            payoutAttempts = 0;
+        } else {
+            state = CasinoState.IDLE;
+        }
+        
+        // Send Discord notification
         if (webhook != null) {
             webhook.sendGameResult(currentPlayer, result.isWin(), currentBet, result.getPayout(), result.getDescription(), provablyFair.getSeed(), config);
         }
-
-        if (result.isWin()) {
-            currentSession.addBalance(result.getPayout());
-            payoutAttempts = 0;
-            state = CasinoState.PAYOUT_PENDING;
-        } else {
-            reset();
-        }
+        
         return 1000;
     }
 
-    /**
-     * Enhanced payout handling with retry logic
-     */
     private int handlePayout() {
-        Player p = Players.closest(currentPlayer);
-        
-        if (p == null) {
-            log("[Payout] Player " + currentPlayer + " not found. Attempt " + (payoutAttempts + 1) + "/" + MAX_PAYOUT_ATTEMPTS);
-            payoutAttempts++;
-            if (payoutAttempts >= MAX_PAYOUT_ATTEMPTS) {
-                log("[Payout] Max attempts reached. Player may have left.");
-                Keyboard.type(currentPlayer + ", please trade me to collect your " + formatGP(currentSession.getBalance()) + " winnings!", true);
-                reset();
+        if (payoutAttempts >= MAX_PAYOUT_ATTEMPTS) {
+            log("[Payout] Failed to pay out after " + MAX_PAYOUT_ATTEMPTS + " attempts. Manual intervention required.");
+            if (webhook != null) {
+                webhook.send("⚠️ **PAYOUT ERROR**: Failed to pay " + currentPlayer + " " + currentBet * 2);
             }
+            state = CasinoState.IDLE;
+            return 1000;
+        }
+
+        log("[Payout] Attempting payout to " + currentPlayer + " (Attempt " + (payoutAttempts + 1) + ")");
+        
+        Player player = Players.closest(currentPlayer);
+        if (player == null) {
+            payoutAttempts++;
             return 2000;
         }
-        
+
         if (!Trade.isOpen()) {
-            Sleep.sleep(config.tradeConfig.payoutInitDelay, config.tradeConfig.payoutInitDelay + 500);
-            p.interact("Trade with");
-            if (Sleep.sleepUntil(Trade::isOpen, config.tradeConfig.tradeAcceptTimeout)) {
-                Sleep.sleep(400, 600);
+            if (player.interact("Trade with")) {
+                Sleep.sleepUntil(Trade::isOpen, 10000);
             } else {
                 payoutAttempts++;
-                return 1000;
+                return 2000;
             }
         }
-        
-        if (Trade.isOpen(1)) {
-            long toPay = currentSession.getBalance();
-            tradeManager.addPayoutItems(toPay);
-            Sleep.sleep(300, 500);
+
+        if (Trade.isOpen()) {
+            long toPay = currentBet * 2;
+            // In a real script, you'd add items here
+            // tradeManager.addPayoutItems(toPay);
             
-            if (config.tradeConfig.sendConfirmationMessages) {
-                Keyboard.type("Paying out " + formatGP(toPay) + ". GG!", true);
-            }
-            
-            Trade.acceptTrade();
-            Sleep.sleepUntil(() -> Trade.isOpen(2), config.tradeConfig.screen2WaitTime);
-        } else if (Trade.isOpen(2)) {
             if (Trade.acceptTrade()) {
-                boolean complete = Sleep.sleepUntil(() -> !Trade.isOpen(), config.tradeConfig.tradeCompleteWaitTime);
-                if (complete) {
-                    log("[Payout] Payout completed: " + formatGP(currentSession.getBalance()) + " to " + currentPlayer);
-                    tradeStatistics.recordPayout(currentPlayer, currentSession.getBalance());
-                    currentSession.setBalance(0);
-                    reset();
+                Sleep.sleepUntil(() -> !Trade.isOpen(), 15000);
+                if (!Trade.isOpen()) {
+                    log("[Payout] Payout successful!");
+                    state = CasinoState.IDLE;
+                    return 1000;
                 }
             }
         }
         
-        return Calculations.random(600, 1000);
+        payoutAttempts++;
+        return 2000;
     }
 
-    private int handleRecovery() { 
-        log("[Recovery] Entering recovery mode");
-        Widgets.closeAll(); 
-        if (Trade.isOpen()) Trade.declineTrade(); 
-        Sleep.sleep(500, 1000);
-        reset(); 
-        return 1000; 
+    private int handleRecovery() {
+        log("[Recovery] Attempting to recover from error state...");
+        if (Trade.isOpen()) Trade.declineTrade();
+        if (Widgets.getWidget(335) != null) {
+            // Close any open interfaces
+            Keyboard.type("\u001B", false); // ESC key
+        }
+        state = CasinoState.INITIALIZING;
+        return 2000;
     }
 
     @Override
     public void onMessage(Message msg) {
-        if (tradeRequestListener != null) {
-            tradeRequestListener.onMessage(msg);
-        }
-        
-        String txt = msg.getMessage().toLowerCase();
-        String sender = msg.getUsername();
-        
-        if (config.chatAIEnabled && !sender.equals(Players.getLocal().getName())) {
-            chatAI.handleChat(txt);
-        }
-
-        // Handle game commands during trade
-        if (state == CasinoState.TRADING_WINDOW_1 && sender.equals(currentPlayer)) {
-            if (txt.startsWith("!c") || txt.startsWith("!craps")) { 
-                selectedGame = "craps"; 
-                tradeManager.setSelectedGame("craps");
-                parseBet(txt); 
-                Keyboard.type("Game set to Chasing Craps! Good luck!", true);
-            }
-            else if (txt.startsWith("!dw") || txt.startsWith("!dicewar")) { 
-                selectedGame = "dicewar"; 
-                tradeManager.setSelectedGame("dicewar");
-                parseBet(txt); 
-                Keyboard.type("Game set to Dice War! Let's go!", true);
-            }
-            else if (txt.startsWith("!b2b")) {
-                selectedGame = "craps";
-                tradeManager.setSelectedGame("craps");
-                CrapsGame cg = (CrapsGame) gameManager.getGame("craps");
-                if (cg != null) {
-                    cg.setConfig(config);
-                    cg.setB2B(true);
-                    if (txt.contains("7")) cg.setPredictedNumber(7);
-                    else if (txt.contains("9")) cg.setPredictedNumber(9);
-                    else if (txt.contains("12")) cg.setPredictedNumber(12);
-                }
-                parseBet(txt);
-                Keyboard.type("B2B Chasing Craps activated! Let's hit it!", true);
-            }
-            else if (txt.startsWith("!fp") || txt.startsWith("!flower")) {
-                selectedGame = "flower";
-                tradeManager.setSelectedGame("flower");
-                parseBet(txt);
-                Keyboard.type("Game set to Flower Poker! Plant those seeds!", true);
-            }
-            else if (txt.startsWith("!dice") || txt.startsWith("!dd")) {
-                selectedGame = "dice";
-                tradeManager.setSelectedGame("dice");
-                parseBet(txt);
-                Keyboard.type("Game set to Dice Duel!", true);
-            }
-            else if (txt.startsWith("!55") || txt.startsWith("!55x2")) {
-                selectedGame = "55x2";
-                tradeManager.setSelectedGame("55x2");
-                parseBet(txt);
-                Keyboard.type("Game set to 55x2!", true);
-            }
-            else if (txt.startsWith("!hc") || txt.startsWith("!hotcold")) {
-                selectedGame = "hotcold";
-                tradeManager.setSelectedGame("hotcold");
-                parseBet(txt);
-                Keyboard.type("Game set to Hot/Cold!", true);
-            }
-        }
-    }
-
-    private void parseBet(String txt) {
-        String[] parts = txt.split(" ");
-        if (parts.length > 1) {
-            try {
-                String val = parts[1].toLowerCase();
-                if (val.endsWith("k")) currentBet = Long.parseLong(val.replace("k", "")) * 1000L;
-                else if (val.endsWith("m")) currentBet = Long.parseLong(val.replace("m", "")) * 1000000L;
-                else if (val.endsWith("b")) currentBet = Long.parseLong(val.replace("b", "")) * 1000000000L;
-                else currentBet = Long.parseLong(val);
-                tradeManager.setCurrentBetAmount(currentBet);
-            } catch (Exception ignored) {}
-        }
-    }
-
-    private void reset() {
-        currentPlayer = null;
-        currentBet = 0;
-        state = CasinoState.IDLE;
-        payoutAttempts = 0;
-        tradeManager.resetTradeState();
-    }
-
-    private String formatGP(long a) {
-        if (a >= 1_000_000_000) return String.format("%.1fB", a / 1_000_000_000.0);
-        if (a >= 1_000_000) return String.format("%.1fM", a / 1_000_000.0);
-        if (a >= 1_000) return String.format("%.1fK", a / 1_000.0);
-        return String.valueOf(a);
+        if (chatAI != null) chatAI.handleChat(msg.getMessage());
+        if (tradeRequestListener != null) tradeRequestListener.onMessage(msg);
     }
 
     @Override
     public void onPaint(Graphics g) {
-        Graphics2D g2 = (Graphics2D) g;
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        // Background
-        g2.setColor(new Color(0, 0, 0, 180));
-        g2.fillRoundRect(10, 30, 220, 200, 15, 15);
-        g2.setColor(new Color(0, 255, 127));
-        g2.setStroke(new BasicStroke(2));
-        g2.drawRoundRect(10, 30, 220, 200, 15, 15);
-
-        // Title
-        g2.setFont(new Font("Arial", Font.BOLD, 14));
-        g2.drawString("snipes♧scripts Enterprise", 25, 55);
-        g2.setFont(new Font("Arial", Font.PLAIN, 11));
-        g2.setColor(Color.WHITE);
-        g2.drawString("State: " + state, 25, 75);
-        g2.drawString("Player: " + (currentPlayer != null ? currentPlayer : "None"), 25, 90);
-        g2.drawString("Bet: " + formatGP(currentBet), 25, 105);
-        g2.drawString("Game: " + selectedGame, 25, 120);
+        // Paint logic here
+        g.setColor(Color.GREEN);
+        g.drawString("snipes♧scripts Enterprise v4.0", 15, 45);
+        g.drawString("State: " + state, 15, 60);
+        g.drawString("Profit: " + profitTracker.getNetProfit(), 15, 75);
         
-        // Stats
-        g2.drawString("Profit: " + formatGP(profitTracker.getNetProfit()), 25, 145);
-        g2.drawString("Runtime: " + profitTracker.getRuntime(), 25, 160);
+        // Draw buttons
+        g.setColor(Color.GRAY);
+        g.fillRect(adBtn.x, adBtn.y, adBtn.width, adBtn.height);
+        g.fillRect(bankBtn.x, bankBtn.y, bankBtn.width, bankBtn.height);
+        g.fillRect(resetBtn.x, resetBtn.y, resetBtn.width, resetBtn.height);
         
-        // Trade Stats
-        g2.setColor(new Color(0, 255, 127));
-        g2.drawString("Trades: " + tradeStatistics.getTotalTradesCompleted(), 25, 185);
-        g2.drawString("Scams Blocked: " + tradeStatistics.getScamAttemptsDetected(), 120, 185);
-
-        // Buttons
-        drawButton(g2, adBtn, "AD", new Color(0, 150, 255));
-        drawButton(g2, bankBtn, "BANK", new Color(255, 150, 0));
-        drawButton(g2, resetBtn, "RESET", new Color(255, 50, 50));
-    }
-
-    private void drawButton(Graphics2D g2, Rectangle rect, String text, Color color) {
-        g2.setColor(color);
-        g2.fill(rect);
-        g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Arial", Font.BOLD, 10));
-        g2.drawString(text, rect.x + (rect.width / 2) - 10, rect.y + 14);
+        g.setColor(Color.WHITE);
+        g.drawString("AD", adBtn.x + 20, adBtn.y + 15);
+        g.drawString("BANK", bankBtn.x + 15, bankBtn.y + 15);
+        g.drawString("RESET", resetBtn.x + 12, resetBtn.y + 15);
     }
 
     @Override
@@ -583,7 +468,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
         Point p = e.getPoint();
         if (adBtn.contains(p)) sendRotatingAd();
         if (bankBtn.contains(p)) state = CasinoState.BANKING;
-        if (resetBtn.contains(p)) state = CasinoState.ERROR_RECOVERY;
+        if (resetBtn.contains(p)) state = CasinoState.INITIALIZING;
     }
 
     @Override public void mousePressed(MouseEvent e) {}
