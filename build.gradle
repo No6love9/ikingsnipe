@@ -1,94 +1,56 @@
 plugins {
     id 'java'
-    id 'application'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 group = 'com.ikingsnipe'
-version = '1.0.0'
+version = '13.0.0'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
 }
-version = '6.0.0'
-
-sourceCompatibility = JavaVersion.VERSION_11
-targetCompatibility = JavaVersion.VERSION_11
 
 repositories {
     mavenCentral()
-    // DreamBot repo if you need it; builds compileOnly so project compiles without bundling DreamBot.
-    maven {
-        url 'https://repo.dreambot.io/artifactory/public'
-        // no credentials by default; set via env if required
-    }
 }
 
 dependencies {
-    // DreamBot API as compileOnly (so the API is available at compile-time but not bundled)
-    compileOnly 'org.dreambot:dreambot-api:4.0.0'
-
-    // Helpful libs (optional)
-    implementation 'com.google.guava:guava:31.1-jre'
-    implementation 'org.slf4j:slf4j-simple:2.0.5'
-
+    // Use local DreamBot API jar
+    compileOnly files('libs/dreambot-api.jar')
+    
+    // Test dependencies
     testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.mockito:mockito-core:5.2.0'
 }
 
-application {
-    // Not used by DreamBot, but keeps tooling happy
-    mainClass = 'com.ikingsnipe.EliteTitanCasino'
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.compilerArgs += ['-Xlint:deprecation', '-Xlint:unchecked', '-parameters']
 }
 
 jar {
+    archiveBaseName.set('EliteTitanCasino')
+    archiveVersion.set(project.version.toString())
+    
     manifest {
         attributes(
-            'Implementation-Title': project.name,
+            'Implementation-Title': 'Elite Titan Casino',
             'Implementation-Version': project.version,
             'Built-By': System.getProperty('user.name'),
             'Build-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         )
     }
-}
-
-shadowJar {
-    archiveBaseName.set('EliteTitanCasino')
-    archiveVersion.set(project.version)
-    archiveClassifier.set('all')
-    mergeServiceFiles()
-    // Keep defaults for output (build/libs)
-}
-    // Local DreamBot API
-    implementation files('libs/dreambot-api.jar')
     
-    // Dependencies to bundle
-    implementation 'com.google.guava:guava:31.1-jre'
-    implementation 'org.slf4j:slf4j-api:2.0.5'
-    implementation 'org.slf4j:slf4j-simple:2.0.5'
+    from(sourceSets.main.output)
 }
-
-shadowJar {
-    archiveClassifier = ''
-    archiveFileName = "EliteTitanCasino.jar"
-    
-    relocate 'com.google', 'com.ikingsnipe.repackaged.google'
-    relocate 'org.slf4j', 'com.ikingsnipe.repackaged.slf4j'
-    
-    dependencies {
-        exclude(dependency(files('libs/dreambot-api.jar')))
-    }
-}
-
-build.dependsOn shadowJar
 
 task copyJar(type: Copy) {
-    from shadowJar
+    from jar
     into 'output'
+    rename { String fileName -> 'EliteTitanCasino.jar' }
 }
 
 build.finalizedBy copyJar
+
+clean.doFirst {
+    delete 'output'
+}
