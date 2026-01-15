@@ -299,6 +299,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
             else if (txt.startsWith("!b2b")) {
                 selectedGame = "craps";
                 CrapsGame cg = (CrapsGame) gameManager.getGame("craps");
+                cg.setConfig(config);
                 cg.setB2B(true);
                 if (txt.contains("7")) cg.setPredictedNumber(7);
                 else if (txt.contains("9")) cg.setPredictedNumber(9);
@@ -371,7 +372,11 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         g2.drawString("Runtime: " + profitTracker.getRuntime(), 15, 55);
         g2.drawString("Net Profit: " + formatGP(profitTracker.getNetProfit()), 15, 75);
         g2.drawString("Jackpot: " + formatGP(config.currentJackpot), 15, 95);
-        g2.drawString("Status: " + state.getStatus(), 15, 115);
+        String status = state.getStatus();
+        if (state == CasinoState.BANKING) {
+            status = bankingManager.getStatus();
+        }
+        g2.drawString("Status: " + status, 15, 115);
         
         // Recent Winners
         g2.setColor(new Color(0, 255, 127, 100));

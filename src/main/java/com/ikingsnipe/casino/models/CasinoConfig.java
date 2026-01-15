@@ -67,11 +67,11 @@ public class CasinoConfig {
     private void initializeDefaultGames() {
         games.put("dice", new GameSettings("Dice Duel", 2.0, true));
         games.put("flower", new GameSettings("Flower Poker", 2.0, true));
-        games.put("craps", new GameSettings("Chasing Craps", 3.0, true));
+        games.put("craps", new GameSettings("Chasing Craps", 3.0, true, 7, 9, 12));
         games.put("blackjack", new GameSettings("Blackjack", 2.5, true));
         games.put("hotcold", new GameSettings("Hot/Cold", 2.0, true));
         games.put("55x2", new GameSettings("55x2", 2.0, true));
-        games.put("dicewar", new GameSettings("Dice War", 1.95, true)); // 1.95x for PvP middleman
+        games.put("dicewar", new GameSettings("Dice War", 1.95, true));
     }
 
     public Tile getTargetTile() {
@@ -82,8 +82,15 @@ public class CasinoConfig {
         public String name;
         public double multiplier;
         public boolean enabled;
+        public List<Integer> winningNumbers = new ArrayList<>();
+        
         public GameSettings(String name, double multiplier, boolean enabled) {
             this.name = name; this.multiplier = multiplier; this.enabled = enabled;
+        }
+        
+        public GameSettings(String name, double multiplier, boolean enabled, Integer... nums) {
+            this(name, multiplier, enabled);
+            this.winningNumbers.addAll(Arrays.asList(nums));
         }
     }
 }
