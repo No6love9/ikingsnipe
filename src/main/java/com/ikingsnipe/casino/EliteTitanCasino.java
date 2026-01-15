@@ -53,6 +53,11 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
     private long tradeStartTime;
     private boolean welcomeSent;
     private volatile boolean guiFinished, startScript;
+    
+    // Stuck Detection
+    private CasinoState lastState;
+    private long lastStateChangeTime;
+    private int stateRepeatCount;
 
     @Override
     public void onStart() {
@@ -89,10 +94,20 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         if (!startScript) { stop(); return 0; }
 
         try {
+            // Stuck Detection Logic
+            if (state == lastState) {
+                if (System.currentTimeMillis() - lastStateChangeTime > 60000) { // 60 seconds in same state
+                    log("Stuck detection triggered in state: " + state + ". Recovering...");
+                    state = CasinoState.ERROR_RECOVERY;
+                }
+            } else {
+                lastState = state;
+                lastStateChangeTime = System.currentTimeMillis();
+            }
+
             // Auto-Muling Check
             if (config.autoMule && getInventoryValue() >= config.muleThreshold) {
-                log("Mule threshold reached! Please handle muling manually or implement auto-trade logic.");
-                // For safety, we just log it for now to prevent accidental losses
+                log("Mule threshold reached! Please handle muling manually.");
             }
 
             switch (state) {
