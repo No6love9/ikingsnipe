@@ -1,7 +1,9 @@
 package com.ikingsnipe.casino.models;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class CasinoConfig {
@@ -14,15 +16,21 @@ public class CasinoConfig {
     public int adIntervalMs = 15000;
     public boolean autoAccept = true;
     
-    // Professional Messaging
-    public String adMessage = "Elite Casino | Fast Payouts | Dice, Flower, Craps! Trade me to play!";
-    public String tradeWelcome = "Welcome to Elite Casino! Please offer your bet.";
-    public String tradeSafety = "Trade is safe. I will roll immediately after confirmation!";
-    public String tradeConfirm = "Bet received! Rolling now, good luck!";
+    // Advanced Features
+    public boolean useProvablyFair = true;
+    public boolean autoRestock = true;
+    public int restockThreshold = 10000000; // 10M
+    public List<String> blacklist = new ArrayList<>();
     
-    public String winAnnouncement = "Congratulations %s! You won %d GP with a %d!";
-    public String lossAnnouncement = "Better luck next time %s. You rolled a %d.";
-    public String errorAnnouncement = "An error occurred. Please trade me again for a refund if needed.";
+    // Professional Messaging
+    public String adMessage = "Elite Casino | Provably Fair | Dice, Flower, Craps! Trade me!";
+    public String tradeWelcome = "Welcome! Provably Fair active. Hash: %s";
+    public String tradeSafety = "Safe to accept. Payouts are automated!";
+    public String tradeConfirm = "Bet received! Rolling...";
+    
+    public String winAnnouncement = "WIN! %s rolled %d and won %d GP! Verify: %s";
+    public String lossAnnouncement = "LOSS! %s rolled %d. Better luck next time!";
+    public String blacklistMsg = "Sorry %s, you are not allowed to play here.";
 
     // Game Specifics
     public Map<String, Object> gameSettings = new HashMap<>();
