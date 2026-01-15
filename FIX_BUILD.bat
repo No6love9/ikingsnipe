@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 echo ===================================================
-echo   snipes♧scripts - Ultimate Build Fixer
+echo   snipes♧scripts - Gradle 8.7 Build Fixer
 echo ===================================================
 
 :: 1. Check if user dragged a folder onto the script
@@ -44,7 +44,7 @@ echo [+] Current Java Version:
 java -version
 echo.
 
-echo [+] Running Build...
+echo [+] Running Build with Gradle 8.7...
 :: Use --no-daemon to avoid background process issues
 call gradlew.bat clean shadowJar --no-daemon
 
@@ -59,6 +59,8 @@ if %ERRORLEVEL% EQU 0 (
     echo [!] Build failed. 
     echo If you see 'tools.jar' error, it means you are using a JRE, not a JDK.
     echo Make sure the folder contains a 'bin' folder with 'javac.exe' inside.
+    echo.
+    echo TIP: If using Gradle 8.7, ensure you have JDK 11 or higher installed.
 )
 
 pause
