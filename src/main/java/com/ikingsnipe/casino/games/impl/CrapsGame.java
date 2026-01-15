@@ -2,20 +2,13 @@ package com.ikingsnipe.casino.games.impl;
 
 import com.ikingsnipe.casino.games.AbstractGame;
 import com.ikingsnipe.casino.games.GameResult;
-import com.ikingsnipe.casino.models.CasinoConfig;
 import java.util.Arrays;
 import java.util.List;
 
 public class CrapsGame extends AbstractGame {
-    private CasinoConfig config;
-    
     // State for Chasing Craps
     private boolean isB2B = false;
     private int predictedNumber = -1;
-
-    public void setConfig(CasinoConfig config) {
-        this.config = config;
-    }
 
     public void setB2B(boolean b2b) {
         this.isB2B = b2b;
@@ -32,12 +25,12 @@ public class CrapsGame extends AbstractGame {
         int total = d1 + d2;
         
         List<Integer> winningNumbers = Arrays.asList(7, 9, 12);
-        if (config != null && config.games.containsKey("craps")) {
-            winningNumbers = config.games.get("craps").winningNumbers;
+        if (settings != null && settings.winningNumbers != null && !settings.winningNumbers.isEmpty()) {
+            winningNumbers = settings.winningNumbers;
         }
         
         boolean win = winningNumbers.contains(total);
-        double finalMultiplier = 3.0; // Default x3 from config
+        double finalMultiplier = (settings != null) ? settings.multiplier : 3.0;
         
         String description = "Rolled " + total;
         
@@ -60,17 +53,19 @@ public class CrapsGame extends AbstractGame {
             }
         } else {
             if (win) {
-                description += " (WIN! x3)";
+                description += " (WIN! x" + finalMultiplier + ")";
             } else {
                 description += " (LOSS)";
             }
         }
 
+        long payout = win ? (long)(bet * finalMultiplier) : 0;
+
         // Reset state for next game
         isB2B = false;
         predictedNumber = -1;
 
-        return new GameResult(win, win ? (long)(bet * 3) : 0, description, String.valueOf(total));
+        return new GameResult(win, payout, description, String.valueOf(total));
     }
     
     private int roll() {

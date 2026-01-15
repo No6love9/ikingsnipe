@@ -95,6 +95,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
         profitTracker = new ProfitTracker();
         chatAI = new ChatAI();
         chatAI.setProfitTracker(profitTracker);
+        chatAI.setConfig(config);
         muleManager = new MuleManager(config);
         humanizationManager = new HumanizationManager(config);
         
@@ -351,6 +352,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
             tradeStatistics.recordTradeSuccess(currentPlayer, currentBet);
         }
         
+        gameManager.syncSettings();
         AbstractGame game = gameManager.getGame(selectedGame);
         if (game == null) {
             log("[Error] Game not found: " + selectedGame);
@@ -444,7 +446,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
 
     @Override
     public void onMessage(Message msg) {
-        if (chatAI != null) chatAI.handleChat(msg.getMessage());
+        if (chatAI != null) chatAI.handleChat(msg.getUsername(), msg.getMessage());
         if (tradeRequestListener != null) tradeRequestListener.onMessage(msg);
     }
 

@@ -8,7 +8,10 @@ public class FiftyFiveGame extends AbstractGame {
     public GameResult play(String player, long bet, String seed) {
         int roll = random.nextInt(100) + 1;
         boolean win = roll >= 55;
-        return new GameResult(win, win ? (long)(bet * 3.0) : 0,
+        
+        long payout = win ? calculatePayout(bet) : 0;
+        
+        return new GameResult(win, payout,
             "Rolled " + roll + " (55+ wins)", String.valueOf(roll));
     }
 }

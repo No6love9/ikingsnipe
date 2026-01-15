@@ -14,8 +14,9 @@ public class FlowerPokerGame extends AbstractGame {
         
         // In Flower Poker, player must beat host. Ties go to host.
         boolean win = playerHand.rank > hostHand.rank;
+        long payout = win ? calculatePayout(bet) : 0;
         
-        return new GameResult(win, win ? (long)(bet * 3.0) : 0,
+        return new GameResult(win, payout,
             "You: " + playerHand.name + " | Host: " + hostHand.name, 
             playerHand.rank + ":" + hostHand.rank);
     }

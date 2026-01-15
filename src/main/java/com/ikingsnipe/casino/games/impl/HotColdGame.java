@@ -9,7 +9,10 @@ public class HotColdGame extends AbstractGame {
         boolean isHot = random.nextBoolean();
         boolean win = random.nextBoolean(); // 50/50
         String outcome = isHot ? "Hot" : "Cold";
-        return new GameResult(win, win ? (long)(bet * 3.0) : 0,
+        
+        long payout = win ? calculatePayout(bet) : 0;
+        
+        return new GameResult(win, payout,
             (win ? "Correct! " : "Incorrect. ") + "Outcome was " + outcome, outcome);
     }
 }
