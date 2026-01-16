@@ -50,6 +50,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
     private ChatAI chatAI;
     private MuleManager muleManager;
     private HumanizationManager humanizationManager;
+    private AntiBanManager antiBanManager;
     
     // New trade handling components
     private TradeManager tradeManager;
@@ -107,6 +108,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
         chatAI.setProvablyFair(provablyFair);
         muleManager = new MuleManager(config);
         humanizationManager = new HumanizationManager(config);
+        antiBanManager = new AntiBanManager();
         
         // Initialize trade handling components
         tradeStatistics = new TradeStatistics();
@@ -135,6 +137,9 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
         }
 
         try {
+            // Anti-Ban Execution
+            if (antiBanManager != null) antiBanManager.execute();
+
             if (humanizationManager.shouldTakeBreak()) {
                 humanizationManager.takeBreak();
                 return 1000;
@@ -474,13 +479,22 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
     }
 
     private int handleRecovery() {
-        log("[Recovery] Attempting to recover from error state...");
-        if (Trade.isOpen()) Trade.declineTrade();
-        if (Widgets.getWidget(335) != null) {
-            // Close any open interfaces
-            Keyboard.type("\u001B", false); // ESC key
+        log("[Recovery] Enterprise Gold Self-Healing active...");
+        try {
+            if (Trade.isOpen()) Trade.declineTrade();
+            org.dreambot.api.methods.widget.Widgets.closeAll();
+            
+            // Reset to safe location if needed
+            if (locationManager != null && !locationManager.isAtLocation()) {
+                log("[Recovery] Not at casino location, attempting to walk back...");
+                locationManager.walkToLocation();
+            }
+            
+            state = CasinoState.IDLE;
+        } catch (Exception e) {
+            log("[Recovery] Critical failure in self-healing: " + e.getMessage());
+            state = CasinoState.INITIALIZING;
         }
-        state = CasinoState.INITIALIZING;
         return 2000;
     }
 
