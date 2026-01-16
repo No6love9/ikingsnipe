@@ -7,7 +7,7 @@ import org.dreambot.api.methods.interactive.Players;
 import org.dreambot.api.methods.interactive.NPCs;
 import org.dreambot.api.methods.input.Keyboard;
 import org.dreambot.api.methods.widget.Widgets;
-import org.dreambot.api.methods.chat.Chat;
+// import org.dreambot.api.methods.chat.Chat;
 import org.dreambot.api.wrappers.widgets.message.Message;
 import org.dreambot.api.utilities.Sleep;
 import org.dreambot.api.utilities.Timer;
@@ -29,9 +29,11 @@ import javax.swing.border.*;
 import javax.swing.table.*;
 import javax.swing.filechooser.*;
 import java.awt.*;
+// import java.awt.List;
 import java.awt.event.*;
 import java.io.*;
 import java.util.*;
+// import java.util.List;
 import java.util.concurrent.*;
 import java.util.regex.*;
 import java.time.LocalDateTime;
@@ -89,12 +91,12 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         // Advertising
         boolean enableAdvertising = true;
         int adCooldownSeconds = 15;
-        List<String> adMessages = new ArrayList<>();
+        java.util.List<String> adMessages = new ArrayList<>();
         
         // Game Settings
         boolean crapsEnabled = true;
         int crapsPayoutMultiplier = 3;
-        List<Integer> crapsWinningNumbers = Arrays.asList(7, 9, 12);
+        java.util.List<Integer> crapsWinningNumbers = Arrays.asList(7, 9, 12);
         
         boolean diceEnabled = true;
         int dicePayoutMultiplier = 2;
@@ -432,7 +434,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
             Map<Integer, Integer> freq = new HashMap<>();
             for (int flower : hand) freq.put(flower, freq.getOrDefault(flower, 0) + 1);
             
-            List<Integer> counts = new ArrayList<>(freq.values());
+            java.util.List<Integer> counts = new ArrayList<>(freq.values());
             counts.sort(Collections.reverseOrder());
             
             if (counts.get(0) == 5) return 7;
@@ -635,7 +637,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
                 " GP " + gameType + " bet. Opening trade...");
             
             // Open trade
-            if (Trade.openTrade(player)) {
+            if (Trade.tradeWithPlayer(player)) {
                 log("Trade opened with " + player);
             } else {
                 sendMessage(player, "Failed to open trade. Please try again.");
@@ -723,8 +725,12 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
                 return;
             }
             
-            List<Map.Entry<String, PlayerStats>> sorted = new ArrayList<>(playerStats.entrySet());
-            sorted.sort(Comparator.comparingInt(e -> -e.getValue().getProfit())); // Descending profit
+            java.util.List<Map.Entry<String, PlayerStats>> sorted = new ArrayList<>(playerStats.entrySet());
+            sorted.sort((e1, e2) -> {
+                PlayerStats s1 = (PlayerStats)((Map.Entry)e1).getValue();
+                PlayerStats s2 = (PlayerStats)((Map.Entry)e2).getValue();
+                return Integer.compare(s2.getProfit(), s1.getProfit());
+            });
             
             StringBuilder sb = new StringBuilder("🏆 Top 5 Players by Profit:\n");
             for (int i = 0; i < Math.min(5, sorted.size()); i++) {
@@ -791,7 +797,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         }
         
         private void sendMessage(String player, String message) {
-            Chat.send(player + ": " + message);
+            Keyboard.type(player + ": " + message, true);
         }
         
         private String formatCoins(int amount) {
@@ -806,7 +812,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         void process() {
             if (!Trade.isOpen()) return;
             
-            String partner = Trade.getPartner();
+            String partner = Trade.getTradingWith();
             if (partner == null) {
                 Trade.declineTrade();
                 return;
@@ -876,7 +882,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         }
         
         private void sendMessage(String player, String message) {
-            Chat.send(player + ": " + message);
+            Keyboard.type(player + ": " + message, true);
         }
         
         private String formatCoins(int amount) {
@@ -940,7 +946,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         gameEngines.put("flower", new FlowerPokerEngine());
         
         // Setup chat listener
-        Chat.addMessageListener(this);
+        // Chat.addMessageListener(this);
         
         // Create GUI
         SwingUtilities.invokeLater(this::createGUI);
@@ -1024,10 +1030,9 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         
         if (System.currentTimeMillis() - lastAdTime > config.adCooldownSeconds * 1000L) {
             String ad = config.getRandomAd();
-            if (Chat.send(ad)) {
-                lastAdTime = System.currentTimeMillis();
-                log("Advertisement: " + ad);
-            }
+            Keyboard.type(ad, true);
+            lastAdTime = System.currentTimeMillis();
+            log("Advertisement: " + ad);
         }
         
         currentState = SystemState.RUNNING;
@@ -1136,7 +1141,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         }
         
         // Open trade for payout
-        if (Trade.openTrade(session.playerName)) {
+        if (Trade.tradeWithPlayer(session.playerName)) {
             Sleep.sleepUntil(() -> Trade.isOpen(), 5000);
             
             if (Trade.isOpen()) {
@@ -1223,7 +1228,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
     }
     
     private void sendMessage(String player, String message) {
-        Chat.send(player + ": " + message);
+        Keyboard.type(player + ": " + message, true);
     }
     
     private String formatCoins(int amount) {
@@ -1273,7 +1278,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
             controlFrame.setVisible(true);
             
             // Start update timer
-            Timer updateTimer = new Timer(1000, e -> updateGUI());
+            javax.swing.Timer updateTimer = new javax.swing.Timer(1000, e -> updateGUI());
             updateTimer.start();
             
         } catch (Exception e) {
@@ -1678,8 +1683,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
     }
     
     private String getEnabledGames() {
-        List<String> enabled = new ArrayList<>();
-        if (config.crapsEnabled) enabled.add("Craps");
+    java.util.List<String> enabled = new ArrayList<>();   if (config.crapsEnabled) enabled.add("Craps");
         if (config.diceEnabled) enabled.add("Dice");
         if (config.flowerEnabled) enabled.add("Flower Poker");
         return String.join(", ", enabled);
@@ -1770,7 +1774,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener {
         }
         
         // Remove chat listener
-        Chat.removeMessageListener(this);
+        // Chat.removeMessageListener(this);
         
         log("System shutdown complete");
         log("================================================");
