@@ -73,6 +73,12 @@ public class CasinoConfig {
     public boolean autoAnnounceBigWins = true;
     public long bigWinThreshold = 50_000_000L;
     public List<String> customAutoResponses = new ArrayList<>();
+    public Map<String, String> chatTriggers = new HashMap<>();
+    public boolean chatSpamFilter = true;
+    public int chatDelayMin = 800;
+    public int chatDelayMax = 1500;
+    public boolean randomChatSuffix = true;
+    public List<String> chatSuffixes = Arrays.asList("!", " :)", " luck!", " gl", "...");
 
     // Clan Chat Settings
     public boolean clanChatEnabled = false;

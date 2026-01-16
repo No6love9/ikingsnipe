@@ -85,7 +85,15 @@ public class ChatAI {
             }
         }
 
-        // 3. Handle General Conversation
+        // 3. Handle Custom Triggers
+        for (Map.Entry<String, String> entry : config.chatTriggers.entrySet()) {
+            if (lower.contains(entry.getKey().toLowerCase())) {
+                typeMessage(sender + ": " + entry.getValue(), isClan);
+                return;
+            }
+        }
+
+        // 4. Handle General Conversation
         for (String key : responses.keySet()) {
             if (lower.contains(key)) {
                 sendResponse(key, sender);
@@ -148,8 +156,13 @@ public class ChatAI {
     }
 
     private void typeMessage(String message, boolean isClan) {
+        if (config.randomChatSuffix && !message.startsWith("!") && !message.startsWith("/")) {
+            message += config.chatSuffixes.get(random.nextInt(config.chatSuffixes.size()));
+        }
+        
         Logger.log("[ChatAI] " + (isClan ? "[Clan] " : "[Public] ") + message);
-        Sleep.sleep(800, 1500);
+        Sleep.sleep(config.chatDelayMin, config.chatDelayMax);
+        
         if (isClan) {
             Keyboard.type("/" + message, true);
         } else {

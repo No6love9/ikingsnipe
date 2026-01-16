@@ -188,6 +188,20 @@ public class CasinoGUI extends JFrame {
         announcePanel.add(thresholdField);
         mainPanel.add(announcePanel);
         
+        // Chat Delays
+        JPanel delayPanel = createSection("Chat Delays (ms)");
+        JTextField minDelay = new JTextField(String.valueOf(config.chatDelayMin), 5);
+        JTextField maxDelay = new JTextField(String.valueOf(config.chatDelayMax), 5);
+        styleTextField(minDelay); styleTextField(maxDelay);
+        
+        minDelay.addActionListener(e -> config.chatDelayMin = Integer.parseInt(minDelay.getText()));
+        maxDelay.addActionListener(e -> config.chatDelayMax = Integer.parseInt(maxDelay.getText()));
+        
+        delayPanel.add(createLabel("Min:")); delayPanel.add(minDelay);
+        delayPanel.add(Box.createHorizontalStrut(10));
+        delayPanel.add(createLabel("Max:")); delayPanel.add(maxDelay);
+        mainPanel.add(delayPanel);
+        
         // Clan Chat Settings
         JPanel clanPanel = createSection("Clan Chat Integration");
         JCheckBox clanEnabled = new JCheckBox("Enable Clan Chat", config.clanChatEnabled);
@@ -206,6 +220,18 @@ public class CasinoGUI extends JFrame {
         clanPanel.add(clanAnnounce);
         clanPanel.add(clanRespond);
         mainPanel.add(clanPanel);
+        
+        // Custom Triggers
+        JPanel triggerPanel = createSection("Custom Chat Triggers");
+        JButton addTrigger = new JButton("Add Trigger");
+        styleButton(addTrigger);
+        addTrigger.addActionListener(e -> {
+            String key = JOptionPane.showInputDialog("Trigger Keyword:");
+            String val = JOptionPane.showInputDialog("Response:");
+            if (key != null && val != null) config.chatTriggers.put(key, val);
+        });
+        triggerPanel.add(addTrigger);
+        mainPanel.add(triggerPanel);
         
         return mainPanel;
     }

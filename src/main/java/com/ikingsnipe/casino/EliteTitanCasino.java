@@ -51,6 +51,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
     private MuleManager muleManager;
     private HumanizationManager humanizationManager;
     private AntiBanManager antiBanManager;
+    private RecoveryManager recoveryManager;
     
     // New trade handling components
     private TradeManager tradeManager;
@@ -109,6 +110,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
         muleManager = new MuleManager(config);
         humanizationManager = new HumanizationManager(config);
         antiBanManager = new AntiBanManager();
+        recoveryManager = new RecoveryManager();
         
         // Initialize trade handling components
         tradeStatistics = new TradeStatistics();
@@ -243,6 +245,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
         TradeManager.TradeDetectionResult detection = tradeManager.detectTradeRequest();
         
         if (detection.success) {
+            recoveryManager.resetErrorCount();
             // Admin Override: Blacklist check
             if (config.adminConfig.isBlacklisted(detection.playerName)) {
                 log("Ignoring trade request from blacklisted player: " + detection.playerName);
@@ -479,22 +482,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
     }
 
     private int handleRecovery() {
-        log("[Recovery] Enterprise Gold Self-Healing active...");
-        try {
-            if (Trade.isOpen()) Trade.declineTrade();
-            org.dreambot.api.methods.widget.Widgets.closeAll();
-            
-            // Reset to safe location if needed
-            if (locationManager != null && !locationManager.isAtLocation()) {
-                log("[Recovery] Not at casino location, attempting to walk back...");
-                locationManager.walkToLocation();
-            }
-            
-            state = CasinoState.IDLE;
-        } catch (Exception e) {
-            log("[Recovery] Critical failure in self-healing: " + e.getMessage());
-            state = CasinoState.INITIALIZING;
-        }
+        state = recoveryManager.attemptRecovery(state);
         return 2000;
     }
 
