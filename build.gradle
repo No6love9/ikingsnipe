@@ -6,11 +6,7 @@ plugins {
 group = 'com.ikingsnipe'
 version = '5.0.0-GOLD'
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(11)
-    }
-}
+
 
 repositories {
     mavenCentral()
@@ -53,3 +49,4 @@ task productionBuild {
 }
 
 tasks.build.dependsOn tasks.shadowJar
+
