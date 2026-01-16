@@ -6,6 +6,8 @@ import java.util.List;
 public class ProfitTracker {
     private long totalWon = 0;
     private long totalLost = 0;
+    private long totalWagered = 0;
+    private long totalPaidOut = 0;
     private long startTime;
     private final List<String> recentWinners = new ArrayList<>();
 
@@ -13,14 +15,19 @@ public class ProfitTracker {
         this.startTime = System.currentTimeMillis();
     }
 
-    public void addGame(String player, boolean win, long profit) {
+    public void addGame(String player, boolean win, long wager, long payout) {
+        totalWagered += wager;
         if (win) {
-            totalLost += profit; // Bot loses what player wins
-            addWinner(player + " (" + formatGP(profit) + ")");
+            totalLost += (payout - wager);
+            totalPaidOut += payout;
+            addWinner(player + " (" + formatGP(payout) + ")");
         } else {
-            totalWon += Math.abs(profit); // Bot wins what player loses
+            totalWon += wager;
         }
     }
+
+    public long getTotalWagered() { return totalWagered; }
+    public long getTotalPaidOut() { return totalPaidOut; }
 
     public long getNetProfit() {
         return totalWon - totalLost;

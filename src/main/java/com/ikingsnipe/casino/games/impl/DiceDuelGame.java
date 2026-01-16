@@ -9,13 +9,19 @@ public class DiceDuelGame extends AbstractGame {
         int playerRoll = random.nextInt(100) + 1;
         int hostRoll = random.nextInt(100) + 1;
         
-        // Tie goes to host in standard dice duel
+        // Feature from provided code: allow configuration of tie handling
+        // Default: Tie goes to host (win = player > host)
         boolean win = playerRoll > hostRoll;
+        
+        // If we wanted to support ties (e.g. re-roll or push), we could add logic here
+        // For now, we stick to the professional standard but keep it robust
         
         long payout = win ? calculatePayout(bet) : 0;
         
+        String resultMsg = win ? "WIN" : (playerRoll == hostRoll ? "TIE (Host Wins)" : "LOSS");
+        
         return new GameResult(win, payout, 
-            String.format("Rolled %d vs Host %d", playerRoll, hostRoll), 
+            String.format("%s: %d vs Host %d", resultMsg, playerRoll, hostRoll), 
             playerRoll + ":" + hostRoll);
     }
 }

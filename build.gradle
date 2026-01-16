@@ -4,11 +4,14 @@ plugins {
 }
 
 group = 'com.ikingsnipe'
-version = '16.0.0'
+version = '17.0.0'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    // Support for both JDK LTS (11/17/21) and JDK 25
+    // We target 11 for broad compatibility while allowing builds on newer JDKs
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
 }
 
 repositories {
@@ -17,17 +20,20 @@ repositories {
 
 dependencies {
     compileOnly files('libs/dreambot-api.jar')
+    // Add any professional libraries if needed, e.g., for JSON or logging
+    // implementation 'com.google.code.gson:gson:2.10.1'
 }
 
 shadowJar {
-    archiveBaseName.set('snipes_scripts_enterprise')
+    archiveBaseName.set('snipes_scripts_enterprise_pro')
     archiveClassifier.set('')
     archiveVersion.set('')
 
     manifest {
         attributes(
-            'Implementation-Title': 'snipes♧scripts Enterprise',
-            'Implementation-Version': project.version
+            'Implementation-Title': 'snipes♧scripts Enterprise Pro',
+            'Implementation-Version': project.version,
+            'Created-By': 'Manus AI'
         )
     }
 }
@@ -35,6 +41,12 @@ shadowJar {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.compilerArgs += ['-Xlint:deprecation', '-Xlint:unchecked', '-parameters']
+    
+    // Ensure compatibility with older runtimes if necessary, 
+    // but allow modern features where possible
+    if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
+        options.release = 11
+    }
 }
 
 tasks.build.dependsOn tasks.shadowJar

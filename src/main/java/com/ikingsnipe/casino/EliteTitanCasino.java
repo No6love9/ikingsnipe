@@ -35,7 +35,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.List;
 
-@ScriptManifest(name = "snipes♧scripts Enterprise", author = "ikingsnipe", version = 4.0, category = Category.MONEYMAKING, description = "Enterprise Casino System with Advanced Trade Handling")
+@ScriptManifest(name = "Elite Titan Casino Pro", author = "ikingsnipe", version = 5.0, category = Category.MONEYMAKING, description = "Professional Enterprise Casino System with Robust Trade Handling & Multi-Game Support")
 public class EliteTitanCasino extends AbstractScript implements ChatListener, PaintListener, MouseListener {
 
     private CasinoConfig config;
@@ -79,8 +79,16 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
 
     @Override
     public void onStart() {
+        log("Initializing Elite Titan Casino Pro...");
         config = new CasinoConfig();
+        
+        // Professional GUI initialization
         SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e) {
+                log("Could not set system look and feel");
+            }
             new CasinoGUI(config, (start) -> {
                 this.startScript = start;
                 this.guiFinished = true;
@@ -96,27 +104,35 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
         chatAI = new ChatAI();
         chatAI.setProfitTracker(profitTracker);
         chatAI.setConfig(config);
+        chatAI.setProvablyFair(provablyFair);
         muleManager = new MuleManager(config);
         humanizationManager = new HumanizationManager(config);
         
-        // Initialize new trade handling components
+        // Initialize trade handling components
         tradeStatistics = new TradeStatistics();
         tradeManager = new TradeManager(config, config.tradeConfig, sessionManager, provablyFair);
         tradeRequestListener = new TradeRequestListener(tradeManager, config.tradeConfig);
         
         if (config.discordEnabled && !config.discordWebhookUrl.isEmpty()) {
             webhook = new DiscordWebhook(config.discordWebhookUrl);
-            webhook.send("🚀 **snipes♧scripts Enterprise v4.0** is now ONLINE! Advanced Trade Handling Active.");
+            webhook.send("🚀 **Elite Titan Casino Pro v5.0** is now ONLINE! Robust Trade Handling Active.");
         }
         state = CasinoState.INITIALIZING;
         
-        log("snipes♧scripts Enterprise v4.0 initialized with Advanced Trade Handling");
+        log("Elite Titan Casino Pro v5.0 initialized successfully.");
     }
 
     @Override
     public int onLoop() {
         if (!guiFinished) return 500;
         if (!startScript) { stop(); return 0; }
+
+        // Admin Emergency Stop
+        if (config.adminConfig.emergencyStop) {
+            log("!!! ADMIN EMERGENCY STOP TRIGGERED !!!");
+            stop();
+            return 0;
+        }
 
         try {
             if (humanizationManager.shouldTakeBreak()) {
@@ -210,10 +226,23 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
      * Enhanced IDLE state with comprehensive trade detection
      */
     private int handleIdle() {
+        // Admin Override: Disable all games
+        if (config.adminConfig.disableAllGames) {
+            if (Calculations.random(1, 100) == 1) {
+                log("Games are currently disabled by Admin.");
+            }
+            return 1000;
+        }
+
         // Use TradeManager for comprehensive trade detection
         TradeManager.TradeDetectionResult detection = tradeManager.detectTradeRequest();
         
         if (detection.success) {
+            // Admin Override: Blacklist check
+            if (config.adminConfig.isBlacklisted(detection.playerName)) {
+                log("Ignoring trade request from blacklisted player: " + detection.playerName);
+                return 1000;
+            }
             currentPlayer = detection.playerName;
             
             if (currentPlayer != null) {
@@ -365,11 +394,22 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
         
         // Update session and profit
         currentSession.addGame(result);
-        profitTracker.addGame(currentPlayer, result.isWin(), result.getPayout());
-        
+        profitTracker.addGame(currentPlayer, result.isWin(), currentBet, result.getPayout());
         // Send result message
         String resultMsg = result.getDescription();
         Keyboard.type(resultMsg, true);
+        
+        // Big Win Announcement
+        if (result.isWin() && result.getPayout() >= config.bigWinThreshold && config.autoAnnounceBigWins) {
+            Sleep.sleep(1000, 2000);
+            Keyboard.type("!!! BIG WIN ALERT: " + currentPlayer + " just won " + formatGP(result.getPayout()) + " !!!", true);
+        }
+        
+        // Clan Chat Big Win Announcement
+        if (result.isWin() && config.clanChatEnabled && config.clanChatAnnounceWins && result.getPayout() >= config.clanChatBigWinThreshold) {
+            Sleep.sleep(1000, 2000);
+            Keyboard.type("/[CLAN] BIG WIN: " + currentPlayer + " won " + formatGP(result.getPayout()) + "!", true);
+        }
         
         // Handle payout if win
         if (result.isWin()) {
@@ -446,7 +486,12 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
 
     @Override
     public void onMessage(Message msg) {
-        if (chatAI != null) chatAI.handleChat(msg.getUsername(), msg.getMessage());
+        if (chatAI != null) {
+            // Use name-based check for MessageType to avoid compilation issues with different API versions
+            String typeName = msg.getType().name();
+            boolean isClan = typeName.contains("CLAN");
+            chatAI.handleChat(msg.getUsername(), msg.getMessage(), isClan);
+        }
         if (tradeRequestListener != null) tradeRequestListener.onMessage(msg);
     }
 
@@ -482,4 +527,10 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
     @Override public void mouseReleased(MouseEvent e) {}
     @Override public void mouseEntered(MouseEvent e) {}
     @Override public void mouseExited(MouseEvent e) {}
+
+    private String formatGP(long a) {
+        if (a >= 1_000_000) return (a / 1_000_000) + "M";
+        if (a >= 1_000) return (a / 1_000) + "K";
+        return String.valueOf(a);
+    }
 }

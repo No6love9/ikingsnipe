@@ -59,16 +59,27 @@ public class CasinoConfig {
 
     // Messaging & AI
     public List<String> adMessages = new ArrayList<>(Arrays.asList(
-        "[snipes♧scripts] Chasing Craps | Dice War | Jackpot | !c !dw !b2b | Trade me!",
-        "Elite Casino is OPEN! !c !dw !b2b for big wins!",
-        "Safe & Fast Payouts | Chasing Craps | Dice War | Trade to start!"
+        "🎰 Elite Titan Casino Pro | Fast Payouts | High Limits! | !rules",
+        "💰 Trusted Casino Host | Instant Trades | Fair Games! | !stats",
+        "🎲 Professional Casino Service | Craps, Dice, Flower Poker! | Trade me!"
     ));
     public boolean enableAntiMute = true;
     public int adIntervalSeconds = 30;
-    public String tradeWelcome = "Welcome! Type !c for Craps or !dw for Dice War. Hash: %s";
-    public String winMessage = "WINNER! %s won %s GP! (Result: %s) [Seed: %s]";
-    public String lossMessage = "LOSS! %s lost. (Result: %s)";
+    public String tradeWelcome = "Welcome to Elite Titan Casino! Type !rules for help. Hash: %s";
+    public String winMessage = "🎉 WINNER! %s won %s GP! (Result: %s) [Seed: %s]";
+    public String lossMessage = "❌ LOSS! %s lost. (Result: %s) Better luck next time!";
     public boolean chatAIEnabled = true;
+    public boolean autoReplyToScamAccusations = true;
+    public boolean autoAnnounceBigWins = true;
+    public long bigWinThreshold = 50_000_000L;
+    public List<String> customAutoResponses = new ArrayList<>();
+
+    // Clan Chat Settings
+    public boolean clanChatEnabled = false;
+    public boolean clanChatAnnounceWins = true;
+    public boolean clanChatRespondToCommands = true;
+    public String clanChatName = "";
+    public long clanChatBigWinThreshold = 100_000_000L;
 
     // Discord Webhook
     public String discordWebhookUrl = "";
@@ -83,6 +94,9 @@ public class CasinoConfig {
     
     /** Selected trade preset */
     public TradeConfig.TradePreset tradePreset = TradeConfig.TradePreset.BALANCED;
+
+    /** Admin/Owner Configuration */
+    public AdminConfig adminConfig = new AdminConfig();
 
     public CasinoConfig() {
         initializeDefaultGames();

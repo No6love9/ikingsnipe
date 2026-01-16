@@ -1,9 +1,11 @@
 package com.ikingsnipe.casino.gui;
 
+import com.ikingsnipe.casino.models.AdminConfig;
 import com.ikingsnipe.casino.models.CasinoConfig;
 import com.ikingsnipe.casino.models.TradeConfig;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
@@ -55,6 +57,12 @@ public class CasinoGUI extends JFrame {
 
         // --- Discord Tab ---
         tabs.addTab("Discord", createDiscordTab(config));
+
+        // --- Admin Tab (NEW) ---
+        tabs.addTab("Admin", createAdminTab(config));
+
+        // --- Chat Tab (NEW) ---
+        tabs.addTab("Chat", createChatTab(config));
 
         // --- Advanced Tab ---
         tabs.addTab("Advanced", createAdvancedTab(config));
@@ -138,6 +146,174 @@ public class CasinoGUI extends JFrame {
         p.add(walkOnStart);
         
         return p;
+    }
+
+    /**
+     * Create the Chat configuration tab
+     */
+    private JPanel createChatTab(CasinoConfig config) {
+        JPanel mainPanel = createTabPanel();
+        
+        // Chat AI Settings
+        JPanel aiPanel = createSection("Chat AI & Automation");
+        JCheckBox chatAIEnabled = new JCheckBox("Enable Chat AI", config.chatAIEnabled);
+        styleCheckbox(chatAIEnabled);
+        chatAIEnabled.addActionListener(e -> config.chatAIEnabled = chatAIEnabled.isSelected());
+        
+        JCheckBox autoReplyScam = new JCheckBox("Auto-Reply to Scam Accusations", config.autoReplyToScamAccusations);
+        styleCheckbox(autoReplyScam);
+        autoReplyScam.addActionListener(e -> config.autoReplyToScamAccusations = autoReplyScam.isSelected());
+        
+        aiPanel.add(chatAIEnabled);
+        aiPanel.add(Box.createHorizontalStrut(10));
+        aiPanel.add(autoReplyScam);
+        mainPanel.add(aiPanel);
+        
+        // Announcements
+        JPanel announcePanel = createSection("Announcements");
+        JCheckBox autoAnnounceWins = new JCheckBox("Auto-Announce Big Wins", config.autoAnnounceBigWins);
+        styleCheckbox(autoAnnounceWins);
+        autoAnnounceWins.addActionListener(e -> config.autoAnnounceBigWins = autoAnnounceWins.isSelected());
+        
+        JTextField thresholdField = new JTextField(String.valueOf(config.bigWinThreshold), 10);
+        styleTextField(thresholdField);
+        thresholdField.addActionListener(e -> {
+            try { config.bigWinThreshold = Long.parseLong(thresholdField.getText().replace(",", "")); }
+            catch (Exception ex) { thresholdField.setText(String.valueOf(config.bigWinThreshold)); }
+        });
+        
+        announcePanel.add(autoAnnounceWins);
+        announcePanel.add(Box.createHorizontalStrut(10));
+        announcePanel.add(createLabel("Threshold:"));
+        announcePanel.add(thresholdField);
+        mainPanel.add(announcePanel);
+        
+        // Clan Chat Settings
+        JPanel clanPanel = createSection("Clan Chat Integration");
+        JCheckBox clanEnabled = new JCheckBox("Enable Clan Chat", config.clanChatEnabled);
+        styleCheckbox(clanEnabled);
+        clanEnabled.addActionListener(e -> config.clanChatEnabled = clanEnabled.isSelected());
+        
+        JCheckBox clanAnnounce = new JCheckBox("Announce Wins in Clan", config.clanChatAnnounceWins);
+        styleCheckbox(clanAnnounce);
+        clanAnnounce.addActionListener(e -> config.clanChatAnnounceWins = clanAnnounce.isSelected());
+        
+        JCheckBox clanRespond = new JCheckBox("Respond to Clan Commands", config.clanChatRespondToCommands);
+        styleCheckbox(clanRespond);
+        clanRespond.addActionListener(e -> config.clanChatRespondToCommands = clanRespond.isSelected());
+        
+        clanPanel.add(clanEnabled);
+        clanPanel.add(clanAnnounce);
+        clanPanel.add(clanRespond);
+        mainPanel.add(clanPanel);
+        
+        return mainPanel;
+    }
+
+    /**
+     * Create the Admin/Owner configuration tab
+     */
+    private JPanel createAdminTab(CasinoConfig config) {
+        JPanel mainPanel = createTabPanel();
+        AdminConfig ac = config.adminConfig;
+
+        // Login Panel
+        JPanel loginPanel = createSection("Admin Authentication");
+        JPasswordField passField = new JPasswordField(10);
+        JButton loginBtn = new JButton("Unlock Admin Rights");
+        styleButton(loginBtn);
+        
+        JPanel contentWrapper = new JPanel(new CardLayout());
+        contentWrapper.setOpaque(false);
+        
+        JPanel lockedPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        lockedPanel.setOpaque(false);
+        lockedPanel.add(createLabel("Password:"));
+        lockedPanel.add(passField);
+        lockedPanel.add(loginBtn);
+        
+        JPanel unlockedPanel = new JPanel();
+        unlockedPanel.setLayout(new BoxLayout(unlockedPanel, BoxLayout.Y_AXIS));
+        unlockedPanel.setOpaque(false);
+        
+        // --- Admin Controls (Visible only when unlocked) ---
+        
+        // System Overrides
+        JPanel systemPanel = createSection("System Overrides");
+        JCheckBox emergencyStop = new JCheckBox("EMERGENCY STOP", ac.emergencyStop);
+        emergencyStop.setForeground(Color.RED);
+        emergencyStop.setFont(new Font("Arial", Font.BOLD, 12));
+        emergencyStop.addActionListener(e -> ac.emergencyStop = emergencyStop.isSelected());
+        
+        JCheckBox disableGames = new JCheckBox("Disable All Games", ac.disableAllGames);
+        styleCheckbox(disableGames);
+        disableGames.addActionListener(e -> ac.disableAllGames = disableGames.isSelected());
+        
+        systemPanel.add(emergencyStop);
+        systemPanel.add(Box.createHorizontalStrut(20));
+        systemPanel.add(disableGames);
+        unlockedPanel.add(systemPanel);
+        
+        // Player Management
+        JPanel playerPanel = createSection("Player Management");
+        JTextField blacklistField = new JTextField(10);
+        JButton addBlacklist = new JButton("Blacklist");
+        styleButton(addBlacklist);
+        addBlacklist.addActionListener(e -> {
+            String name = blacklistField.getText().trim();
+            if (!name.isEmpty()) {
+                ac.blacklistPlayer(name);
+                blacklistField.setText("");
+                JOptionPane.showMessageDialog(this, name + " added to blacklist.");
+            }
+        });
+        
+        playerPanel.add(createLabel("Player Name:"));
+        playerPanel.add(blacklistField);
+        playerPanel.add(addBlacklist);
+        unlockedPanel.add(playerPanel);
+        
+        // Advanced Settings
+        JPanel advancedAdmin = createSection("Advanced Admin Settings");
+        JCheckBox verboseLogs = new JCheckBox("Verbose Admin Logs", ac.enableVerboseAdminLogs);
+        styleCheckbox(verboseLogs);
+        verboseLogs.addActionListener(e -> ac.enableVerboseAdminLogs = verboseLogs.isSelected());
+        
+        advancedAdmin.add(verboseLogs);
+        unlockedPanel.add(advancedAdmin);
+
+        contentWrapper.add(lockedPanel, "LOCKED");
+        contentWrapper.add(unlockedPanel, "UNLOCKED");
+        
+        loginBtn.addActionListener(e -> {
+            String input = new String(passField.getPassword());
+            if (input.equals(ac.adminPassword)) {
+                ac.isAdminModeEnabled = true;
+                ((CardLayout)contentWrapper.getLayout()).show(contentWrapper, "UNLOCKED");
+            } else {
+                JOptionPane.showMessageDialog(this, "Invalid Admin Password", "Access Denied", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        mainPanel.add(loginPanel);
+        mainPanel.add(contentWrapper);
+        
+        // If already logged in (e.g. GUI reopened)
+        if (ac.isAdminModeEnabled) {
+            ((CardLayout)contentWrapper.getLayout()).show(contentWrapper, "UNLOCKED");
+        }
+
+        return mainPanel;
+    }
+
+    private void styleButton(JButton btn) {
+        btn.setBackground(new Color(60, 60, 70));
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(100, 100, 110)),
+            BorderFactory.createEmptyBorder(5, 15, 5, 15)
+        ));
     }
 
     /**
