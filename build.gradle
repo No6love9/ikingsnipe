@@ -13,7 +13,12 @@ repositories {
 }
 
 dependencies {
+    // Dependencies for OSRS Bot
     compileOnly files('libs/dreambot-api.jar')
+
+    // Dependencies for Discord Bot (GoatGangDiscordBot)
+    implementation 'net.dv8tion:JDA:5.0.0-beta.20'
+    implementation 'com.google.code.gson:gson:2.10.1'
 }
 
 shadowJar {
@@ -28,7 +33,7 @@ shadowJar {
             'Implementation-Title': 'Elite Titan Casino Pro Enterprise Gold',
             'Implementation-Version': project.version,
             'Created-By': 'Manus AI',
-            'Main-Class': 'com.ikingsnipe.casino.EliteTitanCasino'
+            'Main-Class': 'com.ikingsnipe.casino.GoatGangDiscordBot' // Changed to Discord Bot for this task
         )
     }
 }
