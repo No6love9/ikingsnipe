@@ -1,0 +1,1016 @@
+# =================================================================================
+# GOAT-GANG CASINO BOT - ENTERPRISE EDITION (PYTHON 3.13 COMPATIBLE)
+# =================================================================================
+import discord
+from discord.ext import commands, tasks
+import json
+import os
+import logging
+import logging.handlers
+import time
+import uuid
+import random
+from PIL import Image, ImageDraw, ImageFont
+from io import BytesIO
+import hashlib
+import secrets
+import datetime
+import asyncio
+import aiohttp
+import uvicorn
+from fastapi import FastAPI, HTTPException, Depends, Header
+from cryptography.fernet import Fernet
+import zlib
+import hmac
+import sys
+import shutil
+from pathlib import Path
+import psutil
+from discord.ui import Button, View, Modal, TextInput
+from collections import Counter
+from typing import List, Tuple, Optional, Union
+import math
+
+# =================================================================================
+# ENHANCED CONSTANTS & CONFIGURATION
+# =================================================================================
+CONFIG_FILE = 'config.json'
+GAME_STATE_FILE = 'gamestate.json'
+POOL_STATE_FILE = 'poolstate.json'
+WELCOME_CONFIG_FILE = 'welcome_config.json'
+LOG_FILE = 'bot.log'
+SECRETS_FILE = 'secrets.enc'
+BACKUP_DIR = 'backups'
+API_PORT = 5000
+
+# Visual Constants
+GOAT_GOLD = 0xFFD700
+GOAT_BLUE = 0x3498DB
+SUCCESS_GREEN = 0x2ECC71
+ERROR_RED = 0xE74C3C
+GOAT_ICON_URL = "https://i.ibb.co/60cw6SN/goat-gang-logo.png"
+
+# Game Assets
+ASSET_URLS = {
+    "craps_table": "https://i.ibb.co/pv73PMLv/Polish-20250817-104830658.jpg",
+    "dice": {
+        1: "https://i.ibb.co/8DPbFBYk/AISelect-20250817-112721-Chrome.jpg",
+        2: "https://i.ibb.co/7NGPz02H/AISelect-20250817-112834-Chrome.jpg",
+        3: "https://i.ibb.co/vxGmmQSF/AISelect-20250817-112759-Chrome.jpg",
+        4: "https://i.ibb.co/kVYzkfSp/AISelect-20250817-112904-Chrome.jpg",
+        5: "https://i.ibb.co/6JnPSN6s/AISelect-20250817-112841-Chrome.jpg",
+        6: "https://i.ibb.co/LXZJbk8z/AISelect-20250817-112921-Chrome.jpg",
+    },
+    "flower_poker_table": "https://i.ibb.co/yBy8DyJQ/Polish-20250817-204648229.jpg",
+    "flowers": {
+        "red": "https://i.ibb.co/rfKsJKs6/AISelect-20250817-181852-Firefox.jpg",
+        "blue": "https://i.ibb.co/Kp1ycgnv/AISelect-20250817-181835-Firefox.jpg",
+        "yellow": "https://i.ibb.co/Y71kD7z6/AISelect-20250817-181820-Firefox.jpg",
+        "purple": "https://i.ibb.co/NnK9HMzj/AISelect-20250817-181806-Firefox.jpg",
+        "orange": "https://i.ibb.co/h1KJBGkr/AISelect-20250817-181750-Firefox.jpg",
+        "white": "https://i.ibb.co/VWgymNsq/AISelect-20250817-181736-Firefox.jpg",
+        "black": "https://i.ibb.co/xSby17kZ/AISelect-20250817-181719-Firefox.jpg",
+    },
+    "hand_ranks": {
+        "5 OaK": "https://i.ibb.co/xSd8rN30/AISelect-20250817-203546-Google.jpg",
+        "4 OaK": "https://i.ibb.co/N6CTcTQ8/AISelect-20250817-202643-Google.jpg",
+        "Full House": "https://i.ibb.co/5x9qN1wk/AISelect-20250817-202745-Google.jpg",
+        "3 OaK": "https://i.ibb.co/9HLJTHPk/AISelect-20250817-202218-Google.jpg",
+        "2 Pairs": "https://i.ibb.co/bjKGNVq7/AISelect-20250817-202209-Google.jpg",
+        "1 Pair": "https://i.ibb.co/60V4SqVk/AISelect-20250817-202152-Google.jpg",
+        "Bust": "https://i.ibb.co/d0y4qcQz/AISelect-20250817-202339-Google.jpg",
+        "YOU WIN": "https://i.ibb.co/2RrY6Z9/AISelect-20250817-202421-Google.jpg",
+        "YOU LOSE": "https://i.ibb.co/pSVtX0h/AISelect-20250817-202528-Google.jpg",
+        "PUSH": "https://i.ibb.co/2RrY6Z9/AISelect-20250817-202421-Google.jpg"
+    }
+}
+
+# =================================================================================
+# IMPORTANT: CONFIGURE YOUR BOT HERE
+# =================================================================================
+DEFAULT_CONFIG = {
+    "bot_token": os.getenv("DISCORD_BOT_TOKEN", "YOUR_BOT_TOKEN_HERE"),
+    "guild_id": "1189439097345941585",
+    "admin_role_id": "1293643009505628206",
+    "goated_role_id": "1404625184064934019",
+    "pos_notifications_channel_id": "CHANNEL_ID_FOR_DEPOSIT_NOTIFICATIONS",
+    "application_channel_id": "CHANNEL_ID_FOR_GOATED_APPLICATIONS",
+    "goated_member_ids": [],
+    "admin_log_channel_id": "1404625168319516712",
+    "casino_channel_id": "",
+    "api_secret_key": str(uuid.uuid4()),
+    "pos_config": {
+        "payment_methods": "CashApp: $YourTag, PayPal: your@email.com",
+        "min_deposit_usd": 10.0,
+        "min_withdrawal_gp": 25000000,
+        "gp_price_per_million": 0.22
+    },
+    "server_config": {
+        "required_channels": {
+            "rewards": {"topic": "Rewards and giveaways", "category": "GOAT-GANG Casino"},
+            "GoatBanker": {"topic": "Banking transactions with Goat Gang", "category": "GOAT-GANG Casino"},
+            "P-U-G": {"topic": "Ping a Goat member for assistance", "category": "GOAT-GANG Casino"},
+            "osrs-gold-pool": {"topic": "The GangPool: hourly distributions from the gold pool", "category": "GOAT-GANG Casino"},
+            "G-craps-results": {"topic": "Craps game results and RNG verification", "category": "GOAT-GANG Casino"}
+        }
+    },
+    "gang_pool_config": {
+        "pool_percentage": 0.01,
+        "owner_share": 0.3,
+        "active_player_share": 0.7
+    },
+    "security": {
+        "rate_limit": True,
+        "max_balance": 1000000000000,
+        "transaction_limit": 10000000000
+    }
+}
+
+# =================================================================================
+# DATA MANAGEMENT (ASYNC I/O)
+# =================================================================================
+class SecureDataManager:
+    def __init__(self):
+        self.locks = {
+            "config": asyncio.Lock(), "game_state": asyncio.Lock(),
+            "gang_pool": asyncio.Lock(), "welcome_config": asyncio.Lock()
+        }
+        self._ensure_secrets()
+        self.fernet = Fernet(self._get_secret_key())
+        self.config = self.game_state = self.gang_pool = self.welcome_config = None
+
+    async def load_all_data(self):
+        self.config = await self._load_encrypted_data(CONFIG_FILE, DEFAULT_CONFIG)
+        self.game_state = await self._load_encrypted_data(GAME_STATE_FILE, {"unfinished_games": {}})
+        self.gang_pool = await self._load_encrypted_data(POOL_STATE_FILE, {
+            "total_pool": 0, "hourly_contributions": {}, "last_distribution": int(time.time())})
+        self.welcome_config = await self._load_encrypted_data(WELCOME_CONFIG_FILE, {"guilds": {}})
+        logger.info("All secure data files loaded.")
+
+    def _ensure_secrets(self):
+        if not os.path.exists(SECRETS_FILE):
+            with open(SECRETS_FILE, 'wb') as f:
+                f.write(Fernet.generate_key())
+
+    def _get_secret_key(self):
+        with open(SECRETS_FILE, 'rb') as f:
+            return f.read()
+
+    def _encrypt_data(self, data):
+        return self.fernet.encrypt(zlib.compress(json.dumps(data).encode()))
+
+    def _decrypt_data(self, encrypted_data):
+        try:
+            return json.loads(zlib.decompress(self.fernet.decrypt(encrypted_data)))
+        except Exception:
+            return None
+
+    def _blocking_load(self, filename):
+        with open(filename, 'rb') as f:
+            return f.read()
+
+    def _blocking_save(self, filename, data):
+        with open(filename, 'wb') as f:
+            f.write(data)
+
+    async def _load_encrypted_data(self, filename, default):
+        if not os.path.exists(filename):
+            await self._save_encrypted_data(filename, default)
+            return default
+        try:
+            encrypted = await asyncio.to_thread(self._blocking_load, filename)
+            data = self._decrypt_data(encrypted)
+            if data is None:
+                logger.error(f"Failed to decrypt {filename}. It might be corrupt. Creating a new one.")
+                os.rename(filename, f"{filename}.corrupt_{int(time.time())}")
+                await self._save_encrypted_data(filename, default)
+                return default
+            return data
+        except Exception as e:
+            logger.error(f"Error loading {filename}: {e}")
+            return default
+
+    async def _save_encrypted_data(self, filename, data):
+        encrypted_data = await asyncio.to_thread(self._encrypt_data, data)
+        await asyncio.to_thread(self._blocking_save, filename, encrypted_data)
+
+    async def save_config(self):
+        async with self.locks["config"]:
+            await self._save_encrypted_data(CONFIG_FILE, self.config)
+
+    async def save_game_state(self):
+        async with self.locks["game_state"]:
+            await self._save_encrypted_data(GAME_STATE_FILE, self.game_state)
+
+    async def save_gang_pool(self):
+        async with self.locks["gang_pool"]:
+            await self._save_encrypted_data(POOL_STATE_FILE, self.gang_pool)
+
+    async def save_welcome_config(self):
+        async with self.locks["welcome_config"]:
+            await self._save_encrypted_data(WELCOME_CONFIG_FILE, self.welcome_config)
+
+    async def get_user_data(self, user_id: int) -> dict:
+        user_id_str = str(user_id)
+        async with self.locks["config"]:
+            if "user_data" not in self.config:
+                self.config["user_data"] = {}
+            if user_id_str not in self.config["user_data"]:
+                self.config["user_data"][user_id_str] = {"balance": 0}
+                await self._save_encrypted_data(CONFIG_FILE, self.config)
+            return self.config["user_data"][user_id_str]
+
+    async def update_balance(self, user_id: int, amount: int, reason: str = "Transaction") -> int:
+        user_id_str = str(user_id)
+        if amount == 0:
+            return (await self.get_user_data(int(user_id)))['balance']
+
+        async with self.locks["config"]:
+            if "user_data" not in self.config: self.config["user_data"] = {}
+            user_data = self.config["user_data"].get(user_id_str, {"balance": 0})
+
+            new_balance = user_data.get("balance", 0) + amount
+
+            if new_balance < 0:
+                raise ValueError("Resulting balance would be negative.")
+            sec_config = self.config["security"]
+            if abs(amount) > sec_config["transaction_limit"]:
+                raise ValueError("Transaction amount exceeds limit.")
+            if new_balance > sec_config["max_balance"]:
+                raise ValueError("Resulting balance exceeds maximum allowed.")
+
+            self.config["user_data"][user_id_str] = user_data
+            user_data["balance"] = new_balance
+
+            await self._save_encrypted_data(CONFIG_FILE, self.config)
+
+        logger.info(f"Balance update for {user_id}: {amount:+,}. Reason: {reason}. New balance: {new_balance:,}")
+        return new_balance
+
+    async def add_user_contribution(self, user_id: int, amount: int):
+        user_id_str = str(user_id)
+        async with self.locks["gang_pool"]:
+            current_contributions = self.gang_pool.get('hourly_contributions', {})
+            current = current_contributions.get(user_id_str, 0)
+            current_contributions[user_id_str] = current + amount
+            self.gang_pool['hourly_contributions'] = current_contributions
+            self.gang_pool['total_pool'] = self.gang_pool.get('total_pool', 0) + amount
+            await self._save_encrypted_data(POOL_STATE_FILE, self.gang_pool)
+
+# =================================================================================
+# LOGGING SYSTEM
+# =================================================================================
+def setup_logging():
+    """Sets up the global logger with file and colored console handlers."""
+    log = logging.getLogger('GOAT_GANG')
+    log.setLevel(logging.INFO)
+    if log.hasHandlers():
+        log.handlers.clear()
+    log_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    file_handler = logging.handlers.RotatingFileHandler(
+        filename=LOG_FILE, encoding='utf-8', maxBytes=32 * 1024 * 1024, backupCount=5
+    )
+    file_handler.setFormatter(log_formatter)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(CustomFormatter())
+    log.addHandler(file_handler)
+    log.addHandler(console_handler)
+    return log
+
+class CustomFormatter(logging.Formatter):
+    """Custom logging formatter that adds color to console output."""
+    grey = "\x1b[38;20m"
+    yellow = "\x1b[33;20m"
+    red = "\x1b[31;20m"
+    bold_red = "\x1b[31;1m"
+    reset = "\x1b[0m"
+    format_str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+    FORMATS = {
+        logging.DEBUG: grey + format_str + reset,
+        logging.INFO: grey + format_str + reset,
+        logging.WARNING: yellow + format_str + reset,
+        logging.ERROR: red + format_str + reset,
+        logging.CRITICAL: bold_red + format_str + reset
+    }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
+
+logger = setup_logging()
+
+# =================================================================================
+# GAME ENGINE
+# =================================================================================
+class AssetManager:
+    def __init__(self):
+        self.assets, self.session, self.font_cache = {}, None, {}
+
+    async def load_all(self):
+        self.session = aiohttp.ClientSession()
+        tasks = [self._load_asset(cat, key, url) for cat, items in ASSET_URLS.items()
+                 for key, url in (items.items() if isinstance(items, dict) else [(None, items)])]
+        await asyncio.gather(*tasks)
+        logger.info("All game assets loaded")
+
+    async def _load_asset(self, category, key, url):
+        try:
+            async with self.session.get(url) as response:
+                if response.status == 200:
+                    data = await response.read()
+                    img = await asyncio.to_thread(Image.open, BytesIO(data))
+                    img = img.convert("RGBA")
+                    if key:
+                        self.assets.setdefault(category, {})[key] = img
+                    else:
+                        self.assets[category] = img
+                else:
+                    logger.error(f"Failed asset load {url}: Status {response.status}")
+        except Exception as e:
+            logger.error(f"Error loading asset {url}: {e}")
+
+    async def close(self):
+        if self.session:
+            await self.session.close()
+
+    def get_font(self, size, bold=False):
+        key = f"{'bold_' if bold else ''}{size}"
+        if key not in self.font_cache:
+            try:
+                self.font_cache[key] = ImageFont.truetype("arialbd.ttf" if bold else "arial.ttf", size)
+            except IOError:
+                logger.warning("Arial font not found. Using default. (Install 'ttf-mscorefonts-installer' on Debian/Ubuntu)")
+                self.font_cache[key] = ImageFont.load_default()
+        return self.font_cache[key]
+
+    async def create_craps_image(self, *args, **kwargs):
+        return await asyncio.to_thread(self._create_craps_image_sync, *args, **kwargs)
+
+    def _create_craps_image_sync(self, die1_val, die2_val, outcome_text="", sub_text=""):
+        table = self.assets['craps_table'].copy()
+        draw = ImageDraw.Draw(table)
+        d1_img = self.assets['dice'].get(die1_val).resize((100, 100))
+        d2_img = self.assets['dice'].get(die2_val).resize((100, 100))
+        table.paste(d1_img, (270, 175), d1_img)
+        table.paste(d2_img, (430, 175), d2_img)
+        if outcome_text:
+            font = self.get_font(70, bold=True)
+            bbox = draw.textbbox((0, 0), outcome_text, font=font)
+            draw.text(((table.width - (bbox[2] - bbox[0])) / 2, 20), outcome_text, font=font, fill="#FFD700", stroke_width=3, stroke_fill="black")
+        if sub_text:
+            font = self.get_font(40)
+            bbox = draw.textbbox((0, 0), sub_text, font=font)
+            draw.text(((table.width - (bbox[2] - bbox[0])) / 2, 380), sub_text, font=font, fill="white", stroke_width=1, stroke_fill="black")
+        buffer = BytesIO()
+        table.save(buffer, format="PNG")
+        buffer.seek(0)
+        return discord.File(buffer, filename="craps_game.png")
+
+    async def create_flower_poker_image(self, *args, **kwargs):
+        return await asyncio.to_thread(self._create_flower_poker_image_sync, *args, **kwargs)
+
+    def _create_flower_poker_image_sync(self, player_hand, host_hand, player_rank, host_rank, outcome_text):
+        table = self.assets['flower_poker_table'].copy()
+        draw = ImageDraw.Draw(table)
+        flower_size = (80, 80)
+        x_start, y_host, y_player = 150, 50, 350
+        for i, flower_name in enumerate(host_hand):
+            if flower_img := self.assets['flowers'].get(flower_name):
+                resized_flower = flower_img.resize(flower_size)
+                table.paste(resized_flower, (x_start + i * 90, y_host), resized_flower)
+        for i, flower_name in enumerate(player_hand):
+            if flower_img := self.assets['flowers'].get(flower_name):
+                resized_flower = flower_img.resize(flower_size)
+                table.paste(resized_flower, (x_start + i * 90, y_player), resized_flower)
+        if p_rank_img := self.assets['hand_ranks'].get(player_rank):
+            table.paste(p_rank_img, (50, 400), p_rank_img)
+        if h_rank_img := self.assets['hand_ranks'].get(host_rank):
+            table.paste(h_rank_img, (50, 150), h_rank_img)
+        if out_img := self.assets['hand_ranks'].get(outcome_text):
+            pos = ((table.width - out_img.width) // 2, (table.height - out_img.height) // 2)
+            table.paste(out_img, pos, out_img)
+        font = self.get_font(30, bold=True)
+        draw.text((200, 10), "Host Hand", font=font, fill="white")
+        draw.text((200, 310), "Your Hand", font=font, fill="white")
+        buffer = BytesIO()
+        table.save(buffer, format="PNG")
+        buffer.seek(0)
+        return discord.File(buffer, filename="flower_poker_game.png")
+
+class RNGEngine:
+    @staticmethod
+    def generate_rng_seed(user_id: int) -> Tuple[str, str]:
+        seed = f"{user_id}-{int(time.time() * 1000)}-{secrets.token_hex(16)}"
+        return seed, hashlib.sha256(seed.encode()).hexdigest()
+
+    @staticmethod
+    def roll_from_seed(seed: str, num_rolls: int = 1, min_val: int = 1, max_val: int = 6) -> List[int]:
+        rng = random.Random(seed)
+        return [rng.randint(min_val, max_val) for _ in range(num_rolls)]
+
+# =================================================================================
+# GAME IMPLEMENTATIONS
+# =================================================================================
+class CrapsGame:
+    def __init__(self, interaction: discord.Interaction, bet: int, data_manager: SecureDataManager):
+        self.interaction = interaction
+        self.bet = bet
+        self.data_manager = data_manager
+        self.player_id = interaction.user.id
+        self.seed, self.seed_hash = RNGEngine.generate_rng_seed(self.player_id)
+        self.fee = int(bet * data_manager.config['gang_pool_config']['pool_percentage'])
+        self.wager = bet - self.fee
+
+    async def start(self):
+        rolls = RNGEngine.roll_from_seed(self.seed, 2)
+        self.d1, self.d2 = rolls
+        self.total = sum(rolls)
+        view, outcome, sub_text = None, "LOSS", f"You lost {self.wager:,} GP. Better luck next time!"
+        if self.total in [7, 9, 12]:
+            win_amount = self.wager * 3
+            await self.data_manager.update_balance(self.player_id, win_amount, "Craps win")
+            view, outcome, sub_text = CrapsDecisionView(self), "WINNER!", f"You won {win_amount:,} GP! Double or nothing?"
+
+        file = await self.interaction.client.asset_manager.create_craps_image(self.d1, self.d2, outcome, sub_text)
+        await self.interaction.channel.send(file=file, view=view)
+
+        await self.data_manager.add_user_contribution(self.player_id, self.fee)
+        await self.post_results()
+
+    async def post_results(self):
+        guild = self.interaction.guild
+        channel_name = "G-craps-results"
+        
+        if channel := discord.utils.get(guild.channels, name=channel_name):
+            embed = discord.Embed(title=f"🎲 Craps Result: {self.interaction.user.display_name}", color=GOAT_GOLD)
+            embed.set_thumbnail(url=self.interaction.user.display_avatar.url)
+            embed.add_field(name="Bet", value=f"{self.bet:,} GP", inline=True)
+            embed.add_field(name="Fee", value=f"{self.fee:,} GP", inline=True)
+            embed.add_field(name="Roll", value=f"{self.d1} + {self.d2} = **{self.total}**", inline=False)
+            embed.add_field(name="RNG Seed", value=f"||`{self.seed}`||", inline=False)
+            embed.add_field(name="Seed Hash", value=f"`{self.seed_hash}`")
+            await channel.send(embed=embed)
+
+class FlowerPokerGame:
+    HAND_VALUES = {"Bust": 0, "1 Pair": 1, "2 Pairs": 2, "3 OaK": 3, "Full House": 4, "4 OaK": 5, "5 OaK": 6}
+    FLOWERS = list(ASSET_URLS["flowers"].keys())
+
+    def __init__(self, interaction: discord.Interaction, bet: int, data_manager: SecureDataManager):
+        self.interaction = interaction
+        self.bet = bet
+        self.data_manager = data_manager
+        self.player_id = interaction.user.id
+        self.seed, self.seed_hash = RNGEngine.generate_rng_seed(self.player_id)
+        self.fee = int(bet * data_manager.config['gang_pool_config']['pool_percentage'])
+        self.wager = bet - self.fee
+
+    def get_hand_rank(self, hand: List[str]):
+        counts = Counter(hand).values()
+        if 5 in counts: return "5 OaK"
+        if 4 in counts: return "4 OaK"
+        if 3 in counts and 2 in counts: return "Full House"
+        if 3 in counts: return "3 OaK"
+        if sorted(list(counts)) == [2, 2]: return "2 Pairs"
+        if 2 in counts: return "1 Pair"
+        return "Bust"
+
+    async def start(self):
+        class FlowerPokerView(View):
+            def __init__(self, game):
+                super().__init__(timeout=60)
+                self.game = game
+
+            @discord.ui.button(label="Plant Flowers", style=discord.ButtonStyle.success, emoji="🌸")
+            async def plant(self, i: discord.Interaction, b: Button):
+                if i.user.id != self.game.player_id:
+                    await i.response.send_message("This is not your game!", ephemeral=True)
+                    return
+                await i.response.defer()
+                b.disabled = True
+                await i.edit_original_response(view=self)
+                await self.game.play(i)
+                self.stop()
+
+        embed = discord.Embed(title="Goated☆Flower☆Poker", description=f"{self.interaction.user.mention}, bet of **{self.bet:,} GP** placed. Plant your flowers!", color=0xDA70D6)
+        await self.interaction.channel.send(embed=embed, view=FlowerPokerView(self))
+
+    async def play(self, interaction: discord.Interaction):
+        rng = random.Random(self.seed)
+        player_hand, host_hand = [rng.choice(self.FLOWERS) for _ in range(5)], [rng.choice(self.FLOWERS) for _ in range(5)]
+        player_rank, host_rank = self.get_hand_rank(player_hand), self.get_hand_rank(host_hand)
+        player_value, host_value = self.HAND_VALUES[player_rank], self.HAND_VALUES[host_rank]
+
+        if player_value > host_value:
+            outcome = "YOU WIN"
+            win_amount = self.bet + self.wager
+            await self.data_manager.update_balance(self.player_id, win_amount, "Flower Poker win")
+        else:
+            outcome = "YOU LOSE" if player_value < host_value else "PUSH"
+            if outcome == "PUSH":
+                await self.data_manager.update_balance(self.player_id, self.bet, "Flower Poker push refund")
+
+        await self.data_manager.add_user_contribution(self.player_id, self.fee)
+
+        file = await self.interaction.client.asset_manager.create_flower_poker_image(player_hand, host_hand, player_rank, host_rank, outcome)
+        await interaction.edit_original_response(attachments=[file], embed=None, view=None)
+
+# =================================================================================
+# DISCORD UI COMPONENTS
+# =================================================================================
+class CrapsDecisionView(View):
+    def __init__(self, game: CrapsGame):
+        super().__init__(timeout=60)
+        self.game = game
+
+    @discord.ui.button(label="Take Winnings", style=discord.ButtonStyle.success, emoji="💰")
+    async def take(self, i: discord.Interaction, b: Button):
+        if i.user.id != self.game.player_id:
+            await i.response.send_message("This is not your game!", ephemeral=True)
+            return
+        file = await self.game.interaction.client.asset_manager.create_craps_image(self.game.d1, self.game.d2, "WINNINGS SECURED", f"You pocketed {self.game.wager * 3:,} GP.")
+        await i.response.edit_message(attachments=[file], view=None)
+        self.stop()
+
+    @discord.ui.button(label="Double or Nothing", style=discord.ButtonStyle.primary, emoji="🎲")
+    async def roll_again(self, i: discord.Interaction, b: Button):
+        if i.user.id != self.game.player_id:
+            await i.response.send_message("This is not your game!", ephemeral=True)
+            return
+        await i.response.defer()
+        new_bet = self.game.wager * 3
+        try:
+            await self.game.data_manager.update_balance(self.game.player_id, -new_bet, "Craps double or nothing bet")
+            new_game = CrapsGame(self.game.interaction, new_bet, self.game.data_manager)
+            await i.edit_original_response(content=f"Rolling again with {new_bet:,} GP!", attachments=[], view=None)
+            await new_game.start()
+        except ValueError as e:
+            await i.edit_original_response(content=f"❌ Error: {e}", view=None)
+        self.stop()
+
+class DepositModal(Modal, title="💰 Make a Deposit"):
+    amount_usd = TextInput(label="Amount to Deposit (USD)", placeholder="Minimum $10.00")
+    transaction_id = TextInput(label="Payment Transaction ID / Reference", placeholder="e.g., CashApp note or PayPal ID")
+
+    async def on_submit(self, i: discord.Interaction):
+        await i.response.defer(ephemeral=True)
+        try:
+            amount = float(self.amount_usd.value)
+        except ValueError:
+            return await i.followup.send("❌ Please enter a valid number.", ephemeral=True)
+        dm = i.client.data_manager
+        if amount < dm.config['pos_config']['min_deposit_usd']:
+            return await i.followup.send(f"❌ Minimum deposit is ${dm.config['pos_config']['min_deposit_usd']:.2f}.", ephemeral=True)
+        gp_to_credit = int((amount / dm.config['pos_config']['gp_price_per_million']) * 1_000_000)
+        embed = discord.Embed(title="📥 New Deposit Request", color=SUCCESS_GREEN, timestamp=datetime.datetime.now(datetime.timezone.utc))
+        embed.set_author(name=i.user, icon_url=i.user.display_avatar.url)
+        embed.add_field(name="Amount (USD)", value=f"${amount:.2f}")
+        embed.add_field(name="Transaction ID", value=self.transaction_id.value)
+        embed.add_field(name="GP to Credit", value=f"**{gp_to_credit:,} GP**", inline=False)
+        embed.set_footer(text=f"User ID: {i.user.id}")
+        if channel_id_str := dm.config.get("pos_notifications_channel_id"):
+            try:
+                channel_id = int(channel_id_str)
+                if channel := i.client.get_channel(channel_id):
+                    await channel.send(embed=embed)
+                    await i.followup.send("✅ Your deposit request is submitted!", ephemeral=True)
+                else:
+                    await i.followup.send("⚠️ Your request was submitted, but the notification channel is invalid.", ephemeral=True)
+            except (ValueError, TypeError):
+                 await i.followup.send("⚠️ Your request was submitted, but the notification channel ID is configured incorrectly.", ephemeral=True)
+
+class WithdrawModal(Modal, title="💸 Request Withdrawal"):
+    amount_gp = TextInput(label="Amount to Withdraw (GP)", placeholder="Minimum 25,000,000 GP")
+
+    async def on_submit(self, i: discord.Interaction):
+        await i.response.defer(ephemeral=True)
+        try:
+            amount = int(self.amount_gp.value.replace(',', ''))
+        except ValueError:
+            return await i.followup.send("❌ Please enter a valid number.", ephemeral=True)
+        dm = i.client.data_manager
+        min_withdraw = dm.config['pos_config']['min_withdrawal_gp']
+        if amount < min_withdraw: 
+            return await i.followup.send(f"❌ Minimum withdrawal is {min_withdraw:,} GP.", ephemeral=True)
+        user_balance = (await dm.get_user_data(i.user.id))['balance']
+        if amount > user_balance: 
+            return await i.followup.send(f"❌ Insufficient balance. You have {user_balance:,} GP.", ephemeral=True)
+        await dm.update_balance(i.user.id, -amount, "Withdrawal request")
+        usd_value = (amount / 1_000_000) * dm.config['pos_config']['gp_price_per_million']
+        embed = discord.Embed(title="📤 New Withdrawal Request", color=GOAT_BLUE, timestamp=datetime.datetime.now(datetime.timezone.utc))
+        embed.set_author(name=i.user, icon_url=i.user.display_avatar.url)
+        embed.add_field(name="Amount (GP)", value=f"{amount:,} GP")
+        embed.add_field(name="USD Value", value=f"${usd_value:.2f}")
+        embed.add_field(name="Payment Info", value=dm.config['pos_config']['payment_methods'], inline=False)
+        embed.set_footer(text=f"User ID: {i.user.id}")
+        if channel_id_str := dm.config.get("pos_notifications_channel_id"):
+            try:
+                channel_id = int(channel_id_str)
+                if channel := i.client.get_channel(channel_id):
+                    await channel.send(embed=embed)
+                    await i.followup.send("✅ Withdrawal request submitted! GP has been deducted.", ephemeral=True)
+                else:
+                    await i.followup.send("⚠️ Your request was submitted, but the notification channel is invalid.", ephemeral=True)
+            except (ValueError, TypeError):
+                 await i.followup.send("⚠️ Your request was submitted, but the notification channel ID is configured incorrectly.", ephemeral=True)
+
+class GetGoatedModal(Modal, title="🐐 Apply to Become Goated"):
+    experience = TextInput(label="Your OSRS Experience", style=discord.TextStyle.long)
+    why_goated = TextInput(label="Why Should You Be Goated?", style=discord.TextStyle.long)
+
+    async def on_submit(self, i: discord.Interaction):
+        await i.response.defer(ephemeral=True)
+        embed = discord.Embed(title="🐐 New Goated Application", color=GOAT_GOLD, timestamp=datetime.datetime.now(datetime.timezone.utc))
+        embed.set_author(name=i.user, icon_url=i.user.display_avatar.url)
+        embed.add_field(name="Experience", value=self.experience.value, inline=False)
+        embed.add_field(name="Reason", value=self.why_goated.value, inline=False)
+        if channel_id_str := i.client.data_manager.config.get("application_channel_id"):
+            try:
+                channel_id = int(channel_id_str)
+                if channel := i.client.get_channel(channel_id):
+                    await channel.send(embed=embed)
+                    await i.followup.send("✅ Your application has been submitted!", ephemeral=True)
+                else:
+                    await i.followup.send("⚠️ Your application was sent, but the review channel is invalid.", ephemeral=True)
+            except (ValueError, TypeError):
+                 await i.followup.send("⚠️ Your application was sent, but the review channel ID is configured incorrectly.", ephemeral=True)
+
+class MainMenuView(View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Play Craps", style=discord.ButtonStyle.primary, emoji="🎲", custom_id="play_craps")
+    async def play_craps(self, i: discord.Interaction, b: Button):
+        await i.response.send_modal(BetModal("craps"))
+
+    @discord.ui.button(label="Play Flower Poker", style=discord.ButtonStyle.primary, emoji="🌸", custom_id="play_flowers")
+    async def play_flowers(self, i: discord.Interaction, b: Button):
+        await i.response.send_modal(BetModal("flowers"))
+
+    @discord.ui.button(label="Deposit", style=discord.ButtonStyle.success, emoji="💳", custom_id="deposit")
+    async def deposit(self, i: discord.Interaction, b: Button):
+        await i.response.send_modal(DepositModal())
+
+    @discord.ui.button(label="Withdraw", style=discord.ButtonStyle.success, emoji="💸", custom_id="withdraw")
+    async def withdraw(self, i: discord.Interaction, b: Button):
+        await i.response.send_modal(WithdrawModal())
+
+    @discord.ui.button(label="Get Goated", style=discord.ButtonStyle.secondary, emoji="🐐", custom_id="get_goated")
+    async def get_goated(self, i: discord.Interaction, b: Button):
+        await i.response.send_modal(GetGoatedModal())
+
+class BetModal(Modal, title="Place Your Bet"):
+    def __init__(self, game_type: str):
+        super().__init__()
+        self.game_type = game_type
+        self.bet_amount = TextInput(label="Bet Amount (GP)", placeholder="e.g., 10m or 10000000")
+        self.add_item(self.bet_amount)
+
+    def parse_bet(self, bet_str: str) -> int:
+        bet_str = bet_str.lower().strip().replace(',', '')
+        multipliers = {'k': 1_000, 'm': 1_000_000, 'b': 1_000_000_000}
+        for suffix, value in multipliers.items():
+            if bet_str.endswith(suffix):
+                return int(float(bet_str[:-1]) * value)
+        return int(bet_str)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        try:
+            bet = self.parse_bet(self.bet_amount.value)
+        except ValueError:
+            return await interaction.followup.send("❌ Invalid bet amount.", ephemeral=True)
+        if bet < 1_000_000:
+            return await interaction.followup.send("❌ Minimum bet is 1,000,000 GP.", ephemeral=True)
+        dm = interaction.client.data_manager
+        user_balance = (await dm.get_user_data(interaction.user.id))['balance']
+        if bet > user_balance:
+            return await interaction.followup.send(f"❌ Insufficient balance.", ephemeral=True)
+
+        await dm.update_balance(interaction.user.id, -bet, f"{self.game_type} bet")
+        await interaction.followup.send(f"✅ Bet placed! Starting your {self.game_type} game in this channel.", ephemeral=True)
+
+        game = CrapsGame(interaction, bet, dm) if self.game_type == "craps" else FlowerPokerGame(interaction, bet, dm)
+        await game.start()
+
+# =================================================================================
+# DISCORD BOT CORE
+# =================================================================================
+class GoatGangBot(commands.Bot):
+    def __init__(self, data_manager: SecureDataManager):
+        intents = discord.Intents.default()
+        intents.members = True
+        intents.message_content = True
+        super().__init__(command_prefix='!', intents=intents, help_command=None)
+        self.data_manager = data_manager
+        self.asset_manager = AssetManager()
+        self.start_time = time.time()
+        self.persistent_views_added = False
+        self.api_app = None
+
+    async def setup_hook(self):
+        await self.data_manager.load_all_data()
+        self.api_app = self.create_api_app()
+        await self.asset_manager.load_all()
+        if not self.persistent_views_added:
+            self.add_view(MainMenuView())
+            self.persistent_views_added = True
+        await setup_commands(self)
+        self.gang_pool_distribution.start()
+        self.performance_monitor.start()
+        self.backup_task.start()
+        await self.start_api_server()
+
+    async def on_ready(self):
+        logger.info(f'🐐 GOAT-GANG MASTER BOT ONLINE: {self.user.name} 🐐')
+        logger.info(f"🔗 Connected to {len(self.guilds)} servers")
+
+    async def on_command_error(self, ctx, error):
+        if isinstance(error, commands.CommandNotFound):
+            return
+        logger.error(f"Command error in '{ctx.command}':", exc_info=error)
+        await ctx.send("An error occurred while running this command.")
+
+    async def on_member_join(self, member):
+        logger.info(f"New member joined: {member.display_name} in {member.guild.name}")
+        await self.send_welcome_message(member)
+
+    async def send_welcome_message(self, member: discord.Member):
+        guild_id = str(member.guild.id)
+        config = self.data_manager.welcome_config.get('guilds', {}).get(guild_id)
+        if config and config.get('channel_id') and (channel := self.get_channel(int(config['channel_id']))):
+            try:
+                await channel.send(f"{member.mention} {config.get('message', 'Welcome!')}")
+            except discord.Forbidden:
+                logger.warning(f"Missing permissions for welcome message in {channel.name}")
+        else:
+            try:
+                embed = discord.Embed(title=f"Welcome to {member.guild.name}!", color=GOAT_BLUE)
+                embed.set_thumbnail(url=GOAT_ICON_URL)
+                embed.add_field(name="Getting Started", value="1. Visit the casino channel\n2. Use `!balance`\n3. Play games!", inline=False)
+                await member.send(embed=embed)
+            except discord.Forbidden:
+                logger.warning(f"Couldn't send welcome DM to {member.name}")
+
+    def create_api_app(self):
+        app = FastAPI()
+        api_secret = self.data_manager.config["api_secret_key"]
+
+        async def verify_api_key(api_key: str = Header(...)):
+            if not hmac.compare_digest(api_key, api_secret):
+                raise HTTPException(status_code=401, detail="Invalid API key")
+
+        @app.get("/bot_status", dependencies=[Depends(verify_api_key)])
+        async def bot_status():
+            return {"status": "online", "uptime": time.time() - self.start_time, "guilds": len(self.guilds)}
+
+        return app
+
+    async def start_api_server(self):
+        config = uvicorn.Config(self.api_app, host="0.0.0.0", port=API_PORT, log_level="info")
+        server = uvicorn.Server(config)
+        loop = asyncio.get_running_loop()
+        loop.create_task(server.serve())
+        logger.info(f"API server started on port {API_PORT}")
+
+    @tasks.loop(minutes=5)
+    async def performance_monitor(self):
+        try:
+            mem = psutil.Process().memory_info().rss / 1024 ** 2
+            cpu = psutil.cpu_percent()
+            logger.info(f"📊 Performance: {mem:.2f}MB RAM, {cpu}% CPU")
+        except Exception as e:
+            logger.error(f"Performance monitor error: {e}")
+
+    @tasks.loop(hours=1)
+    async def gang_pool_distribution(self):
+        await self.wait_until_ready()
+        logger.info("💰 Starting hourly gang pool distribution...")
+
+        try:
+            async with self.data_manager.locks["gang_pool"]:
+                pool_data = self.data_manager.gang_pool
+                total_pool = pool_data.get("total_pool", 0)
+                contributions = pool_data.get("hourly_contributions", {})
+
+                if total_pool <= 0 or not contributions:
+                    logger.info("Pool is empty. No distribution will occur.")
+                    pool_data["hourly_contributions"] = {}
+                    pool_data["last_distribution"] = int(time.time())
+                    await self.data_manager.save_gang_pool()
+                    return
+
+                gang_config = self.data_manager.config['gang_pool_config']
+                owner_share_percent = gang_config['owner_share']
+                player_share_percent = gang_config['active_player_share']
+
+                owner_cut = int(total_pool * owner_share_percent)
+                players_pot = total_pool - owner_cut
+
+                total_player_contributions = sum(contributions.values())
+
+                guild = self.get_guild(int(self.data_manager.config['guild_id']))
+                if not guild:
+                    logger.error(f"Cannot find guild with ID {self.data_manager.config['guild_id']}. Aborting distribution.")
+                    return
+
+                if owner_cut > 0:
+                    try:
+                        await self.data_manager.update_balance(guild.owner_id, owner_cut, "Gang Pool Owner Share")
+                        logger.info(f"Distributed {owner_cut:,} GP to server owner {guild.owner.name}.")
+                    except Exception as e:
+                        logger.error(f"Failed to distribute owner's share: {e}")
+
+                distribution_details = []
+                for user_id_str, amount in contributions.items():
+                    user_id = int(user_id_str)
+                    share_percentage = amount / total_player_contributions
+                    winnings = int(players_pot * share_percentage)
+
+                    if winnings > 0:
+                        try:
+                            await self.data_manager.update_balance(user_id, winnings, "Gang Pool Player Share")
+                            user = self.get_user(user_id) or await self.fetch_user(user_id)
+                            distribution_details.append(f"• {user.mention}: **{winnings:,} GP**")
+                            logger.info(f"Distributed {winnings:,} GP to user {user_id}.")
+                        except Exception as e:
+                            logger.error(f"Failed to distribute share to user {user_id}: {e}")
+
+                pool_channel_name = 'osrs-gold-pool'
+                if channel := discord.utils.get(guild.channels, name=pool_channel_name):
+                    embed = discord.Embed(
+                        title="💰 Gang Pool Hourly Payout! 💰",
+                        description=f"A total of **{total_pool:,} GP** has been distributed!",
+                        color=GOAT_GOLD,
+                        timestamp=datetime.datetime.now(datetime.timezone.utc)
+                    )
+                    embed.add_field(name="👑 Owner's Share", value=f"`{owner_cut:,}` GP paid to {guild.owner.mention}", inline=False)
+                    if distribution_details:
+                        embed.add_field(name="🏆 Player Payouts", value="\n".join(distribution_details), inline=False)
+                    else:
+                        embed.add_field(name="🏆 Player Payouts", value="No players earned a payout this hour.", inline=False)
+
+                    await channel.send(embed=embed)
+
+                pool_data["total_pool"] = 0
+                pool_data["hourly_contributions"] = {}
+                pool_data["last_distribution"] = int(time.time())
+                await self.data_manager.save_gang_pool()
+                logger.info("✅ Hourly gang pool distribution complete.")
+        except Exception as e:
+            logger.error(f"Gang pool distribution error: {e}")
+
+    @tasks.loop(hours=24)
+    async def backup_task(self):
+        await self.wait_until_ready()
+        logger.info("💾 Starting daily data backup...")
+
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        backup_path = Path(BACKUP_DIR) / f"backup_{timestamp}"
+
+        try:
+            backup_path.mkdir(parents=True, exist_ok=True)
+
+            files_to_backup = [
+                CONFIG_FILE, GAME_STATE_FILE, POOL_STATE_FILE,
+                WELCOME_CONFIG_FILE, SECRETS_FILE, LOG_FILE
+            ]
+
+            for filename in files_to_backup:
+                if os.path.exists(filename):
+                    shutil.copy(filename, backup_path / filename)
+
+            logger.info(f"✅ Successfully backed up data to {backup_path}")
+
+        except Exception as e:
+            logger.error(f"❌ Backup failed: {e}")
+
+    async def close(self):
+        await self.asset_manager.close()
+        await super().close()
+
+# =================================================================================
+# COMMAND IMPLEMENTATIONS
+# =================================================================================
+async def setup_commands(bot: GoatGangBot):
+    @bot.command(name="setserver")
+    @commands.has_permissions(administrator=True)
+    async def setserver(ctx):
+        """Configures the server with required channels and roles"""
+        await ctx.defer()
+        try:
+            config = bot.data_manager.config
+            guild = ctx.guild
+
+            category_name = "GOAT-GANG Casino"
+            category = discord.utils.get(guild.categories, name=category_name)
+            if not category:
+                category = await guild.create_category(category_name)
+
+            for channel_name, settings in config['server_config']['required_channels'].items():
+                if not discord.utils.get(guild.channels, name=channel_name):
+                    await category.create_text_channel(name=channel_name, topic=settings['topic'])
+                    logger.info(f"Created channel: {channel_name}")
+            if not discord.utils.get(guild.roles, name="Goated"):
+                await guild.create_role(name="Goated", color=discord.Color.gold())
+            await ctx.followup.send("✅ Server setup complete! Required channels and roles created.")
+        except Exception as e:
+            logger.error(f"Server setup failed: {e}")
+            await ctx.followup.send(f"❌ Setup failed: {e}")
+
+    @bot.command(name="casino_panel")
+    @commands.has_permissions(manage_channels=True)
+    async def casino_panel(ctx):
+        await ctx.message.delete()
+        embed = discord.Embed(title="🐐 Welcome to the ☆GOAT-GANG-GAMES☆ Hub ♑️", color=GOAT_BLUE)
+        embed.set_image(url="https://i.ibb.co/qFJFpPk/1000044844.jpg")
+        await ctx.send(embed=embed, view=MainMenuView())
+
+    @bot.command(name="balance", aliases=["bal"])
+    async def balance(ctx, member: Optional[discord.Member] = None):
+        target = member or ctx.author
+        user_data = await bot.data_manager.get_user_data(target.id)
+        embed = discord.Embed(title=f"{target.display_name}'s Wallet", description=f"**{user_data.get('balance', 0):,} GP**", color=GOAT_GOLD)
+        embed.set_thumbnail(url=target.display_avatar.url)
+        await ctx.send(embed=embed)
+
+    @bot.command(name="addbalance", aliases=["credit"])
+    @commands.has_permissions(administrator=True)
+    async def add_balance(ctx, member: Union[discord.Member, discord.User], amount: int):
+        if amount <= 0: return await ctx.send("❌ Amount must be positive.")
+        reason = f"Admin credit by {ctx.author.name}"
+        try:
+            new_balance = await bot.data_manager.update_balance(member.id, amount, reason=reason)
+            embed = discord.Embed(title="Balance Update Successful", description=f"✅ Added `{amount:,}` GP to {member.mention}.", color=SUCCESS_GREEN)
+            embed.add_field(name="New Balance", value=f"{new_balance:,} GP")
+            await ctx.send(embed=embed)
+        except ValueError as e:
+            await ctx.send(f"❌ Error: {e}")
+
+    @bot.command(name="removebalance", aliases=["debit"])
+    @commands.has_permissions(administrator=True)
+    async def remove_balance(ctx, member: Union[discord.Member, discord.User], amount: int):
+        if amount <= 0: return await ctx.send("❌ Amount must be positive.")
+        reason = f"Admin debit by {ctx.author.name}"
+        try:
+            new_balance = await bot.data_manager.update_balance(member.id, -amount, reason=reason)
+            embed = discord.Embed(title="Balance Update Successful", description=f"✅ Removed `{amount:,}` GP from {member.mention}.", color=ERROR_RED)
+            embed.add_field(name="New Balance", value=f"{new_balance:,} GP")
+            await ctx.send(embed=embed)
+        except ValueError as e:
+            await ctx.send(f"❌ Error: {e}")
+
+    @bot.command(name="setbalance")
+    @commands.has_permissions(administrator=True)
+    async def set_balance(ctx, member: Union[discord.Member, discord.User], amount: int):
+        if amount < 0: return await ctx.send("❌ Amount cannot be negative.")
+        async with bot.data_manager.locks["config"]:
+            user_data = await bot.data_manager.get_user_data(member.id)
+            user_data['balance'] = amount
+            await bot.data_manager.save_config()
+        embed = discord.Embed(title="Balance Set Successful", description=f"✅ Set {member.mention}'s balance to `{amount:,}` GP.", color=GOAT_BLUE)
+        await ctx.send(embed=embed)
+
+    @bot.command(name="setwelcome")
+    @commands.has_permissions(manage_guild=True)
+    async def set_welcome(ctx, channel: discord.TextChannel, *, message: str):
+        guild_id = str(ctx.guild.id)
+        wc = bot.data_manager.welcome_config
+        if 'guilds' not in wc:
+            wc['guilds'] = {}
+        wc['guilds'][guild_id] = {"channel_id": channel.id, "message": message}
+        await bot.data_manager.save_welcome_config()
+        await ctx.send(f"✅ Welcome message set for {channel.mention}")
+
+# =================================================================================
+# BOT STARTUP
+# =================================================================================
+if __name__ == '__main__':
+    data_manager = SecureDataManager()
+    bot_token = DEFAULT_CONFIG.get("bot_token")
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(SECRETS_FILE, 'rb') as f_secret:
+                key = f_secret.read()
+            fernet = Fernet(key)
+            with open(CONFIG_FILE, 'rb') as f_config:
+                encrypted = f_config.read()
+            compressed = fernet.decrypt(encrypted)
+            json_data = zlib.decompress(compressed)
+            bot_token = json.loads(json_data).get("bot_token", bot_token)
+        except Exception as e:
+            logger.warning(f"Could not load encrypted config, falling back to default. Reason: {e}")
+            pass
+
+    if not bot_token or "YOUR_BOT_TOKEN_HERE" in bot_token:
+        logger.critical("FATAL ERROR: Bot token not set! Edit the DEFAULT_CONFIG section in your script or set the DISCORD_BOT_TOKEN environment variable.")
+        sys.exit(1)
+
+    bot = GoatGangBot(data_manager)
+    try:
+        bot.run(bot_token)
+    except discord.LoginFailure:
+        logger.critical("Invalid bot token. Please check the config.")
+    except Exception as e:
+        logger.critical(f"Fatal error during bot execution:", exc_info=e)
