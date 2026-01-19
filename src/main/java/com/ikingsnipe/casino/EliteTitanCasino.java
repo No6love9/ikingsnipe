@@ -11,6 +11,7 @@ import com.ikingsnipe.casino.models.PlayerSession;
 import com.ikingsnipe.casino.utils.ChatAI;
 import com.ikingsnipe.casino.utils.DiscordWebhook;
 import com.ikingsnipe.casino.utils.ProvablyFair;
+import com.ikingsnipe.database.DatabaseManager;
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.input.Keyboard;
 import org.dreambot.api.methods.interactive.Players;
@@ -216,7 +217,8 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
     private int handleGame() {
         // Java 8 compatible Future handling
         try {
-            long balance = dbManager.getBalance(currentPlayer).get(); // Blocking get for script flow
+            DatabaseManager.PlayerStats stats = dbManager.getPlayerStats(currentPlayer);
+            long balance = stats != null ? stats.balanceGp : 0;
             if (balance < config.minBet) {
                 Keyboard.type("Insufficient balance! Deposit more Coins or Platinum Tokens.", true);
                 state = CasinoState.IDLE;
@@ -230,7 +232,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
             Keyboard.type(result.getDescription(), true);
             
             long payout = result.isWin() ? result.getPayout() : -currentBet;
-            dbManager.updateBalance(currentPlayer, payout, currentBet, result.isWin() ? payout : 0);
+            dbManager.recordGame(currentPlayer, selectedGame, currentBet, payout, result.isWin() ? "WIN" : "LOSS", provablyFair.getSeed());
             
             long newBalance = balance + payout;
 
