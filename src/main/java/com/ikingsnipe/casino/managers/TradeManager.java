@@ -1,53 +1,46 @@
 package com.ikingsnipe.casino.managers;
 
 import com.ikingsnipe.casino.models.CasinoConfig;
-import com.ikingsnipe.casino.models.PlayerSession;
 import com.ikingsnipe.casino.utils.ProvablyFair;
 import org.dreambot.api.methods.input.Keyboard;
 import org.dreambot.api.methods.trade.Trade;
+import org.dreambot.api.wrappers.items.Item;
 import org.dreambot.api.utilities.Logger;
-import org.dreambot.api.utilities.Sleep;
 
 /**
- * SnipesScripts Enterprise Trade Manager
+ * SnipesScripts Enterprise Trade Manager v9.0
  * Features:
- * - Two-stage verification (Screen 1 & 2)
- * - Clan Chat notifications for trade safety
- * - Command parsing in trade window
- * - Anti-scam amount change detection
+ * - Dual Currency Support (Gold Coins & Platinum Tokens)
+ * - Database Balance Integration
+ * - Anti-Scam Verification
  */
 public class TradeManager {
     private final CasinoConfig config;
-    private final SessionManager sessionManager;
-    private final ProvablyFair provablyFair;
+    private final DatabaseManager dbManager;
     
     private String currentTrader = null;
-    private long verifiedAmount = 0;
-    private String selectedGame = "craps";
+    private long verifiedValueGP = 0;
 
-    public TradeManager(CasinoConfig config, SessionManager sessionManager, ProvablyFair provablyFair) {
+    public TradeManager(CasinoConfig config, DatabaseManager dbManager) {
         this.config = config;
-        this.sessionManager = sessionManager;
-        this.provablyFair = provablyFair;
+        this.dbManager = dbManager;
     }
 
     public void handleTradeScreen1() {
         if (!Trade.isOpen(1)) return;
 
         String trader = Trade.getTradingWith();
-        // Use correct DreamBot API method: getValue(false) for their trade value
-        long currentAmount = Trade.getValue(false);
+        long totalValueGP = calculateTradeValueGP();
 
-        // Notify Clan Chat on first trade interaction
         if (currentTrader == null || !currentTrader.equals(trader)) {
             currentTrader = trader;
             notifyClanTradeStarted(trader);
         }
 
-        if (currentAmount >= config.minBet) {
+        if (totalValueGP >= config.minBet) {
             if (Trade.acceptTrade()) {
-                verifiedAmount = currentAmount;
-                Logger.log("[Trade] Screen 1 Accepted. Amount: " + verifiedAmount);
+                verifiedValueGP = totalValueGP;
+                Logger.log("[Trade] Screen 1 Accepted. Total GP Value: " + verifiedValueGP);
             }
         }
     }
@@ -55,20 +48,19 @@ public class TradeManager {
     public void handleTradeScreen2() {
         if (!Trade.isOpen(2)) return;
 
-        // Use correct DreamBot API method: getValue(false) for their trade value
-        long screen2Amount = Trade.getValue(false);
+        long screen2ValueGP = calculateTradeValueGP();
 
-        // CRITICAL: Ensure amount hasn't changed between screens
-        if (screen2Amount != verifiedAmount) {
-            Logger.warn("[Trade] SCAM DETECTED: Amount changed from " + verifiedAmount + " to " + screen2Amount);
+        if (screen2ValueGP != verifiedValueGP) {
+            Logger.warn("[Trade] SCAM DETECTED: Value changed from " + verifiedValueGP + " to " + screen2ValueGP);
             Trade.declineTrade();
             notifyClanScamAttempt(currentTrader);
             return;
         }
 
         if (Trade.acceptTrade()) {
-            Logger.log("[Trade] Screen 2 Accepted. Bet confirmed: " + verifiedAmount);
-            notifyClanTradeSafe(currentTrader, verifiedAmount);
+            Logger.log("[Trade] Screen 2 Accepted. Deposit confirmed: " + verifiedValueGP);
+            dbManager.updateBalance(currentTrader, verifiedValueGP, 0, 0);
+            notifyClanTradeSafe(currentTrader, verifiedValueGP);
         }
     }
 
@@ -76,24 +68,37 @@ public class TradeManager {
         Logger.log("[Trade] Queued request from: " + playerName);
     }
 
+    private long calculateTradeValueGP() {
+        long total = 0;
+        Item[] items = Trade.getTheirItems();
+        if (items == null) return 0;
+
+        for (Item item : items) {
+            if (item == null) continue;
+            if (item.getID() == CasinoConfig.COINS_ID) {
+                total += item.getAmount();
+            } else if (item.getID() == CasinoConfig.PLATINUM_TOKEN_ID) {
+                total += (long) item.getAmount() * 1000L;
+            }
+        }
+        return total;
+    }
+
     private void notifyClanTradeStarted(String player) {
         if (config.notifyClanOnTrade) {
-            String msg = "/[Snipes] Trade started with: " + player + ". Checking bet...";
-            Keyboard.type(msg, true);
+            Keyboard.type("/[Snipes] Trade with " + player + ". Checking Coins/Tokens...", true);
         }
     }
 
     private void notifyClanTradeSafe(String player, long amount) {
         if (config.notifyClanOnTrade) {
-            String msg = "/[Snipes] " + player + " bet " + formatGP(amount) + ". SAFE TO PROCEED.";
-            Keyboard.type(msg, true);
+            Keyboard.type("/[Snipes] " + player + " deposited " + formatGP(amount) + ". Balance Updated.", true);
         }
     }
 
     private void notifyClanScamAttempt(String player) {
         if (config.notifyClanOnTrade) {
-            String msg = "/[Snipes] ALERT: " + player + " attempted to change trade amount! DECLINED.";
-            Keyboard.type(msg, true);
+            Keyboard.type("/[Snipes] ALERT: " + player + " attempted to swap items! DECLINED.", true);
         }
     }
 
@@ -105,6 +110,10 @@ public class TradeManager {
 
     public void reset() {
         currentTrader = null;
-        verifiedAmount = 0;
+        verifiedValueGP = 0;
+    }
+
+    public long getVerifiedValueGP() {
+        return verifiedValueGP;
     }
 }

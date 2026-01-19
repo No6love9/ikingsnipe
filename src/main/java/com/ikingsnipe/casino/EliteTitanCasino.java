@@ -13,11 +13,9 @@ import com.ikingsnipe.casino.utils.ChatAI;
 import com.ikingsnipe.casino.utils.DiscordWebhook;
 import com.ikingsnipe.casino.utils.ProvablyFair;
 import org.dreambot.api.methods.Calculations;
-import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.input.Keyboard;
 import org.dreambot.api.methods.interactive.Players;
 import org.dreambot.api.methods.trade.Trade;
-import org.dreambot.api.methods.widget.Widgets;
 import org.dreambot.api.script.AbstractScript;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
@@ -32,7 +30,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
-@ScriptManifest(name = "SnipesScripts Enterprise", author = "ikingsnipe", version = 8.0, category = Category.MONEYMAKING, description = "Top-Tier 2026 Grade Casino System with ChasingCraps & Robust Trade Safety")
+@ScriptManifest(name = "SnipesScripts Enterprise", author = "ikingsnipe", version = 9.0, category = Category.MONEYMAKING, description = "Global Economy Update: Platinum Tokens, SQL Database Balances, and Rich Discord Embeds")
 public class EliteTitanCasino extends AbstractScript implements ChatListener, PaintListener, MouseListener {
 
     private CasinoConfig config;
@@ -48,30 +46,20 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
     private MuleManager muleManager;
     private HumanizationManager humanizationManager;
     private TradeManager tradeManager;
+    private DatabaseManager dbManager;
     private TradeRequestListener tradeRequestListener;
-    private TradeStatistics tradeStatistics;
 
     private String currentPlayer;
     private long currentBet;
     private String selectedGame = "craps";
-    private PlayerSession currentSession;
-    private long lastAdTime;
-    private long tradeStartTime;
     private volatile boolean guiFinished, startScript;
     
-    private CasinoState lastState;
-    private long lastStateChangeTime;
+    private long lastAdTime;
     private int adIndex = 0;
-    private int payoutAttempts = 0;
-    private static final int MAX_PAYOUT_ATTEMPTS = 3;
-
-    private final Rectangle adBtn = new Rectangle(15, 200, 60, 20);
-    private final Rectangle bankBtn = new Rectangle(80, 200, 60, 20);
-    private final Rectangle resetBtn = new Rectangle(145, 200, 60, 20);
 
     @Override
     public void onStart() {
-        log("Initializing SnipesScripts Enterprise v8.0...");
+        log("Initializing SnipesScripts Enterprise v9.0 [Global Economy Update]...");
         config = new CasinoConfig();
         
         SwingUtilities.invokeLater(() -> {
@@ -81,6 +69,8 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
             });
         });
 
+        dbManager = new DatabaseManager("localhost", "snipes_casino", "root", "");
+        
         sessionManager = new SessionManager();
         gameManager = new GameManager(config);
         bankingManager = new BankingManager(config);
@@ -93,13 +83,12 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
         chatAI.setProvablyFair(provablyFair);
         muleManager = new MuleManager(config);
         humanizationManager = new HumanizationManager(config);
-        tradeStatistics = new TradeStatistics();
-        tradeManager = new TradeManager(config, sessionManager, provablyFair);
+        tradeManager = new TradeManager(config, dbManager);
         tradeRequestListener = new TradeRequestListener(tradeManager, config.tradeConfig);
         
         if (config.discordEnabled && !config.discordWebhookUrl.isEmpty()) {
             webhook = new DiscordWebhook(config.discordWebhookUrl);
-            webhook.send("🚀 **SnipesScripts Enterprise v8.0** is now ONLINE!");
+            webhook.send("🚀 **SnipesScripts Enterprise v9.0** is now ONLINE! [Global Economy Active]");
         }
         state = CasinoState.INITIALIZING;
     }
@@ -109,30 +98,10 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
         if (!guiFinished) return 500;
         if (!startScript) { stop(); return 0; }
 
-        if (config.adminConfig.emergencyStop) {
-            log("!!! EMERGENCY STOP !!!");
-            stop();
-            return 0;
-        }
-
         try {
             if (humanizationManager.shouldTakeBreak()) {
                 humanizationManager.takeBreak();
                 return 1000;
-            }
-
-            if (muleManager.shouldMule() || muleManager.isMulingInProgress()) {
-                muleManager.handleMuling();
-                return 1000;
-            }
-
-            if (state == lastState) {
-                if (System.currentTimeMillis() - lastStateChangeTime > 60000) {
-                    state = CasinoState.ERROR_RECOVERY;
-                }
-            } else {
-                lastState = state;
-                lastStateChangeTime = System.currentTimeMillis();
             }
 
             switch (state) {
@@ -154,11 +123,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
     }
 
     private int handleInitializing() {
-        if (config.walkOnStart && !locationManager.isAtLocation()) {
-            state = CasinoState.WALKING_TO_LOCATION;
-        } else {
-            state = CasinoState.IDLE;
-        }
+        state = (config.walkOnStart && !locationManager.isAtLocation()) ? CasinoState.WALKING_TO_LOCATION : CasinoState.IDLE;
         return 500;
     }
 
@@ -199,8 +164,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
 
     private void sendRotatingAd() {
         if (config.adMessages.isEmpty()) return;
-        String ad = config.adMessages.get(adIndex);
-        Keyboard.type(ad, true);
+        Keyboard.type(config.adMessages.get(adIndex), true);
         adIndex = (adIndex + 1) % config.adMessages.size();
     }
 
@@ -216,7 +180,6 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
     private int handleTrade2() {
         if (!Trade.isOpen(2)) {
             if (Trade.isOpen(1)) { state = CasinoState.TRADING_WINDOW_1; return 300; }
-            // If trade closed, check if it was accepted
             state = CasinoState.PROCESSING_GAME;
             return 500;
         }
@@ -225,20 +188,34 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
     }
 
     private int handleGame() {
+        long balance = dbManager.getBalance(currentPlayer).join();
+        if (balance < config.minBet) {
+            Keyboard.type("Insufficient balance! Deposit more Coins or Platinum Tokens.", true);
+            state = CasinoState.IDLE;
+            return 1000;
+        }
+
+        currentBet = balance;
         AbstractGame game = gameManager.getGame(selectedGame);
         GameResult result = game.play(currentPlayer, currentBet, provablyFair.getSeed());
+        
         Keyboard.type(result.getDescription(), true);
         
-        if (result.isWin()) {
-            state = CasinoState.PAYOUT_PENDING;
-        } else {
-            state = CasinoState.IDLE;
+        long payout = result.isWin() ? result.getPayout() : -currentBet;
+        dbManager.updateBalance(currentPlayer, payout, currentBet, result.isWin() ? payout : 0);
+        
+        long newBalance = balance + payout;
+
+        if (webhook != null) {
+            webhook.sendGameResult(currentPlayer, result.isWin(), currentBet, result.getPayout(), result.getDescription(), provablyFair.getSeed(), newBalance, config);
         }
+
+        state = result.isWin() ? CasinoState.PAYOUT_PENDING : CasinoState.IDLE;
         return 1000;
     }
 
     private int handlePayout() {
-        state = CasinoState.IDLE; // Simplified for now
+        state = CasinoState.IDLE;
         return 1000;
     }
 
@@ -258,9 +235,10 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
 
     @Override
     public void onPaint(Graphics g) {
-        g.setColor(Color.YELLOW);
-        g.drawString("SnipesScripts Enterprise v8.0", 15, 45);
-        g.drawString("State: " + state, 15, 60);
+        g.setColor(Color.CYAN);
+        g.drawString("SnipesScripts Enterprise v9.0", 15, 45);
+        g.drawString("Global Economy: ACTIVE", 15, 60);
+        g.drawString("State: " + state, 15, 75);
     }
 
     @Override public void mouseClicked(MouseEvent e) {}
