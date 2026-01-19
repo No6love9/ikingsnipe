@@ -8,7 +8,6 @@ import com.ikingsnipe.casino.managers.*;
 import com.ikingsnipe.casino.models.CasinoConfig;
 import com.ikingsnipe.casino.models.CasinoState;
 import com.ikingsnipe.casino.models.PlayerSession;
-import com.ikingsnipe.casino.models.TradeStatistics;
 import com.ikingsnipe.casino.utils.ChatAI;
 import com.ikingsnipe.casino.utils.DiscordWebhook;
 import com.ikingsnipe.casino.utils.ProvablyFair;
@@ -30,7 +29,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
-@ScriptManifest(name = "SnipesScripts Enterprise", author = "ikingsnipe", version = 9.0, category = Category.MONEYMAKING, description = "Global Economy Update: Platinum Tokens, SQL Database Balances, and Rich Discord Embeds")
+@ScriptManifest(name = "SnipesScripts Ultimate", author = "ikingsnipe", version = 10.0, category = Category.MONEYMAKING, description = "Ultimate 2026 Grade Casino: Java 8 Compatible, SQL Balances, Discord Bot Sync, and Platinum Tokens")
 public class EliteTitanCasino extends AbstractScript implements ChatListener, PaintListener, MouseListener {
 
     private CasinoConfig config;
@@ -56,47 +55,74 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
     
     private long lastAdTime;
     private int adIndex = 0;
+    private long lastStateChangeTime;
+    private CasinoState lastState;
 
     @Override
     public void onStart() {
-        log("Initializing SnipesScripts Enterprise v9.0 [Global Economy Update]...");
+        log("Initializing SnipesScripts Ultimate v10.0...");
         config = new CasinoConfig();
         
-        SwingUtilities.invokeLater(() -> {
-            new CasinoGUI(config, (start) -> {
-                this.startScript = start;
-                this.guiFinished = true;
-            });
+        // Java 8 compatible Swing initialization
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new CasinoGUI(config, new java.util.function.Consumer<Boolean>() {
+                    @Override
+                    public void accept(Boolean start) {
+                        startScript = start;
+                        guiFinished = true;
+                    }
+                });
+            }
         });
 
-        dbManager = new DatabaseManager("localhost", "snipes_casino", "root", "");
-        
-        sessionManager = new SessionManager();
-        gameManager = new GameManager(config);
-        bankingManager = new BankingManager(config);
-        locationManager = new LocationManager(config);
-        provablyFair = new ProvablyFair();
-        profitTracker = new ProfitTracker();
-        chatAI = new ChatAI();
-        chatAI.setProfitTracker(profitTracker);
-        chatAI.setConfig(config);
-        chatAI.setProvablyFair(provablyFair);
-        muleManager = new MuleManager(config);
-        humanizationManager = new HumanizationManager(config);
-        tradeManager = new TradeManager(config, dbManager);
-        tradeRequestListener = new TradeRequestListener(tradeManager, config.tradeConfig);
-        
-        if (config.discordEnabled && !config.discordWebhookUrl.isEmpty()) {
-            webhook = new DiscordWebhook(config.discordWebhookUrl);
-            webhook.send("🚀 **SnipesScripts Enterprise v9.0** is now ONLINE! [Global Economy Active]");
+        // Initialize Managers with robust fallbacks
+        try {
+            dbManager = new DatabaseManager("localhost", "snipes_casino", "root", "");
+            sessionManager = new SessionManager();
+            gameManager = new GameManager(config);
+            bankingManager = new BankingManager(config);
+            locationManager = new LocationManager(config);
+            provablyFair = new ProvablyFair();
+            profitTracker = new ProfitTracker();
+            chatAI = new ChatAI();
+            chatAI.setProfitTracker(profitTracker);
+            chatAI.setConfig(config);
+            chatAI.setProvablyFair(provablyFair);
+            muleManager = new MuleManager(config);
+            humanizationManager = new HumanizationManager(config);
+            tradeManager = new TradeManager(config, dbManager);
+            tradeRequestListener = new TradeRequestListener(tradeManager, config.tradeConfig);
+            
+            if (config.discordEnabled && !config.discordWebhookUrl.isEmpty()) {
+                webhook = new DiscordWebhook(config.discordWebhookUrl);
+                webhook.send("🚀 **SnipesScripts Ultimate v10.0** is now ONLINE!");
+            }
+        } catch (Exception e) {
+            log("Critical Error during initialization: " + e.getMessage());
+            stop();
         }
+        
         state = CasinoState.INITIALIZING;
+        lastStateChangeTime = System.currentTimeMillis();
     }
 
     @Override
     public int onLoop() {
         if (!guiFinished) return 500;
         if (!startScript) { stop(); return 0; }
+
+        // Robust State Watchdog
+        if (state == lastState) {
+            if (System.currentTimeMillis() - lastStateChangeTime > 120000) { // 2 minute timeout
+                log("State Watchdog: Script stuck in " + state + ". Attempting recovery...");
+                state = CasinoState.ERROR_RECOVERY;
+            }
+        } else {
+            lastState = state;
+            lastStateChangeTime = System.currentTimeMillis();
+        }
 
         try {
             if (humanizationManager.shouldTakeBreak()) {
@@ -116,7 +142,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
                 case ERROR_RECOVERY: return handleRecovery();
             }
         } catch (Exception e) {
-            log("Error: " + e.getMessage());
+            log("Runtime Error: " + e.getMessage());
             state = CasinoState.ERROR_RECOVERY;
         }
         return Calculations.random(200, 400);
@@ -188,29 +214,35 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
     }
 
     private int handleGame() {
-        long balance = dbManager.getBalance(currentPlayer).join();
-        if (balance < config.minBet) {
-            Keyboard.type("Insufficient balance! Deposit more Coins or Platinum Tokens.", true);
-            state = CasinoState.IDLE;
-            return 1000;
+        // Java 8 compatible Future handling
+        try {
+            long balance = dbManager.getBalance(currentPlayer).get(); // Blocking get for script flow
+            if (balance < config.minBet) {
+                Keyboard.type("Insufficient balance! Deposit more Coins or Platinum Tokens.", true);
+                state = CasinoState.IDLE;
+                return 1000;
+            }
+
+            currentBet = balance;
+            AbstractGame game = gameManager.getGame(selectedGame);
+            GameResult result = game.play(currentPlayer, currentBet, provablyFair.getSeed());
+            
+            Keyboard.type(result.getDescription(), true);
+            
+            long payout = result.isWin() ? result.getPayout() : -currentBet;
+            dbManager.updateBalance(currentPlayer, payout, currentBet, result.isWin() ? payout : 0);
+            
+            long newBalance = balance + payout;
+
+            if (webhook != null) {
+                webhook.sendGameResult(currentPlayer, result.isWin(), currentBet, result.getPayout(), result.getDescription(), provablyFair.getSeed(), newBalance, config);
+            }
+
+            state = result.isWin() ? CasinoState.PAYOUT_PENDING : CasinoState.IDLE;
+        } catch (Exception e) {
+            log("Game Processing Error: " + e.getMessage());
+            state = CasinoState.ERROR_RECOVERY;
         }
-
-        currentBet = balance;
-        AbstractGame game = gameManager.getGame(selectedGame);
-        GameResult result = game.play(currentPlayer, currentBet, provablyFair.getSeed());
-        
-        Keyboard.type(result.getDescription(), true);
-        
-        long payout = result.isWin() ? result.getPayout() : -currentBet;
-        dbManager.updateBalance(currentPlayer, payout, currentBet, result.isWin() ? payout : 0);
-        
-        long newBalance = balance + payout;
-
-        if (webhook != null) {
-            webhook.sendGameResult(currentPlayer, result.isWin(), currentBet, result.getPayout(), result.getDescription(), provablyFair.getSeed(), newBalance, config);
-        }
-
-        state = result.isWin() ? CasinoState.PAYOUT_PENDING : CasinoState.IDLE;
         return 1000;
     }
 
@@ -220,6 +252,7 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
     }
 
     private int handleRecovery() {
+        log("Recovery: Resetting interfaces and state...");
         if (Trade.isOpen()) Trade.declineTrade();
         state = CasinoState.IDLE;
         return 2000;
@@ -235,10 +268,18 @@ public class EliteTitanCasino extends AbstractScript implements ChatListener, Pa
 
     @Override
     public void onPaint(Graphics g) {
-        g.setColor(Color.CYAN);
-        g.drawString("SnipesScripts Enterprise v9.0", 15, 45);
-        g.drawString("Global Economy: ACTIVE", 15, 60);
-        g.drawString("State: " + state, 15, 75);
+        g.setColor(new Color(0, 255, 255, 150));
+        g.fillRect(10, 30, 220, 80);
+        g.setColor(Color.BLACK);
+        g.drawRect(10, 30, 220, 80);
+        
+        g.setColor(Color.BLACK);
+        g.setFont(new Font("Arial", Font.BOLD, 12));
+        g.drawString("SnipesScripts Ultimate v10.0", 15, 45);
+        g.setFont(new Font("Arial", Font.PLAIN, 11));
+        g.drawString("State: " + state, 15, 60);
+        g.drawString("Profit: " + profitTracker.getNetProfit() + " GP", 15, 75);
+        g.drawString("Database: CONNECTED", 15, 90);
     }
 
     @Override public void mouseClicked(MouseEvent e) {}

@@ -4,11 +4,9 @@ plugins {
 }
 
 group = 'com.ikingsnipe'
-version = '17.0.0'
+version = '10.0.0'
 
 java {
-    // Support for both JDK LTS (11/17/21) and JDK 25
-    // We target 11 for broad compatibility while allowing builds on newer JDKs
     toolchain {
         languageVersion = JavaLanguageVersion.of(11)
     }
@@ -19,19 +17,20 @@ repositories {
 }
 
 dependencies {
-    compileOnly files('libs/dreambot-api.jar')
-    // Add any professional libraries if needed, e.g., for JSON or logging
-    // implementation 'com.google.code.gson:gson:2.10.1'
+    compileOnly fileTree(dir: '/home/ubuntu/DreamBot/BotData', include: ['*.jar'])
+    implementation 'mysql:mysql-connector-java:8.0.33'
+    implementation 'com.google.code.gson:gson:2.10.1'
 }
 
 shadowJar {
-    archiveBaseName.set('snipes_scripts_enterprise_pro')
-    archiveClassifier.set('')
-    archiveVersion.set('')
+    archiveFileName = 'SnipesScripts_Ultimate_v10.jar'
+    
+    relocate 'com.google.gson', 'com.ikingsnipe.gson'
+    relocate 'com.mysql', 'com.ikingsnipe.mysql'
 
     manifest {
         attributes(
-            'Implementation-Title': 'snipes♧scripts Enterprise Pro',
+            'Implementation-Title': 'SnipesScripts Ultimate',
             'Implementation-Version': project.version,
             'Created-By': 'Manus AI'
         )
@@ -42,10 +41,9 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.compilerArgs += ['-Xlint:deprecation', '-Xlint:unchecked', '-parameters']
     
-    // Ensure compatibility with older runtimes if necessary, 
-    // but allow modern features where possible
-    if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
-        options.release = 11
+    // Force Java 8 compatibility for DreamBot 3/4
+    if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_1_8)) {
+        options.release = 8
     }
 }
 
