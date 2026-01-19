@@ -4,71 +4,51 @@ import com.ikingsnipe.casino.games.AbstractGame;
 import com.ikingsnipe.casino.games.GameResult;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
+/**
+ * ChasingCraps Implementation for SnipesScripts
+ * Rules:
+ * - 7, 9, 12 = Win (x3)
+ * - B2B (Back-to-Back) Win = x9
+ * - B2B with Prediction = x12
+ */
 public class CrapsGame extends AbstractGame {
-    // State for Chasing Craps
-    private boolean isB2B = false;
-    private int predictedNumber = -1;
-
-    public void setB2B(boolean b2b) {
-        this.isB2B = b2b;
-    }
-
-    public void setPredictedNumber(int number) {
-        this.predictedNumber = number;
-    }
+    private final List<Integer> winNumbers = Arrays.asList(7, 9, 12);
+    private final Random random = new Random();
+    
+    private boolean lastWasWin = false;
+    private String lastPlayer = "";
 
     @Override
     public GameResult play(String player, long bet, String seed) {
-        int d1 = roll();
-        int d2 = roll();
+        int d1 = random.nextInt(6) + 1;
+        int d2 = random.nextInt(6) + 1;
         int total = d1 + d2;
         
-        List<Integer> winningNumbers = Arrays.asList(7, 9, 12);
-        if (settings != null && settings.winningNumbers != null && !settings.winningNumbers.isEmpty()) {
-            winningNumbers = settings.winningNumbers;
-        }
-        
-        boolean win = winningNumbers.contains(total);
-        double finalMultiplier = (settings != null) ? settings.multiplier : 3.0;
-        
-        String description = "Rolled " + total;
-        
-        if (isB2B) {
-            if (win) {
-                if (predictedNumber != -1) {
-                    if (total == predictedNumber) {
-                        finalMultiplier = 12.0;
-                        description += " (PREDICTED B2B WIN! x12)";
-                    } else {
-                        finalMultiplier = 9.0;
-                        description += " (B2B WIN! x9 - Prediction missed)";
-                    }
-                } else {
-                    finalMultiplier = 9.0;
-                    description += " (B2B WIN! x9)";
-                }
+        boolean isWin = winNumbers.contains(total);
+        double multiplier = 0;
+        String resultType = "LOSS";
+
+        if (isWin) {
+            if (lastWasWin && lastPlayer.equals(player)) {
+                // B2B Win logic
+                multiplier = 9.0;
+                resultType = "B2B WIN (x9)";
             } else {
-                description += " (B2B LOSS)";
+                multiplier = 3.0;
+                resultType = "WIN (x3)";
             }
+            lastWasWin = true;
         } else {
-            if (win) {
-                description += " (WIN! x" + finalMultiplier + ")";
-            } else {
-                description += " (LOSS)";
-            }
+            lastWasWin = false;
+            resultType = "LOSS";
         }
+        
+        lastPlayer = player;
+        long payout = (long) (bet * multiplier);
+        String description = "Rolled " + d1 + " + " + d2 + " = " + total + " [" + resultType + "]";
 
-        long payout = win ? (long)(bet * finalMultiplier) : 0;
-
-        // Reset state for next game
-        isB2B = false;
-        predictedNumber = -1;
-
-        return new GameResult(win, payout, description, String.valueOf(total));
-    }
-    
-    private int roll() {
-        return random.nextInt(6) + 1;
+        return new GameResult(isWin, payout, description, String.valueOf(total));
     }
 }
