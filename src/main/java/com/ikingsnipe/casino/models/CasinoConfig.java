@@ -4,6 +4,10 @@ import org.dreambot.api.methods.map.Tile;
 import java.util.*;
 
 public class CasinoConfig {
+    // Branding
+    public String scriptName = "SnipesScripts Enterprise";
+    public String version = "8.0";
+
     // Constants
     public static final int COINS_ID = 995;
     public static final int PLATINUM_TOKEN_ID = 13204;
@@ -48,24 +52,30 @@ public class CasinoConfig {
     public boolean enableMouseFatigue = true;
 
     // Game Settings
-    public String defaultGame = "dice";
+    public String defaultGame = "craps";
     public Map<String, GameSettings> games = new HashMap<>();
     public boolean useProvablyFair = true;
+    
+    // ChasingCraps Specifics
+    public boolean enableB2B = true;
+    public double b2bMultiplier = 9.0;
+    public double b2bPredictionMultiplier = 12.0;
     
     // Jackpot Settings
     public boolean jackpotEnabled = true;
     public long currentJackpot = 0;
-    public double jackpotContributionPercent = 1.0; // 1% of bets go to jackpot
+    public double jackpotContributionPercent = 1.0;
 
     // Messaging & AI
     public List<String> adMessages = new ArrayList<>(Arrays.asList(
-        "🎰 Elite Titan Casino Pro | Fast Payouts | High Limits! | !rules",
+        "🎰 SnipesScripts Enterprise | Craps 3x Payout | !c to play!",
         "💰 Trusted Casino Host | Instant Trades | Fair Games! | !stats",
-        "🎲 Professional Casino Service | Craps, Dice, Flower Poker! | Trade me!"
+        "🎲 Professional Casino Service | Chasing Craps Active! | Trade me!"
     ));
+    public String adMessage = adMessages.get(0); // For compatibility
     public boolean enableAntiMute = true;
     public int adIntervalSeconds = 30;
-    public String tradeWelcome = "Welcome to Elite Titan Casino! Type !rules for help. Hash: %s";
+    public String tradeWelcome = "Welcome to SnipesScripts! Type !c for Craps. Hash: %s";
     public String winMessage = "🎉 WINNER! %s won %s GP! (Result: %s) [Seed: %s]";
     public String lossMessage = "❌ LOSS! %s lost. (Result: %s) Better luck next time!";
     public boolean chatAIEnabled = true;
@@ -81,9 +91,10 @@ public class CasinoConfig {
     public List<String> chatSuffixes = Arrays.asList("!", " :)", " luck!", " gl", "...");
 
     // Clan Chat Settings
-    public boolean clanChatEnabled = false;
+    public boolean clanChatEnabled = true;
     public boolean clanChatAnnounceWins = true;
     public boolean clanChatRespondToCommands = true;
+    public boolean notifyClanOnTrade = true;
     public String clanChatName = "";
     public long clanChatBigWinThreshold = 100_000_000L;
 
@@ -94,14 +105,17 @@ public class CasinoConfig {
     public boolean discordNotifyLosses = true;
     public boolean discordShowSeeds = true;
 
-    // ==================== TRADE CONFIGURATION ====================
-    /** Trade-specific configuration */
-    public TradeConfig tradeConfig = new TradeConfig();
-    
-    /** Selected trade preset */
-    public TradeConfig.TradePreset tradePreset = TradeConfig.TradePreset.BALANCED;
+    // Remote Control
+    public boolean discordRemoteControlEnabled = false;
+    public String discordCommandApiUrl = "";
+    public String botIdentifier = "bot1";
 
-    /** Admin/Owner Configuration */
+    // Trade Configuration
+    public TradeConfig tradeConfig = new TradeConfig();
+    public TradeConfig.TradePreset tradePreset = TradeConfig.TradePreset.BALANCED;
+    public boolean autoAcceptTrades = true; // Missing field
+
+    // Admin Configuration
     public AdminConfig adminConfig = new AdminConfig();
 
     public CasinoConfig() {
@@ -122,9 +136,6 @@ public class CasinoConfig {
         return locationPreset == LocationPreset.CUSTOM ? new Tile(customX, customY, customZ) : locationPreset.getTile();
     }
     
-    /**
-     * Apply a trade preset to the trade configuration
-     */
     public void applyTradePreset(TradeConfig.TradePreset preset) {
         this.tradePreset = preset;
         this.tradeConfig = TradeConfig.fromPreset(preset);
@@ -144,5 +155,9 @@ public class CasinoConfig {
             this(name, multiplier, enabled);
             this.winningNumbers.addAll(Arrays.asList(nums));
         }
+    }
+
+    public static class AdminConfig {
+        public boolean emergencyStop = false;
     }
 }
