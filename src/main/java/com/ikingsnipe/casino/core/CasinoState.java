@@ -9,7 +9,11 @@ public enum CasinoState {
     TRADING_WINDOW_2("Trade Screen 2"),
     PROCESSING_GAME("Processing Game Logic"),
     PAYOUT_PENDING("Handling Payout"),
-    ERROR_RECOVERY("Recovering from Error");
+    ERROR_RECOVERY("Recovering from Error"),
+    TRADING("Trading with Player"),
+    PLAYING_GAME("Playing Game"),
+    MULING("Muling Operations"),
+    BREAK("Taking Break");
 
     private final String status;
     CasinoState(String status) { this.status = status; }

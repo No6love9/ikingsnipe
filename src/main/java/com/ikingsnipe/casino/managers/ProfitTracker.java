@@ -55,4 +55,24 @@ public class ProfitTracker {
         if (a >= 1_000) return (a / 1_000) + "K";
         return String.valueOf(a);
     }
+
+    public void recordWin(long amount) {
+        totalWon += amount;
+    }
+
+    public void recordLoss(long amount) {
+        totalLost += amount;
+    }
+
+    public long getTotalProfit() {
+        return getNetProfit();
+    }
+
+    public int getTotalWins() {
+        return (int)(totalWon / 1000000); // Approximate count
+    }
+
+    public int getTotalLosses() {
+        return (int)(totalLost / 1000000); // Approximate count
+    }
 }

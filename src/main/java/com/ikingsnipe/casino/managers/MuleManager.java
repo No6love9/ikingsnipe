@@ -74,4 +74,8 @@ public class MuleManager {
     public boolean isMulingInProgress() {
         return mulingInProgress;
     }
+
+    public boolean performMule() {
+        return handleMuling();
+    }
 }

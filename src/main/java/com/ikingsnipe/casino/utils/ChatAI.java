@@ -28,6 +28,12 @@ public class ChatAI {
         initializeCommands();
     }
 
+    public ChatAI(CasinoConfig config) {
+        this.config = config;
+        initializeResponses();
+        initializeCommands();
+    }
+
     private void initializeResponses() {
         responses.put("legit", new String[]{"100% legit, use !hash to verify", "Fair games only, check my history", "Trusted host, fast payouts!"});
         responses.put("how to play", new String[]{"Trade me and type !rules for help", "Just trade me to start, all games are listed in !games"});
@@ -174,5 +180,19 @@ public class ChatAI {
         if (a >= 1_000_000) return (a / 1_000_000) + "M";
         if (a >= 1_000) return (a / 1_000) + "K";
         return String.valueOf(a);
+    }
+
+    /**
+     * Send a message to chat
+     */
+    public void sendMessage(String message, boolean isClan) {
+        typeMessage(message, isClan);
+    }
+
+    /**
+     * Handle incoming message
+     */
+    public void handleMessage(String sender, String message) {
+        handleChat(sender, message, false);
     }
 }

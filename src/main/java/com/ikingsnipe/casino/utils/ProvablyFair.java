@@ -16,4 +16,8 @@ public class ProvablyFair {
         } catch (Exception e) { return "ERROR"; }
     }
     public String getSeed() { return serverSeed; }
+
+    public String generateSeed(String playerName) {
+        return playerName + "-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().substring(0, 8);
+    }
 }

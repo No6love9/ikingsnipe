@@ -23,6 +23,13 @@ public class BankingManager {
         return currentStatus;
     }
 
+    public boolean shouldBank() {
+        long currentGP = Inventory.count(CasinoConfig.COINS_ID);
+        long currentTokens = Inventory.count(CasinoConfig.PLATINUM_TOKEN_ID);
+        long totalValue = currentGP + (currentTokens * 1000L);
+        return totalValue < config.restockThreshold;
+    }
+
     public boolean restock() {
         if (!Bank.isOpen()) {
             currentStatus = "Opening Bank...";
