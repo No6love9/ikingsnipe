@@ -75,4 +75,15 @@ public class ProfitTracker {
     public int getTotalLosses() {
         return (int)(totalLost / 1000000); // Approximate count
     }
+
+    /**
+     * Records a game result for profit tracking
+     */
+    public static void recordGame(boolean win, long betAmount) {
+        // Static method for easy access from BotApplication
+        // In a real implementation, this would update a singleton instance
+        // For now, we'll just log it
+        org.dreambot.api.utilities.Logger.log(String.format("[ProfitTracker] Game recorded: %s, Bet: %s", 
+            win ? "WIN" : "LOSS", BalanceManager.formatGP(betAmount)));
+    }
 }

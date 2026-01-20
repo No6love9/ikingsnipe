@@ -53,6 +53,7 @@ public class CasinoConfig {
     // Betting Limits
     public long minBet = 100_000L;
     public long maxBet = 100_000_000L;
+    public double payoutMultiplier = 2.0;
 
     // Messaging
     public String msgWelcome = "Welcome to GoatGang! Type !help for games.";

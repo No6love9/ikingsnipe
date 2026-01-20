@@ -73,7 +73,30 @@ public class BotApplication extends AbstractScript {
     }
 
     private void handleGame(GameEngine.GameType type, String player) {
-        // Game processing logic
+        try {
+            long balance = DatabaseManager.getBalance(player);
+            if (balance < config.minBet) {
+                Logger.log(String.format("[GoatGang] %s has insufficient balance: %s GP", player, BalanceManager.formatGP(balance)));
+                return;
+            }
+
+            long betAmount = Math.min(balance, config.maxBet);
+            GameEngine.GameResult result = GameEngine.play(type, player, betAmount);
+
+            if (result.win) {
+                long payout = (long)(betAmount * config.payoutMultiplier);
+                DatabaseManager.updateBalance(player, balance + payout);
+                Logger.log(String.format(config.msgWin, player, BalanceManager.formatGP(payout), result.detail));
+                TradeManager.sendPayout(player, payout);
+            } else {
+                DatabaseManager.updateBalance(player, balance - betAmount);
+                Logger.log(String.format(config.msgLoss, player, result.detail));
+            }
+
+            ProfitTracker.recordGame(result.win, betAmount);
+        } catch (Exception e) {
+            Logger.error("[GoatGang] Error handling game for " + player + ": " + e.getMessage());
+        }
     }
 
     @Override
