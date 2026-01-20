@@ -137,6 +137,7 @@ public class BotApplication extends AbstractScript {
                     gameManager.syncSettings();
                     Logger.log("[GUI] Configuration applied. Starting casino operations...");
                 });
+                gui.setProfitTracker(profitTracker);
                 gui.setVisible(true);
             });
             
