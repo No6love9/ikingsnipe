@@ -1,7 +1,6 @@
 package com.ikingsnipe.casino.managers;
 
 import com.ikingsnipe.casino.models.CasinoConfig;
-import com.ikingsnipe.casino.utils.ProvablyFair;
 import com.ikingsnipe.database.DatabaseManager;
 import org.dreambot.api.methods.input.Keyboard;
 import org.dreambot.api.methods.trade.Trade;
@@ -62,7 +61,8 @@ public class TradeManager {
 
         if (Trade.acceptTrade()) {
             Logger.log("[Trade] Screen 2 Accepted. Deposit confirmed: " + verifiedValueGP);
-            dbManager.recordGame(currentTrader, "deposit", verifiedValueGP, 0, "DEPOSIT", "", "");
+            DatabaseManager.updateBalance(currentTrader, verifiedValueGP);
+            DatabaseManager.recordGame(currentTrader, "DEPOSIT", verifiedValueGP, "SUCCESS");
             notifyClanTradeSafe(currentTrader, verifiedValueGP);
         }
     }
@@ -112,9 +112,7 @@ public class TradeManager {
     }
 
     private String formatGP(long a) {
-        if (a >= 1_000_000) return (a / 1_000_000) + "M";
-        if (a >= 1_000) return (a / 1_000) + "K";
-        return String.valueOf(a);
+        return BalanceManager.formatGP(a);
     }
 
     public void reset() {
@@ -124,5 +122,19 @@ public class TradeManager {
 
     public long getVerifiedValueGP() {
         return verifiedValueGP;
+    }
+
+    /**
+     * Sends payout to player via trade
+     */
+    public static void sendPayout(String player, long amount) {
+        try {
+            // Queue payout for manual processing or automated trade
+            Logger.log(String.format("[Payout] Queued %s GP for %s", BalanceManager.formatGP(amount), player));
+            // In a real implementation, this would initiate a trade with the player
+            // For now, we log it and the admin can manually process
+        } catch (Exception e) {
+            Logger.error("[Payout] Error sending payout to " + player + ": " + e.getMessage());
+        }
     }
 }

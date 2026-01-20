@@ -10,16 +10,14 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.net.URL;
 import java.util.function.Consumer;
-import java.util.Map;
 
 /**
  * GoatGang Edition GUI by iKingSnipe
- * Professional high-end design with custom branding and extensive features.
+ * Professional high-end design with custom branding and Save/Load persistence.
  */
 public class CasinoGUI extends JFrame {
-    private final CasinoConfig config;
+    private CasinoConfig config;
     private final Consumer<Boolean> onStart;
     private ProfitTracker profitTracker;
 
@@ -39,7 +37,7 @@ public class CasinoGUI extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(900, 700);
         setLocationRelativeTo(null);
-        setUndecorated(true); // Modern frameless look
+        setUndecorated(true);
         
         initComponents();
     }
@@ -55,7 +53,6 @@ public class CasinoGUI extends JFrame {
         header.setPreferredSize(new Dimension(0, 100));
         header.setBorder(new EmptyBorder(10, 20, 10, 20));
 
-        // Logo and Title
         JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         titlePanel.setOpaque(false);
         
@@ -65,7 +62,6 @@ public class CasinoGUI extends JFrame {
             JLabel logo = new JLabel(new ImageIcon(img));
             titlePanel.add(logo);
         } catch (Exception e) {
-            // Fallback if icon fails
             JLabel logo = new JLabel("🐐");
             logo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 40));
             titlePanel.add(logo);
@@ -84,7 +80,6 @@ public class CasinoGUI extends JFrame {
         titlePanel.add(textPanel);
         header.add(titlePanel, BorderLayout.WEST);
 
-        // Window Controls
         JPanel controls = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         controls.setOpaque(false);
         JButton closeBtn = new JButton("✕");
@@ -99,13 +94,7 @@ public class CasinoGUI extends JFrame {
 
         mainPanel.add(header, BorderLayout.NORTH);
 
-        // --- Sidebar Navigation ---
-        JPanel sidebar = new JPanel();
-        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBackground(BG_DARK);
-        sidebar.setPreferredSize(new Dimension(200, 0));
-        sidebar.setBorder(new EmptyBorder(20, 10, 20, 10));
-
+        // --- Tabs ---
         JTabbedPane tabs = new JTabbedPane(JTabbedPane.LEFT);
         tabs.setBackground(BG_DARK);
         tabs.setForeground(TEXT_PRIMARY);
@@ -123,30 +112,41 @@ public class CasinoGUI extends JFrame {
         // --- Footer ---
         JPanel footer = new JPanel(new BorderLayout());
         footer.setBackground(BG_DARK);
-        footer.setPreferredSize(new Dimension(0, 40));
-        footer.setBorder(new EmptyBorder(5, 20, 5, 20));
+        footer.setPreferredSize(new Dimension(0, 60));
+        footer.setBorder(new EmptyBorder(10, 20, 10, 20));
         
         JLabel copyright = new JLabel("© 2026 iKingSnipe. All Rights Reserved. Ownership: GoatGang.");
         copyright.setFont(new Font("Arial", Font.PLAIN, 10));
         copyright.setForeground(new Color(100, 100, 110));
         footer.add(copyright, BorderLayout.WEST);
 
-        JButton startBtn = new JButton("LAUNCH GOATGANG");
-        startBtn.setBackground(ACCENT_GOLD);
-        startBtn.setForeground(Color.BLACK);
-        startBtn.setFont(new Font("Arial", Font.BOLD, 14));
-        startBtn.setFocusPainted(false);
+        JPanel actionButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        actionButtons.setOpaque(false);
+
+        JButton saveBtn = createStyledButton("SAVE CONFIG", new Color(45, 45, 55), TEXT_PRIMARY);
+        saveBtn.addActionListener(e -> config.save());
+        
+        JButton loadBtn = createStyledButton("LOAD CONFIG", new Color(45, 45, 55), TEXT_PRIMARY);
+        loadBtn.addActionListener(e -> {
+            this.config = CasinoConfig.load();
+            refreshUI();
+        });
+
+        JButton startBtn = createStyledButton("LAUNCH GOATGANG", ACCENT_GOLD, Color.BLACK);
         startBtn.addActionListener(e -> {
             onStart.accept(true);
             dispose();
         });
-        footer.add(startBtn, BorderLayout.EAST);
+
+        actionButtons.add(saveBtn);
+        actionButtons.add(loadBtn);
+        actionButtons.add(startBtn);
+        footer.add(actionButtons, BorderLayout.EAST);
 
         mainPanel.add(footer, BorderLayout.SOUTH);
 
         setContentPane(mainPanel);
         
-        // Make window draggable
         MouseAdapter ma = new MouseAdapter() {
             int lastX, lastY;
             public void mousePressed(MouseEvent e) { lastX = e.getXOnScreen(); lastY = e.getYOnScreen(); }
@@ -160,6 +160,22 @@ public class CasinoGUI extends JFrame {
         header.addMouseMotionListener(ma);
     }
 
+    private void refreshUI() {
+        // In a real implementation, we would re-initialize components or use data binding
+        // For this version, we'll just notify the user that they should restart the GUI for full visual refresh
+        JOptionPane.showMessageDialog(this, "Configuration loaded. Please restart the GUI to see all changes visually.", "Config Loaded", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private JButton createStyledButton(String text, Color bg, Color fg) {
+        JButton b = new JButton(text);
+        b.setBackground(bg);
+        b.setForeground(fg);
+        b.setFont(new Font("Arial", Font.BOLD, 12));
+        b.setFocusPainted(false);
+        b.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        return b;
+    }
+
     private JPanel createDashboardPanel() {
         JPanel panel = createBasePanel();
         panel.add(createSection("Live Statistics", new Component[]{
@@ -167,15 +183,6 @@ public class CasinoGUI extends JFrame {
             createStatLabel("Runtime:", "00:00:00", TEXT_PRIMARY),
             createStatLabel("Total Profit:", "0 GP", TEXT_PRIMARY),
             createStatLabel("Active Players:", "0", TEXT_PRIMARY)
-        }));
-        
-        panel.add(createSection("Recent Activity", new Component[]{
-            new JScrollPane(new JTextArea("Waiting for activity...") {{
-                setEditable(false);
-                setBackground(BG_CARD);
-                setForeground(TEXT_SECONDARY);
-                setBorder(null);
-            }})
         }));
         return panel;
     }
@@ -190,8 +197,8 @@ public class CasinoGUI extends JFrame {
             createCheckbox("Hot/Cold", true, b -> {})
         }));
         panel.add(createSection("Betting Limits", new Component[]{
-            createLabel("Min Bet:"), createTextField("100K", s -> {}),
-            createLabel("Max Bet:"), createTextField("100M", s -> {})
+            createLabel("Min Bet:"), createTextField(String.valueOf(config.minBet), s -> config.minBet = Long.parseLong(s)),
+            createLabel("Max Bet:"), createTextField(String.valueOf(config.maxBet), s -> config.maxBet = Long.parseLong(s))
         }));
         return panel;
     }
@@ -201,8 +208,7 @@ public class CasinoGUI extends JFrame {
         panel.add(createSection("Clan Chat Configuration", new Component[]{
             createCheckbox("Enable Clan Chat", config.clanChatEnabled, b -> config.clanChatEnabled = b),
             createLabel("CC Name:"), createTextField(config.clanChatName, s -> config.clanChatName = s),
-            createCheckbox("Announce Wins in CC", config.clanChatAnnounceWins, b -> config.clanChatAnnounceWins = b),
-            createLabel("Rank Required:"), createTextField("Smiley", s -> {})
+            createCheckbox("Announce Wins in CC", config.clanChatAnnounceWins, b -> config.clanChatAnnounceWins = b)
         }));
         return panel;
     }
@@ -211,9 +217,8 @@ public class CasinoGUI extends JFrame {
         JPanel panel = createBasePanel();
         panel.add(createSection("Trade Management", new Component[]{
             createCheckbox("Auto Accept Trades", config.autoAcceptTrades, b -> config.autoAcceptTrades = b),
-            createCheckbox("Verify Trade Window 1", true, b -> {}),
-            createCheckbox("Anti-Scam Protection", true, b -> {}),
-            createLabel("Trade Message:"), createTextField("Trading with {player}...", s -> {})
+            createCheckbox("Verify Trade Amount", config.verifyTradeAmount, b -> config.verifyTradeAmount = b),
+            createLabel("Trade Timeout (s):"), createTextField(String.valueOf(config.tradeTimeoutSeconds), s -> config.tradeTimeoutSeconds = Integer.parseInt(s))
         }));
         return panel;
     }
@@ -222,8 +227,7 @@ public class CasinoGUI extends JFrame {
         JPanel panel = createBasePanel();
         panel.add(createSection("Chat & AI Responses", new Component[]{
             createCheckbox("Enable Chat AI", config.chatAIEnabled, b -> config.chatAIEnabled = b),
-            createLabel("Ad Interval (s):"), createTextField(String.valueOf(config.adIntervalSeconds), s -> {}),
-            createLabel("Custom Ad Message:"), createTextField("Join GoatGang Casino! Best Odds!", s -> {})
+            createLabel("Ad Interval (s):"), createTextField(String.valueOf(config.adIntervalSeconds), s -> config.adIntervalSeconds = Integer.parseInt(s))
         }));
         return panel;
     }
@@ -232,20 +236,11 @@ public class CasinoGUI extends JFrame {
         JPanel panel = createBasePanel();
         panel.add(createSection("License & Security", new Component[]{
             createLabel("License Key:"), createTextField("GG-XXXX-XXXX-XXXX", s -> {}),
-            createLabel("Master Password:"), new JPasswordField("********") {{
-                setEditable(false);
-                setBackground(new Color(45, 45, 55));
-                setForeground(TEXT_PRIMARY);
-            }},
-            new JLabel("Source code is encrypted and obfuscated.") {{
-                setForeground(ACCENT_GOLD);
-                setFont(new Font("Arial", Font.ITALIC, 10));
-            }}
+            createLabel("Master Password:"), new JPasswordField("********") {{ setEditable(false); setBackground(new Color(45, 45, 55)); setForeground(TEXT_PRIMARY); }},
+            new JLabel("Source code is encrypted and obfuscated.") {{ setForeground(ACCENT_GOLD); setFont(new Font("Arial", Font.ITALIC, 10)); }}
         }));
         return panel;
     }
-
-    // --- Helper Methods ---
 
     private JPanel createBasePanel() {
         JPanel p = new JPanel();
@@ -264,12 +259,8 @@ public class CasinoGUI extends JFrame {
             title, TitledBorder.LEFT, TitledBorder.TOP,
             new Font("Arial", Font.BOLD, 12), ACCENT_GOLD
         ));
-        p.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200));
-        
-        for (Component c : components) {
-            p.add(c);
-            p.add(Box.createVerticalStrut(5));
-        }
+        p.setMaximumSize(new Dimension(Integer.MAX_VALUE, 250));
+        for (Component c : components) { p.add(c); p.add(Box.createVerticalStrut(5)); }
         return p;
     }
 
@@ -286,22 +277,15 @@ public class CasinoGUI extends JFrame {
         return l;
     }
 
-    private String toHex(Color c) {
-        return String.format("#%02x%02x%02x", c.getRed(), c.getGreen(), c.getBlue());
-    }
+    private String toHex(Color c) { return String.format("#%02x%02x%02x", c.getRed(), c.getGreen(), c.getBlue()); }
 
     private JTextField createTextField(String text, Consumer<String> onChange) {
         JTextField f = new JTextField(text);
         f.setBackground(new Color(45, 45, 55));
         f.setForeground(TEXT_PRIMARY);
         f.setCaretColor(TEXT_PRIMARY);
-        f.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(80, 80, 90)),
-            new EmptyBorder(5, 5, 5, 5)
-        ));
+        f.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(80, 80, 90)), new EmptyBorder(5, 5, 5, 5)));
         f.addActionListener(e -> onChange.accept(f.getText()));
-        
-        // Clipboard Support
         JPopupMenu menu = new JPopupMenu();
         JMenuItem copy = new JMenuItem("Copy");
         JMenuItem paste = new JMenuItem("Paste");
@@ -309,7 +293,6 @@ public class CasinoGUI extends JFrame {
         paste.addActionListener(e -> { f.paste(); onChange.accept(f.getText()); });
         menu.add(copy); menu.add(paste);
         f.setComponentPopupMenu(menu);
-        
         return f;
     }
 
@@ -322,7 +305,5 @@ public class CasinoGUI extends JFrame {
         return c;
     }
 
-    public void setProfitTracker(ProfitTracker tracker) {
-        this.profitTracker = tracker;
-    }
+    public void setProfitTracker(ProfitTracker tracker) { this.profitTracker = tracker; }
 }
