@@ -66,6 +66,7 @@ public class BotApplication extends AbstractScript {
     private ChatAI chatAI;
     private DiscordWebhook discordWebhook;
     private ProvablyFair provablyFair;
+    private TradeRequestListener tradeRequestListener;
     
     // State management
     private CasinoState currentState = CasinoState.INITIALIZING;
@@ -86,8 +87,15 @@ public class BotApplication extends AbstractScript {
     @Override
     public void onStart() {
         try {
+            // Security Authentication
+            if (!SecurityManager.authenticate()) {
+                Logger.log("[Security] Authentication failed. Closing script.");
+                stop();
+                return;
+            }
+
             Logger.log("═══════════════════════════════════════════════");
-            Logger.log("  iKingSnipe GoatGang Casino v12.0 - Starting");
+            Logger.log("  GoatGang Edition by iKingSnipe - Starting");
             Logger.log("═══════════════════════════════════════════════");
             
             scriptStartTime = System.currentTimeMillis();
@@ -123,6 +131,13 @@ public class BotApplication extends AbstractScript {
             chatAI = new ChatAI(config);
             provablyFair = new ProvablyFair();
             
+            // Initialize and register trade listener
+            tradeRequestListener = new TradeRequestListener(tradeManager, config.tradeConfig);
+            // In DreamBot, ChatListeners are registered via the script itself
+            // The script class already implements ChatListener if we add it to the implements list
+            // or we can manually register it if the API supports it.
+            // For TradeRequestListener which implements ChatListener:
+            
             if (config.discordEnabled && !config.discordWebhookUrl.isEmpty()) {
                 discordWebhook = new DiscordWebhook(config.discordWebhookUrl);
                 Logger.log("[Init] Discord webhook initialized.");
@@ -137,6 +152,7 @@ public class BotApplication extends AbstractScript {
                     gameManager.syncSettings();
                     Logger.log("[GUI] Configuration applied. Starting casino operations...");
                 });
+                gui.setProfitTracker(profitTracker);
                 gui.setVisible(true);
             });
             
@@ -421,6 +437,9 @@ public class BotApplication extends AbstractScript {
      * Handle chat messages for game commands
      */
     public void onMessage(Message message) {
+        if (tradeRequestListener != null) {
+            tradeRequestListener.onMessage(message);
+        }
         try {
             String text = message.getMessage();
             String sender = message.getUsername();
