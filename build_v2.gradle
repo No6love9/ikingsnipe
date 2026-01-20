@@ -65,6 +65,7 @@ shadowJar {
     // Relocate dependencies to avoid conflicts
     relocate 'com.google.gson', 'com.ikingsnipe.libs.gson'
     relocate 'com.mysql', 'com.ikingsnipe.libs.mysql'
+    relocate 'com.mysql.cj', 'com.ikingsnipe.libs.mysql.cj'
     relocate 'com.zaxxer.hikari', 'com.ikingsnipe.libs.hikari'
     relocate 'net.dv8tion.jda', 'com.ikingsnipe.libs.jda'
     relocate 'org.jfree', 'com.ikingsnipe.libs.jfree'

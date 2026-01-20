@@ -5,8 +5,8 @@ import java.util.*;
 
 public class CasinoConfig {
     // Branding
-    public String scriptName = "SnipesScripts Enterprise";
-    public String version = "8.0";
+    public String scriptName = "iKingSnipe GoatGang Casino";
+    public String version = "12.0";
 
     // Constants
     public static final int COINS_ID = 995;
@@ -14,14 +14,14 @@ public class CasinoConfig {
     public static final long TOKEN_VALUE = 1000L;
 
     // Betting Limits
-    public long minBet = 1_000_000L;
-    public long maxBet = 2_147_483_647L;
+    public long minBet = 100_000L;
+    public long maxBet = 100_000_000L;
 
     // Location Settings
     public enum LocationPreset {
-        GRAND_EXCHANGE("Grand Exchange", new Tile(3164, 3487, 0)),
-        CLAN_HALL("Clan Hall Portal", new Tile(3388, 3161, 0)),
-        CUSTOM("Custom Coordinates", null);
+        GRAND_EXCHANGE_SW("GE Southwest", new Tile(3164, 3484, 0)),
+        CLAN_HALL("Clan Hall", new Tile(3388, 3161, 0)),
+        CUSTOM("Custom", null);
 
         private final String name;
         private final Tile tile;
@@ -30,8 +30,8 @@ public class CasinoConfig {
         public Tile getTile() { return tile; }
     }
 
-    public LocationPreset locationPreset = LocationPreset.GRAND_EXCHANGE;
-    public int customX = 3164, customY = 3487, customZ = 0;
+    public LocationPreset locationPreset = LocationPreset.GRAND_EXCHANGE_SW;
+    public int customX = 3164, customY = 3484, customZ = 0;
     public boolean walkOnStart = true;
 
     // Banking & Muling Settings
@@ -44,114 +44,107 @@ public class CasinoConfig {
     public long muleThreshold = 500_000_000L;
     public long muleKeepAmount = 50_000_000L;
 
-    // Humanization Settings
+    // Humanization & Anti-Ban Settings
     public boolean enableMicroBreaks = true;
     public int breakFrequencyMinutes = 60;
     public int breakDurationMinutes = 5;
     public boolean enableCameraJitter = true;
     public boolean enableMouseFatigue = true;
+    public boolean enableRandomWalking = true;
+    public boolean enableSmartAdaptiveLogic = true;
+    public boolean enableAntiMute = true;
+    public int reactionTimeMin = 600;
+    public int reactionTimeMax = 1200;
 
-    // Game Settings
-    public String defaultGame = "craps";
+    // Game Settings & Command Triggers
     public Map<String, GameSettings> games = new HashMap<>();
     public boolean useProvablyFair = true;
     
-    // ChasingCraps Specifics
-    public boolean enableB2B = true;
-    public double b2bMultiplier = 9.0;
-    public double b2bPredictionMultiplier = 12.0;
-    
-    // Jackpot Settings
-    public boolean jackpotEnabled = true;
-    public long currentJackpot = 0;
-    public double jackpotContributionPercent = 1.0;
+    // Command Triggers (Configurable)
+    public String cmdBalance = "!bal";
+    public String cmdStats = "!stats";
+    public String cmdCraps = "!c";
+    public String cmdDiceDuel = "!dd";
+    public String cmdFlowerPoker = "!fp";
+    public String cmdHotCold = "!hc";
+    public String cmdBlackjack = "!bj";
+    public String cmdHelp = "!help";
 
-    // Messaging & AI
+    // Messaging & Game Messages
     public List<String> adMessages = new ArrayList<>(Arrays.asList(
-        "🎰 SnipesScripts Enterprise | Craps 3x Payout | !c to play!",
-        "💰 Trusted Casino Host | Instant Trades | Fair Games! | !stats",
-        "🎲 Professional Casino Service | Chasing Craps Active! | Trade me!"
+        "🎰 GoatGang Casino | Craps 3x Payout | !c to play!",
+        "💰 Trusted Host | Instant Trades | !stats",
+        "🎲 Verifiable RNG | Join Clan: GoatGang"
     ));
-    public String adMessage = adMessages.get(0); // For compatibility
-    public boolean enableAntiMute = true;
     public int adIntervalSeconds = 30;
-    public String tradeWelcome = "Welcome to SnipesScripts! Type !c for Craps. Hash: %s";
+    public String tradeWelcome = "Welcome to GoatGang! Type !help for games. Hash: %s";
     public String winMessage = "🎉 WINNER! %s won %s GP! (Result: %s) [Seed: %s]";
     public String lossMessage = "❌ LOSS! %s lost. (Result: %s) Better luck next time!";
+    public String payoutMessage = "💰 Payout of %s GP sent to %s. Enjoy!";
+    public String timeoutMessage = "⏳ Payout delayed for %s. Admin will collect manually.";
+    
     public boolean chatAIEnabled = true;
     public boolean autoReplyToScamAccusations = true;
     public boolean autoAnnounceBigWins = true;
     public long bigWinThreshold = 50_000_000L;
-    public List<String> customAutoResponses = new ArrayList<>();
 
     // Clan Chat Settings
     public boolean clanChatEnabled = true;
+    public String clanChatName = "GoatGang";
     public boolean clanChatAnnounceWins = true;
     public boolean clanChatRespondToCommands = true;
     public boolean notifyClanOnTrade = true;
-    public String clanChatName = "";
-    public long clanChatBigWinThreshold = 100_000_000L;
 
-    // Discord Webhook
+    // Discord Configuration
+    public String discordToken = "";
     public String discordWebhookUrl = "";
     public boolean discordEnabled = false;
     public boolean discordNotifyWins = true;
     public boolean discordNotifyLosses = true;
     public boolean discordShowSeeds = true;
-
-    // Remote Control
-    public boolean discordRemoteControlEnabled = false;
-    public String discordCommandApiUrl = "";
-    public String botIdentifier = "bot1";
+    public String discordNotificationChannelId = "";
 
     // Trade Configuration
+    public boolean autoAcceptTrades = true;
+    public boolean verifyTradeAmount = true;
+    public int tradeTimeoutSeconds = 60;
+    
+    // Legacy fields for compatibility
+    public String defaultGame = "craps";
+    public boolean enableB2B = true;
     public TradeConfig tradeConfig = new TradeConfig();
     public TradeConfig.TradePreset tradePreset = TradeConfig.TradePreset.BALANCED;
-    public boolean autoAcceptTrades = true; // Missing field
-
-    // Admin Configuration
-    public AdminConfig adminConfig = new AdminConfig();
 
     public CasinoConfig() {
         initializeDefaultGames();
     }
 
     private void initializeDefaultGames() {
-        games.put("dice", new GameSettings("Dice Duel", 2.0, true));
-        games.put("flower", new GameSettings("Flower Poker", 2.0, true));
-        games.put("craps", new GameSettings("Chasing Craps", 3.0, true, 7, 9, 12));
-        games.put("blackjack", new GameSettings("Blackjack", 2.5, true));
-        games.put("hotcold", new GameSettings("Hot/Cold", 2.0, true));
-        games.put("55x2", new GameSettings("55x2", 2.0, true));
-        games.put("dicewar", new GameSettings("Dice War", 1.95, true));
+        games.put("dice", new GameSettings("Dice Duel", 2.0, true, "!dd"));
+        games.put("flower", new GameSettings("Flower Poker", 2.0, true, "!fp"));
+        games.put("craps", new GameSettings("Chasing Craps", 3.0, true, "!c", 7, 9, 12));
+        games.put("blackjack", new GameSettings("Blackjack", 2.5, true, "!bj"));
+        games.put("hotcold", new GameSettings("Hot/Cold", 2.0, true, "!hc"));
     }
 
     public Tile getTargetTile() {
         return locationPreset == LocationPreset.CUSTOM ? new Tile(customX, customY, customZ) : locationPreset.getTile();
-    }
-    
-    public void applyTradePreset(TradeConfig.TradePreset preset) {
-        this.tradePreset = preset;
-        this.tradeConfig = TradeConfig.fromPreset(preset);
     }
 
     public static class GameSettings {
         public String name;
         public double multiplier;
         public boolean enabled;
+        public String trigger;
         public List<Integer> winningNumbers = new ArrayList<>();
         
-        public GameSettings(String name, double multiplier, boolean enabled) {
-            this.name = name; this.multiplier = multiplier; this.enabled = enabled;
+        public GameSettings(String name, double multiplier, boolean enabled, String trigger) {
+            this.name = name; this.multiplier = multiplier; this.enabled = enabled; this.trigger = trigger;
         }
         
-        public GameSettings(String name, double multiplier, boolean enabled, Integer... nums) {
-            this(name, multiplier, enabled);
+        public GameSettings(String name, double multiplier, boolean enabled, String trigger, Integer... nums) {
+            this(name, multiplier, enabled, trigger);
             this.winningNumbers.addAll(Arrays.asList(nums));
         }
-    }
-
-    public static class AdminConfig {
-        public boolean emergencyStop = false;
     }
 }
