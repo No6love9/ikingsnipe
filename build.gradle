@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'com.ikingsnipe'
-version = '13.1.0-MASTER'
+version = '13.2.0-MASTER'
 
 // Java 8 compatibility for DreamBot
 java {
@@ -47,7 +47,7 @@ tasks.withType(JavaCompile) {
 }
 
 shadowJar {
-    archiveFileName = 'iKingSnipe-Master-v13.1.jar'
+    archiveFileName = 'iKingSnipe-Master-v13.2.jar'
     archiveClassifier = ''
     
     // Relocate dependencies to avoid conflicts with other scripts or DreamBot

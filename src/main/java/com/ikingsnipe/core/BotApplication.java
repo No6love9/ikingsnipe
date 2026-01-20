@@ -66,6 +66,7 @@ public class BotApplication extends AbstractScript {
     private ChatAI chatAI;
     private DiscordWebhook discordWebhook;
     private ProvablyFair provablyFair;
+    private TradeRequestListener tradeRequestListener;
     
     // State management
     private CasinoState currentState = CasinoState.INITIALIZING;
@@ -122,6 +123,13 @@ public class BotApplication extends AbstractScript {
             muleManager = new MuleManager(config);
             chatAI = new ChatAI(config);
             provablyFair = new ProvablyFair();
+            
+            // Initialize and register trade listener
+            tradeRequestListener = new TradeRequestListener(tradeManager, config.tradeConfig);
+            // In DreamBot, ChatListeners are registered via the script itself
+            // The script class already implements ChatListener if we add it to the implements list
+            // or we can manually register it if the API supports it.
+            // For TradeRequestListener which implements ChatListener:
             
             if (config.discordEnabled && !config.discordWebhookUrl.isEmpty()) {
                 discordWebhook = new DiscordWebhook(config.discordWebhookUrl);
@@ -422,6 +430,9 @@ public class BotApplication extends AbstractScript {
      * Handle chat messages for game commands
      */
     public void onMessage(Message message) {
+        if (tradeRequestListener != null) {
+            tradeRequestListener.onMessage(message);
+        }
         try {
             String text = message.getMessage();
             String sender = message.getUsername();
