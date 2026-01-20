@@ -26,6 +26,10 @@ public class DiscordWebhook {
         sendRaw("{\"content\": \"" + content.replace("\"", "\\\"") + "\"}");
     }
 
+    public void sendGameResult(String player, String gameType, com.ikingsnipe.casino.games.GameResult result, String seed) {
+        sendGameResult(player, result.isWin(), result.getPayout(), result.getPayout(), result.getDescription(), seed, 0, new CasinoConfig());
+    }
+
     public void sendGameResult(String player, boolean win, long bet, long payout, String desc, String seed, long balance, CasinoConfig config) {
         if (!config.discordEnabled || url == null || url.isEmpty()) return;
         

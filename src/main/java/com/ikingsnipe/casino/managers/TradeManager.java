@@ -60,7 +60,7 @@ public class TradeManager {
 
         if (Trade.acceptTrade()) {
             Logger.log("[Trade] Screen 2 Accepted. Deposit confirmed: " + verifiedValueGP);
-            dbManager.recordGame(currentTrader, "deposit", verifiedValueGP, 0, "DEPOSIT", "");
+            dbManager.recordGame(currentTrader, "deposit", verifiedValueGP, 0, "DEPOSIT", "", "");
             notifyClanTradeSafe(currentTrader, verifiedValueGP);
         }
     }
