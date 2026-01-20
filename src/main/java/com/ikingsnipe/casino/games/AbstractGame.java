@@ -1,5 +1,8 @@
 package com.ikingsnipe.casino.games;
 
+import org.dreambot.api.methods.input.Keyboard;
+
+
 import com.ikingsnipe.casino.models.CasinoConfig;
 import java.util.Random;
 

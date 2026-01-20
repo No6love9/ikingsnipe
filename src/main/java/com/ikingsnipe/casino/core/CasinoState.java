@@ -1,5 +1,8 @@
 package com.ikingsnipe.casino.core;
 
+import org.dreambot.api.methods.input.Keyboard;
+
+
 public enum CasinoState {
     INITIALIZING("Initializing Systems"),
     WALKING_TO_LOCATION("Walking to Location"),

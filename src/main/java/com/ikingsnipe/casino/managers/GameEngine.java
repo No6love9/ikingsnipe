@@ -1,5 +1,8 @@
 package com.ikingsnipe.casino.managers;
 
+import org.dreambot.api.methods.input.Keyboard;
+
+
 import org.dreambot.api.utilities.Logger;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;

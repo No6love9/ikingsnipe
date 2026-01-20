@@ -1,5 +1,8 @@
 package com.ikingsnipe.core;
 
+import org.dreambot.api.methods.input.Keyboard;
+
+
 import java.security.MessageDigest;
 import java.util.Base64;
 

@@ -1,5 +1,8 @@
 package com.ikingsnipe.casino.games.impl;
 
+import org.dreambot.api.methods.input.Keyboard;
+
+
 import com.ikingsnipe.casino.games.AbstractGame;
 import com.ikingsnipe.casino.games.GameResult;
 import java.util.*;

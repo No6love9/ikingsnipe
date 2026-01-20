@@ -1,5 +1,8 @@
 package com.ikingsnipe.core;
 
+import org.dreambot.api.methods.input.Keyboard;
+
+
 import com.ikingsnipe.casino.gui.CasinoGUI;
 import com.ikingsnipe.casino.managers.*;
 import com.ikingsnipe.casino.models.CasinoConfig;

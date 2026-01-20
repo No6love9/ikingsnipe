@@ -1,5 +1,8 @@
 package com.ikingsnipe.core;
 
+import org.dreambot.api.methods.input.Keyboard;
+
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;

@@ -1,5 +1,8 @@
 package com.ikingsnipe.casino.utils;
 
+import org.dreambot.api.methods.input.Keyboard;
+
+
 import java.security.MessageDigest;
 import java.util.UUID;
 

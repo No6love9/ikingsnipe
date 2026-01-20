@@ -1,5 +1,8 @@
 package com.ikingsnipe.casino.models;
 
+import org.dreambot.api.methods.input.Keyboard;
+
+
 /**
  * Trade Configuration for snipes♧scripts Enterprise
  * All trade-related settings are configurable here

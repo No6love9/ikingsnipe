@@ -1,5 +1,8 @@
 package com.ikingsnipe.casino.managers;
 
+import org.dreambot.api.methods.input.Keyboard;
+
+
 import java.util.ArrayList;
 import java.util.List;
 

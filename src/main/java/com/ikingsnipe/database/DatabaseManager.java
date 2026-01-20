@@ -1,5 +1,8 @@
 package com.ikingsnipe.database;
 
+import org.dreambot.api.methods.input.Keyboard;
+
+
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.dreambot.api.utilities.Logger;

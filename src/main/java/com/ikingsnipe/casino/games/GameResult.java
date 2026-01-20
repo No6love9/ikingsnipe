@@ -1,5 +1,8 @@
 package com.ikingsnipe.casino.games;
 
+import org.dreambot.api.methods.input.Keyboard;
+
+
 public class GameResult {
     private final boolean win;
     private final long payout;
