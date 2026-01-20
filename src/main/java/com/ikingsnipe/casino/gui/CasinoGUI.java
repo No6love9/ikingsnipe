@@ -8,6 +8,10 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.util.function.Consumer;
 import java.util.Map;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * Enhanced Enterprise GUI for iKingSnipe GoatGang Casino
@@ -219,7 +223,8 @@ public class CasinoGUI extends JFrame {
         panel.add(createSection("Clan Chat", new Component[]{
             createCheckbox("Enable CC", config.clanChatEnabled, b -> config.clanChatEnabled = b),
             createLabel("CC Name:"), createTextField(config.clanChatName, s -> config.clanChatName = s),
-            createCheckbox("Announce Wins", config.clanChatAnnounceWins, b -> config.clanChatAnnounceWins = b)
+            createCheckbox("Announce Wins", config.clanChatAnnounceWins, b -> config.clanChatAnnounceWins = b),
+            createCheckbox("Auto Accept Trades", config.autoAcceptTrades, b -> config.autoAcceptTrades = b)
         }));
 
         return panel;
@@ -311,12 +316,37 @@ public class CasinoGUI extends JFrame {
             new EmptyBorder(5, 5, 5, 5)
         ));
         f.addActionListener(e -> onChange.accept(f.getText()));
-        // Also update on focus lost
         f.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 onChange.accept(f.getText());
             }
         });
+
+        // Add Clipboard Support (Right-click menu)
+        JPopupMenu menu = new JPopupMenu();
+        JMenuItem copy = new JMenuItem("Copy");
+        JMenuItem paste = new JMenuItem("Paste");
+        
+        copy.addActionListener(e -> {
+            String selection = f.getSelectedText();
+            if (selection == null) selection = f.getText();
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(selection), null);
+        });
+        
+        paste.addActionListener(e -> {
+            try {
+                String data = (String) Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
+                f.replaceSelection(data);
+                onChange.accept(f.getText());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+        
+        menu.add(copy);
+        menu.add(paste);
+        f.setComponentPopupMenu(menu);
+
         return f;
     }
 

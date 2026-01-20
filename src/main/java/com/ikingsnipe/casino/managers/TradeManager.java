@@ -7,6 +7,8 @@ import org.dreambot.api.methods.input.Keyboard;
 import org.dreambot.api.methods.trade.Trade;
 import org.dreambot.api.wrappers.items.Item;
 import org.dreambot.api.utilities.Logger;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * SnipesScripts Enterprise Trade Manager v9.0
@@ -66,7 +68,13 @@ public class TradeManager {
     }
 
     public void queueTradeRequest(String playerName) {
-        Logger.log("[Trade] Queued request from: " + playerName);
+        String timestamp = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        Logger.log("[Trade] " + playerName + " is trading @ " + timestamp);
+        
+        // Automated trade acceptance message
+        if (config.autoAcceptTrades) {
+            Keyboard.type("/" + playerName + " is trading", true);
+        }
     }
 
     private long calculateTradeValueGP() {
