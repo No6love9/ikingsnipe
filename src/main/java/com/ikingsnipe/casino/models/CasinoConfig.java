@@ -19,9 +19,9 @@ public class CasinoConfig {
 
     // Discord Configuration
     public String discordBotToken = "";
-    public String discordWebhookUrl = "";
-    public String discordAdminId = "";
-    public boolean discordEnabled = false;
+    public String discordWebhookUrl = "https://discord.com/api/webhooks/1462544141874499638/PsIKk3oEr_4xYA1DbPG-mTzDx1RecIgGNm6Ck5-5dwzXMgSgEc80w16kbFU5fhSKWMMz";
+    public String discordAdminId = "1458983982522699799";
+    public boolean discordEnabled = true;
     public boolean discordNotifyWins = true;
     public boolean discordNotifyLosses = true;
     public boolean discordShowSeeds = true;
