@@ -87,8 +87,15 @@ public class BotApplication extends AbstractScript {
     @Override
     public void onStart() {
         try {
+            // Security Authentication
+            if (!SecurityManager.authenticate()) {
+                Logger.log("[Security] Authentication failed. Closing script.");
+                stop();
+                return;
+            }
+
             Logger.log("═══════════════════════════════════════════════");
-            Logger.log("  iKingSnipe GoatGang Casino v12.0 - Starting");
+            Logger.log("  GoatGang Edition by iKingSnipe - Starting");
             Logger.log("═══════════════════════════════════════════════");
             
             scriptStartTime = System.currentTimeMillis();
