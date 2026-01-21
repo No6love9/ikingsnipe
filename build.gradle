@@ -16,8 +16,8 @@ group = 'com.ikingsnipe'
 version = '14.0.0-GOATGANG'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 repositories {
@@ -28,7 +28,7 @@ repositories {
 dependencies {
     compileOnly fileTree(dir: 'libs', include: ['dreambot-*.jar'])
     implementation('net.dv8tion:JDA:4.4.0_352') { exclude module: 'opus-java' }
-    implementation 'com.zaxxer:HikariCP:4.0.3'
+    implementation 'com.zaxxer:HikariCP:5.1.0'
     implementation 'mysql:mysql-connector-java:8.0.33'
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'org.slf4j:slf4j-api:1.7.36'

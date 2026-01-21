@@ -1,69 +1,74 @@
 @echo off
 SETLOCAL EnableDelayedExpansion
-TITLE iKingSnipe GoatGang Edition - Automated Setup
+TITLE iKingSnipe GoatGang Edition - Hardened Setup
 
-echo ======================================================
-echo    🐐 iKingSnipe GoatGang Edition - Windows Setup
-echo ======================================================
-echo.
+:: ======================================================
+::    🐐 iKingSnipe GoatGang Edition - Hardened Setup
+:: ======================================================
+:: Version: 2.0 (Operator-Grade)
+:: Purpose: Idempotent environment configuration and build
+:: ======================================================
 
-:: Check for Python
+echo [INFO] Starting environment verification...
+
+:: 1. Check for Python
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [ERROR] Python is not installed or not in PATH.
-    echo Please install Python from https://www.python.org/
-    pause
-    exit /b
+    echo [ERROR] Python not found. Install from https://www.python.org/
+    pause && exit /b 1
 )
 echo [OK] Python detected.
 
-:: Check for Java
-java -version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [ERROR] Java is not installed or not in PATH.
-    echo Please install JDK 11 or higher.
-    pause
-    exit /b
+:: 2. Check for Java 11+ (Required for HikariCP 5.x)
+for /f "tokens=3" %%g in ('java -version 2^>^&1 ^| findstr /i "version"') do (
+    set JVER=%%g
+    set JVER=!JVER:"=!
+    for /f "delims=. tokens=1" %%v in ("!JVER!") do set JMAJOR=%%v
 )
-echo [OK] Java detected.
 
-:: Create .env from .env.example if it doesn't exist
+if !JMAJOR! LSS 11 (
+    echo [ERROR] Java version !JVER! detected. Java 11 or higher is REQUIRED.
+    echo [ACTION] Please install Temurin 11: https://adoptium.net/temurin/releases/?version=11
+    pause && exit /b 1
+)
+echo [OK] Java !JVER! detected (Major: !JMAJOR!).
+
+:: 3. Idempotent .env Creation
 if not exist .env (
-    echo [INFO] Creating .env file from template...
-    copy .env.example .env
-    echo [ACTION] Please edit the .env file with your credentials before running the bot.
+    echo [INFO] Initializing .env from template...
+    copy .env.example .env >nul
+    echo [WARN] Edit .env with your credentials before running the bot.
 ) else (
-    echo [OK] .env file already exists.
+    echo [OK] .env configuration found.
 )
 
-:: Install Python dependencies
-echo [INFO] Installing Python dependencies...
-pip install -r requirements.txt
+:: 4. Dependency Management
+echo [INFO] Syncing Python dependencies...
+python -m pip install --upgrade pip >nul
+pip install -r requirements.txt --quiet
 if %errorlevel% neq 0 (
-    echo [ERROR] Failed to install Python dependencies.
-    pause
-    exit /b
+    echo [ERROR] Dependency sync failed.
+    pause && exit /b 1
 )
-echo [OK] Dependencies installed.
+echo [OK] Python environment ready.
 
-:: Build the project using Gradle
-echo [INFO] Building the Java project...
-call gradlew.bat build
+:: 5. Gradle Toolchain Build
+echo [INFO] Executing Gradle build (ShadowJar)...
+call gradlew.bat clean shadowJar --no-daemon
 if %errorlevel% neq 0 (
-    echo [ERROR] Build failed. Please check the logs.
-    pause
-    exit /b
+    echo [ERROR] Build failed. Check logs above.
+    pause && exit /b 1
 )
-echo [OK] Build successful. JAR located in build\libs\
 
-:: Final Instructions
+:: 6. Deployment Preparation
+set JAR_NAME=ikingsnipe-14.0.0-GOATGANG.jar
+if exist build\libs\!JAR_NAME! (
+    echo [SUCCESS] Build complete: build\libs\!JAR_NAME!
+    echo [INFO] Copy this JAR to: %%USERPROFILE%%\DreamBot\Scripts\
+)
+
 echo.
 echo ======================================================
-echo    ✅ SETUP COMPLETE
-echo ======================================================
-echo 1. Edit the .env file with your Discord and DB info.
-echo 2. Run 'database\init_db.sql' in your MySQL client.
-echo 3. Copy the JAR from build\libs\ to your DreamBot Scripts folder.
-echo 4. Run 'python discord_bot\casino_bot.py' to start the Discord bot.
+echo    ✅ SYSTEM READY - GOATGANG OPERATIONAL
 echo ======================================================
 pause
