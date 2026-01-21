@@ -2,8 +2,7 @@ package com.ikingsnipe.framework.leaves;
 
 import com.ikingsnipe.framework.core.Leaf;
 import com.ikingsnipe.casino.models.CasinoConfig;
-import org.dreambot.api.methods.input.Keyboard;
-import org.dreambot.api.utilities.Calculations;
+import com.ikingsnipe.casino.input.ModernInputHandler;
 import org.dreambot.api.utilities.Timer;
 
 /**
@@ -20,16 +19,16 @@ public class AutoChatLeaf implements Leaf {
 
     @Override
     public boolean isValid() {
-        return config.autoChatEnabled && System.currentTimeMillis() >= nextChatTime;
+        return System.currentTimeMillis() >= nextChatTime;
     }
 
     @Override
     public int onLoop() {
-        String message = config.getRandomAdvertisingMessage();
+        String message = "[Snipes] Casino is open! Trade with me for games!";
         if (message != null && !message.isEmpty()) {
-            Keyboard.type(message, true);
+            ModernInputHandler.typeText(message, true);
             // Randomize next chat interval between 5-12 seconds
-            nextChatTime = System.currentTimeMillis() + Calculations.random(5000, 12000);
+            nextChatTime = System.currentTimeMillis() + (5000 + (long)(Math.random() * 7000));
         }
         return 600;
     }

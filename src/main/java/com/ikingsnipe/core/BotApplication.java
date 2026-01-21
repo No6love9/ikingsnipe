@@ -83,10 +83,10 @@ public class BotApplication extends TreeScript {
         return super.onLoop();
     }
 
-    @Override
-    public void onMessage(Message msg) {
-        if (!started) return;
-    }
+    // Message handling moved to EnterpriseMessageHandler
+    // public void onMessage(Message msg) {
+    //     if (!started) return;
+    // }
 
     @Override
     public void onPaint(Graphics g) {

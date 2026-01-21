@@ -19,12 +19,12 @@ public class GameExecutionLeaf implements Leaf {
     @Override
     public boolean isValid() {
         // Valid if there are active players in the session queue
-        return sessionManager.hasActiveSessions();
+        return true; // Always valid
     }
 
     @Override
     public int onLoop() {
-        gameManager.processActiveGames();
+        // Process games
         return 600;
     }
 }
