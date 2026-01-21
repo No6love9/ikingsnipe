@@ -28,7 +28,7 @@ repositories {
 dependencies {
     compileOnly fileTree(dir: 'libs', include: ['dreambot-*.jar'])
     implementation('net.dv8tion:JDA:4.4.0_352') { exclude module: 'opus-java' }
-    implementation 'com.zaxxer:HikariCP:3.4.5'
+    implementation 'com.zaxxer:HikariCP:5.1.0'
     implementation 'mysql:mysql-connector-java:8.0.33'
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'org.slf4j:slf4j-api:1.7.36'
@@ -42,7 +42,7 @@ tasks.withType(JavaCompile) {
 }
 
 shadowJar {
-    archiveFileName = 'iKingSnipe-GoatGang-v14.0.jar'
+    archiveFileName = 'ikingsnipe-14.0.0-GOATGANG.jar'
     archiveClassifier = ''
     
     relocate 'com.google.gson', 'com.ikingsnipe.libs.gson'

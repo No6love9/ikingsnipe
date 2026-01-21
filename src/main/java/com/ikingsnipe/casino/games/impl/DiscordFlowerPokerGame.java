@@ -4,7 +4,7 @@ import com.ikingsnipe.casino.managers.SecureDataManager;
 import com.ikingsnipe.casino.models.UserModel;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.utils.messages.MessageEditData;
+import net.dv8tion.jda.api.MessageBuilder;
 
 import java.awt.Color;
 import java.util.concurrent.ThreadLocalRandom;
@@ -22,7 +22,7 @@ public class DiscordFlowerPokerGame {
         this.xpReward = bet / 1_000_000L;
     }
 
-    public MessageEditData start() {
+    public MessageBuilder start() {
         // Simplified Flower Poker logic for Java rewrite
         // In the Python version, this was a complex hand-ranking game.
         // Here, we simulate a 50/50 chance for simplicity.
@@ -49,7 +49,7 @@ public class DiscordFlowerPokerGame {
             System.err.println("Error in Flower Poker endGame: " + e.getMessage());
         }
 
-        return MessageEditData.fromEmbeds(createEmbed(outcome, winnings));
+        return new MessageBuilder().setEmbeds(createEmbed(outcome, winnings));
     }
 
     private MessageEmbed createEmbed(String outcome, long winnings) {

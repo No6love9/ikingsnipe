@@ -111,6 +111,11 @@ public class CasinoConfig {
     public Map<String, GameSettings> games = new HashMap<>();
     public boolean useProvablyFair = true;
     public boolean chatAIEnabled = true;
+    public Map<String, String> chatTriggers = new HashMap<>();
+    public boolean randomChatSuffix = true;
+    public List<String> chatSuffixes = Arrays.asList(" lol", " haha", " :)", "!", " gg");
+    public int chatDelayMin = 600;
+    public int chatDelayMax = 1500;
     public boolean autoReplyToScamAccusations = true;
     public boolean autoAnnounceBigWins = true;
     public long bigWinThreshold = 50_000_000L;

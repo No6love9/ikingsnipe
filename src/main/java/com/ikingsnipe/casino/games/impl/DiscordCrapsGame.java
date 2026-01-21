@@ -5,8 +5,8 @@ import com.ikingsnipe.casino.models.UserModel;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.utils.messages.MessageEditData;
+import net.dv8tion.jda.api.interactions.components.Button;
+import net.dv8tion.jda.api.MessageBuilder;
 
 import java.awt.Color;
 import java.util.concurrent.ThreadLocalRandom;
@@ -24,7 +24,7 @@ public class DiscordCrapsGame {
         this.xpReward = bet / 1_000_000L;
     }
 
-    public MessageEditData start() {
+    public MessageBuilder start() {
         int d1 = ThreadLocalRandom.current().nextInt(6) + 1;
         int d2 = ThreadLocalRandom.current().nextInt(6) + 1;
         int total = d1 + d2;
@@ -32,22 +32,22 @@ public class DiscordCrapsGame {
         String outcome;
         long winnings = 0;
         String reason = "Craps game";
-        MessageEditData response;
+        MessageBuilder response;
 
         if (total == 7 || total == 11) {
             outcome = "WIN";
             winnings = bet * 2;
             reason += " win";
-            response = MessageEditData.fromEmbeds(createEmbed(d1, d2, outcome, String.format("You rolled %d and won %,d GP!", total, winnings)));
+            response = new MessageBuilder().setEmbeds(createEmbed(d1, d2, outcome, String.format("You rolled %d and won %,d GP!", total, winnings)));
         } else if (total == 2 || total == 3 || total == 12) {
             outcome = "LOSS";
             reason += " loss";
-            response = MessageEditData.fromEmbeds(createEmbed(d1, d2, outcome, String.format("You rolled %d. Craps! You lose.", total)));
+            response = new MessageBuilder().setEmbeds(createEmbed(d1, d2, outcome, String.format("You rolled %d. Craps! You lose.", total)));
         } else {
             outcome = "POINT";
             // For simplicity, we end the game here in the Java rewrite, as interactive Craps is complex
             // In a full implementation, this would start a new phase with a point to hit.
-            response = MessageEditData.fromEmbeds(createEmbed(d1, d2, outcome, String.format("You rolled %d. Point is %d. Game over for now.", total, total)));
+            response = new MessageBuilder().setEmbeds(createEmbed(d1, d2, outcome, String.format("You rolled %d. Point is %d. Game over for now.", total, total)));
         }
 
         try {

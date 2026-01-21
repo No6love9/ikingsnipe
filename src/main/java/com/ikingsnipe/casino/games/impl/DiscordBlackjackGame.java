@@ -3,9 +3,9 @@ package com.ikingsnipe.casino.games.impl;
 import com.ikingsnipe.casino.managers.SecureDataManager;
 import com.ikingsnipe.casino.models.UserModel;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.Button;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.utils.messages.MessageEditData;
+import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.EmbedBuilder;
 
 import java.awt.Color;
@@ -111,7 +111,7 @@ public class DiscordBlackjackGame {
         return embed.build();
     }
 
-    public MessageEditData start() {
+    public MessageBuilder start() {
         dealCard(playerHand);
         dealCard(dealerHand);
         dealCard(playerHand);
@@ -121,37 +121,35 @@ public class DiscordBlackjackGame {
             // Immediate Blackjack
             long winnings = (long) (bet * 2.5);
             endGame("Blackjack! You win 1.5x your bet.", winnings, "Blackjack win");
-            return MessageEditData.fromEmbeds(createEmbed("Blackjack! Game Over.", String.format("You won %,d GP.", winnings), false));
+            return new MessageBuilder().setEmbeds(createEmbed("Blackjack! Game Over.", String.format("You won %,d GP.", winnings), false));
         }
 
-        return MessageEditData.newBuilder()
+        return new MessageBuilder()
                 .setEmbeds(createEmbed("Blackjack Game Started", "Hit or Stand?", true))
-                .setComponents(ActionRow.of(
+                .setActionRows(ActionRow.of(
                         Button.primary("blackjack_hit_" + playerId, "Hit"),
                         Button.success("blackjack_stand_" + playerId, "Stand")
-                ))
-                .build();
+                ));
     }
 
-    public MessageEditData hit() {
+    public MessageBuilder hit() {
         dealCard(playerHand);
         int playerValue = getHandValue(playerHand);
 
         if (playerValue > 21) {
             endGame("Bust! You lose.", 0, "Blackjack loss");
-            return MessageEditData.fromEmbeds(createEmbed("Bust! Game Over.", "You went over 21.", false));
+            return new MessageBuilder().setEmbeds(createEmbed("Bust! Game Over.", "You went over 21.", false));
         }
 
-        return MessageEditData.newBuilder()
+        return new MessageBuilder()
                 .setEmbeds(createEmbed("Hit!", "Hit or Stand?", true))
-                .setComponents(ActionRow.of(
+                .setActionRows(ActionRow.of(
                         Button.primary("blackjack_hit_" + playerId, "Hit"),
                         Button.success("blackjack_stand_" + playerId, "Stand")
-                ))
-                .build();
+                ));
     }
 
-    public MessageEditData stand() {
+    public MessageBuilder stand() {
         int dealerValue = getHandValue(dealerHand);
 
         // Dealer hits on 16 or less
@@ -184,7 +182,7 @@ public class DiscordBlackjackGame {
         }
 
         endGame(outcome, winnings, reason);
-        return MessageEditData.fromEmbeds(createEmbed(String.format("Game Over: %s", outcome), String.format("You won %,d GP.", winnings), false));
+        return new MessageBuilder().setEmbeds(createEmbed(String.format("Game Over: %s", outcome), String.format("You won %,d GP.", winnings), false));
     }
 
     private void endGame(String outcome, long winnings, String reason) {

@@ -5,9 +5,9 @@ import com.ikingsnipe.casino.models.UserModel;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.ChunkingFilter;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
@@ -40,7 +40,7 @@ public class GoatGangDiscordBot extends ListenerAdapter {
         try {
             jda = JDABuilder.createDefault(token)
                     .setActivity(Activity.playing("Craps & Blackjack"))
-                    .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.MESSAGE_CONTENT)
+                    .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_MESSAGES)
                     .setMemberCachePolicy(MemberCachePolicy.ALL)
                     .setChunkingFilter(ChunkingFilter.ALL)
                     .addEventListeners(new GoatGangDiscordBot())
@@ -50,9 +50,9 @@ public class GoatGangDiscordBot extends ListenerAdapter {
 
             // Register Slash Commands
             jda.updateCommands().addCommands(
-                    Commands.slash("balance", "Check your current GP balance, level, and XP."),
-                    Commands.slash("rank", "Show your current level and XP status."),
-                    Commands.slash("daily", "Claim your daily GP bonus.")
+                    new CommandData("balance", "Check your current GP balance, level, and XP."),
+                    new CommandData("rank", "Show your current level and XP status."),
+                    new CommandData("daily", "Claim your daily GP bonus.")
                     // Game commands will be added later
             ).queue();
 
@@ -66,8 +66,7 @@ public class GoatGangDiscordBot extends ListenerAdapter {
         }
     }
 
-    @Override
-    public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+    public void onSlashCommandEvent(SlashCommandEvent event) {
         if (event.getUser().isBot()) return;
 
         switch (event.getName()) {
@@ -85,7 +84,7 @@ public class GoatGangDiscordBot extends ListenerAdapter {
         }
     }
 
-    private void handleBalanceCommand(SlashCommandInteractionEvent event) {
+    private void handleBalanceCommand(SlashCommandEvent event) {
         long userId = event.getUser().getIdLong();
         UserModel user = dataManager.getUserData(userId);
         
@@ -102,7 +101,7 @@ public class GoatGangDiscordBot extends ListenerAdapter {
         event.reply(response).setEphemeral(true).queue();
     }
 
-    private void handleRankCommand(SlashCommandInteractionEvent event) {
+    private void handleRankCommand(SlashCommandEvent event) {
         long userId = event.getUser().getIdLong();
         UserModel user = dataManager.getUserData(userId);
 
@@ -127,7 +126,7 @@ public class GoatGangDiscordBot extends ListenerAdapter {
         event.reply(response).setEphemeral(true).queue();
     }
 
-    private void handleDailyCommand(SlashCommandInteractionEvent event) {
+    private void handleDailyCommand(SlashCommandEvent event) {
         long userId = event.getUser().getIdLong();
         UserModel user = dataManager.getUserData(userId);
         long currentTime = System.currentTimeMillis() / 1000L;
