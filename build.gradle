@@ -26,69 +26,196 @@ repositories {
 }
 
 dependencies {
+    // DreamBot API - Compile Only (provided at runtime)
     compileOnly fileTree(dir: 'libs', include: ['dreambot-*.jar'])
+    
+    // Discord JDA for bot features
     implementation('net.dv8tion:JDA:4.4.0_352') { exclude module: 'opus-java' }
+    
+    // Database connectivity
     implementation 'com.zaxxer:HikariCP:5.1.0'
     implementation 'mysql:mysql-connector-java:8.0.33'
+    
+    // JSON processing
     implementation 'com.google.code.gson:gson:2.10.1'
+    
+    // Logging
     implementation 'org.slf4j:slf4j-api:1.7.36'
     implementation 'org.slf4j:slf4j-simple:1.7.36'
+    
+    // Utilities
     implementation 'commons-codec:commons-codec:1.15'
 }
 
+// ============================================================================
+// COMPILATION CONFIGURATION
+// ============================================================================
+
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+    
+    // Enable all warnings for code quality
     options.compilerArgs += ['-Xlint:deprecation', '-Xlint:unchecked']
+    
+    // Performance optimization: Parallel compilation
+    options.fork = true
+    options.forkOptions.memoryMaximumSize = '2g'
+    options.forkOptions.jvmArgs = ['-XX:+UseG1GC', '-XX:MaxGCPauseMillis=200']
 }
 
+// ============================================================================
+// SHADOW JAR CONFIGURATION (Fat JAR with all dependencies)
+// ============================================================================
+
 shadowJar {
+    // Output configuration
     archiveFileName = 'ikingsnipe-14.0.0-GOATGANG.jar'
     archiveClassifier = ''
     
+    // Relocate dependencies to avoid conflicts
     relocate 'com.google.gson', 'com.ikingsnipe.libs.gson'
     relocate 'com.zaxxer.hikari', 'com.ikingsnipe.libs.hikari'
     relocate 'org.slf4j', 'com.ikingsnipe.libs.slf4j'
     relocate 'net.dv8tion.jda', 'com.ikingsnipe.libs.jda'
     relocate 'org.apache.commons', 'com.ikingsnipe.libs.commons'
     
+    // Exclude unnecessary files
     exclude 'META-INF/*.SF'
     exclude 'META-INF/*.DSA'
     exclude 'META-INF/*.RSA'
+    exclude 'META-INF/maven/**'
+    exclude 'META-INF/proguard/**'
     
+    // Merge service files for proper SPI loading
     mergeServiceFiles()
     
+    // Manifest configuration
     manifest {
         attributes(
             'Main-Class': 'com.ikingsnipe.core.BotApplication',
             'Implementation-Title': 'GoatGang Edition by iKingSnipe',
             'Implementation-Version': project.version,
-            'Multi-Release': 'true'
+            'Implementation-Vendor': 'iKingSnipe',
+            'Multi-Release': 'true',
+            'Built-By': 'iKingSnipe Build System',
+            'Build-Timestamp': new Date().format('yyyy-MM-dd HH:mm:ss'),
+            'Specification-Version': '14.0.0',
+            'Class-Path': '.'
         )
     }
 }
 
+// ============================================================================
+// CODE OBFUSCATION (ProGuard)
+// ============================================================================
+
 task obfuscate(type: proguard.gradle.ProGuardTask, dependsOn: shadowJar) {
     configuration 'proguard.txt'
     
-    injars "build/libs/iKingSnipe-GoatGang-v14.0.jar"
-    outjars "build/libs/iKingSnipe-GoatGang-v14.0-Protected.jar"
+    // Input and output
+    injars "build/libs/ikingsnipe-14.0.0-GOATGANG.jar"
+    outjars "build/libs/ikingsnipe-14.0.0-GOATGANG-Protected.jar"
     
     // Use the current Java home for library jars
     def javaHome = System.getProperty('java.home')
     if (new File("${javaHome}/lib/rt.jar").exists()) {
+        // Java 8
         libraryjars "${javaHome}/lib/rt.jar"
         libraryjars "${javaHome}/lib/jce.jar"
     } else {
-        // For Java 9+
+        // Java 9+
         libraryjars "${javaHome}/jmods/java.base.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
         libraryjars "${javaHome}/jmods/java.desktop.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
     }
     
+    // Include compile classpath
     configurations.compileClasspath.each { libraryjars it }
 }
 
-clean {
-    delete 'build'
+// ============================================================================
+// JAR PLACEMENT TASK
+// ============================================================================
+
+task placeJar(dependsOn: shadowJar) {
+    doLast {
+        // Create output directory if it doesn't exist
+        def outputDir = file('output')
+        if (!outputDir.exists()) {
+            outputDir.mkdirs()
+        }
+        
+        // Copy JAR to output folder
+        def sourceJar = file("build/libs/ikingsnipe-14.0.0-GOATGANG.jar")
+        def destJar = file("output/ikingsnipe-14.0.0-GOATGANG.jar")
+        
+        if (sourceJar.exists()) {
+            copy {
+                from sourceJar
+                into outputDir
+            }
+            println "✓ JAR placed in output folder: ${destJar.absolutePath}"
+        } else {
+            println "✗ Error: JAR not found at ${sourceJar.absolutePath}"
+        }
+        
+        // Also create a symlink/copy for DreamBot compatibility
+        def dreamBotName = file("output/EliteTitanCasino.jar")
+        if (sourceJar.exists()) {
+            copy {
+                from sourceJar
+                into outputDir
+                rename { 'EliteTitanCasino.jar' }
+            }
+            println "✓ Compatibility JAR created: ${dreamBotName.absolutePath}"
+        }
+    }
 }
 
-defaultTasks 'clean', 'shadowJar'
+// ============================================================================
+// CLEAN TASK
+// ============================================================================
+
+clean {
+    delete 'build'
+    delete 'output'
+}
+
+// ============================================================================
+// DEFAULT TASKS
+// ============================================================================
+
+defaultTasks 'clean', 'shadowJar', 'placeJar'
+
+// ============================================================================
+// BUILD SUMMARY TASK
+// ============================================================================
+
+task buildSummary {
+    doLast {
+        println """
+╔════════════════════════════════════════════════════════════════╗
+║                    BUILD SUMMARY                              ║
+╚════════════════════════════════════════════════════════════════╝
+
+Project: ${project.name}
+Version: ${project.version}
+Group: ${project.group}
+
+Output Locations:
+  • Main JAR: build/libs/ikingsnipe-14.0.0-GOATGANG.jar
+  • Output:   output/ikingsnipe-14.0.0-GOATGANG.jar
+  • Compat:   output/EliteTitanCasino.jar
+
+Deployment:
+  • Copy JAR to: C:\\Users\\YourName\\DreamBot\\Scripts\\
+  • Or use: .\\Deploy-ToDreamBot.ps1
+
+Java Version: ${sourceCompatibility}
+Build Time: ${new Date().format('yyyy-MM-dd HH:mm:ss')}
+
+✓ Build completed successfully!
+"""
+    }
+}
+
+build.finalizedBy(buildSummary)
