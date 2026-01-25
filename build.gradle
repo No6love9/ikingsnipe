@@ -81,6 +81,8 @@ shadowJar {
     relocate 'org.apache.commons', 'com.ikingsnipe.libs.commons'
     
     // Exclude unnecessary files (signatures, maven metadata)
+    exclude 'com/zaxxer/hikari/hibernate/**'
+    exclude 'com/zaxxer/hikari/metrics/**'
     exclude 'META-INF/*.SF'
     exclude 'META-INF/*.DSA'
     exclude 'META-INF/*.RSA'
