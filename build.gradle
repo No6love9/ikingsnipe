@@ -13,7 +13,7 @@ plugins {
 }
 
 group = 'com.ikingsnipe'
-version = '8.2.7-velocity-bezier'
+version = '8.2.8-guaranteed'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -30,10 +30,10 @@ dependencies {
     // NEVER shade this - it's provided by the client loader
     compileOnly fileTree(dir: 'libs', include: ['dreambot-*.jar', 'dreambot*.jar'])
     
-    // Discord JDA for bot features
+    // Discord JDA for bot features (optional - can be removed for lighter JAR)
     implementation('net.dv8tion:JDA:4.4.0_352') { exclude module: 'opus-java' }
     
-    // Database connectivity
+    // Database connectivity (optional)
     implementation 'com.zaxxer:HikariCP:5.1.0'
     implementation 'mysql:mysql-connector-java:8.0.33'
     
@@ -70,67 +70,83 @@ tasks.withType(JavaCompile) {
 
 shadowJar {
     // Output configuration
-    archiveFileName = 'EliteTitanCasino-fat.jar'
+    archiveFileName = 'EliteTitanCasino.jar'
     archiveClassifier = ''
     
-    // Relocate dependencies to avoid conflicts
+    // Relocate dependencies to avoid conflicts with DreamBot's bundled libs
     relocate 'com.google.gson', 'com.ikingsnipe.libs.gson'
     relocate 'com.zaxxer.hikari', 'com.ikingsnipe.libs.hikari'
     relocate 'org.slf4j', 'com.ikingsnipe.libs.slf4j'
     relocate 'net.dv8tion.jda', 'com.ikingsnipe.libs.jda'
     relocate 'org.apache.commons', 'com.ikingsnipe.libs.commons'
     
-    // Exclude unnecessary files
+    // Exclude unnecessary files (signatures, maven metadata)
     exclude 'META-INF/*.SF'
     exclude 'META-INF/*.DSA'
     exclude 'META-INF/*.RSA'
     exclude 'META-INF/maven/**'
     exclude 'META-INF/proguard/**'
+    exclude 'META-INF/versions/**'
+    exclude 'META-INF/native-image/**'
     
     // Merge service files for proper SPI loading
     mergeServiceFiles()
     
-    // Manifest configuration
+    // Manifest configuration - DreamBot reads this
     manifest {
         attributes(
-            'Main-Class': 'com.ikingsnipe.core.BotApplication',
-            'Implementation-Title': 'GoatGang Edition by iKingSnipe',
+            'Main-Class': 'com.ikingsnipe.EliteTitanCasino',
+            'Script-Name': 'Elite Titan Casino',
+            'Script-Author': 'iKingSnipe',
+            'Script-Version': '8.2.8',
+            'Script-Category': 'MISC',
+            'Script-Description': 'Provably Fair Casino Bot - Craps, Dice, Anti-Ban',
+            'Implementation-Title': 'Elite Titan Casino by iKingSnipe',
             'Implementation-Version': project.version,
-            'Implementation-Vendor': 'iKingSnipe',
-            'Multi-Release': 'true',
-            'Built-By': 'iKingSnipe Build System',
+            'Implementation-Vendor': 'iKingSnipe / GoatGang',
+            'Built-By': 'EliteForge Build System',
             'Build-Timestamp': new Date().format('yyyy-MM-dd HH:mm:ss'),
-            'Specification-Version': '14.0.0',
             'Class-Path': '.'
         )
     }
 }
 
 // ============================================================================
-// CODE OBFUSCATION (ProGuard)
+// LIGHTWEIGHT JAR (No Discord/Database - for testing)
 // ============================================================================
 
-task obfuscate(type: proguard.gradle.ProGuardTask, dependsOn: shadowJar) {
-    configuration 'proguard.txt'
+task lightJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    archiveFileName = 'EliteTitanCasino-lite.jar'
+    archiveClassifier = 'lite'
     
-    // Input and output
-    injars "build/libs/EliteTitanCasino-fat.jar"
-    outjars "build/libs/EliteTitanCasino-fat-Protected.jar"
+    from sourceSets.main.output
+    configurations = [project.configurations.runtimeClasspath]
     
-    // Use the current Java home for library jars
-    def javaHome = System.getProperty('java.home')
-    if (new File("${javaHome}/lib/rt.jar").exists()) {
-        // Java 8
-        libraryjars "${javaHome}/lib/rt.jar"
-        libraryjars "${javaHome}/lib/jce.jar"
-    } else {
-        // Java 9+
-        libraryjars "${javaHome}/jmods/java.base.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
-        libraryjars "${javaHome}/jmods/java.desktop.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
+    // Only include Gson (required for config)
+    dependencies {
+        include(dependency('com.google.code.gson:gson'))
+        include(dependency('commons-codec:commons-codec'))
     }
     
-    // Include compile classpath
-    configurations.compileClasspath.each { libraryjars it }
+    relocate 'com.google.gson', 'com.ikingsnipe.libs.gson'
+    
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+    exclude 'META-INF/maven/**'
+    
+    mergeServiceFiles()
+    
+    manifest {
+        attributes(
+            'Main-Class': 'com.ikingsnipe.EliteTitanCasino',
+            'Script-Name': 'Elite Titan Casino',
+            'Script-Author': 'iKingSnipe',
+            'Script-Version': '8.2.8',
+            'Implementation-Title': 'Elite Titan Casino (Lite)',
+            'Implementation-Version': project.version
+        )
+    }
 }
 
 // ============================================================================
@@ -146,8 +162,8 @@ task placeJar(dependsOn: shadowJar) {
         }
         
         // Copy JAR to output folder
-        def sourceJar = file("build/libs/EliteTitanCasino-fat.jar")
-        def destJar = file("output/EliteTitanCasino-fat.jar")
+        def sourceJar = file("build/libs/EliteTitanCasino.jar")
+        def destJar = file("output/EliteTitanCasino.jar")
         
         if (sourceJar.exists()) {
             copy {
@@ -155,19 +171,9 @@ task placeJar(dependsOn: shadowJar) {
                 into outputDir
             }
             println "✓ JAR placed in output folder: ${destJar.absolutePath}"
+            println "✓ JAR Size: ${(sourceJar.length() / 1024 / 1024).round(2)} MB"
         } else {
             println "✗ Error: JAR not found at ${sourceJar.absolutePath}"
-        }
-        
-        // Also create a symlink/copy for DreamBot compatibility
-        def dreamBotName = file("output/EliteTitanCasino.jar")
-        if (sourceJar.exists()) {
-            copy {
-                from sourceJar
-                into outputDir
-                rename { 'EliteTitanCasino.jar' }
-            }
-            println "✓ Compatibility JAR created: ${dreamBotName.absolutePath}"
         }
     }
 }
@@ -193,28 +199,44 @@ defaultTasks 'clean', 'shadowJar', 'placeJar'
 
 task buildSummary {
     doLast {
+        def jarFile = file("build/libs/EliteTitanCasino.jar")
+        def jarSize = jarFile.exists() ? "${(jarFile.length() / 1024 / 1024).round(2)} MB" : "N/A"
+        
         println """
 ╔════════════════════════════════════════════════════════════════╗
-║                    BUILD SUMMARY                              ║
+║           ELITE TITAN CASINO - BUILD COMPLETE                 ║
 ╚════════════════════════════════════════════════════════════════╝
 
 Project: ${project.name}
 Version: ${project.version}
-Group: ${project.group}
+Main Class: com.ikingsnipe.EliteTitanCasino
 
-Output Locations:
-  • Main JAR: build/libs/EliteTitanCasino-fat.jar
-  • Output:   output/EliteTitanCasino-fat.jar
-  • Compat:   output/EliteTitanCasino.jar
+Output JAR:
+  • Location: build/libs/EliteTitanCasino.jar
+  • Size: ${jarSize}
+  • Copy to: output/EliteTitanCasino.jar
 
-Deployment:
-  • Copy JAR to: C:\\Users\\YourName\\DreamBot\\Scripts\\
-  • Or use: .\\Deploy-ToDreamBot.ps1
+DEPLOYMENT:
+  Windows: Copy to %LOCALAPPDATA%\\DreamBot\\Scripts\\
+  Linux:   Copy to ~/.dreambot/Scripts/
+  Mac:     Copy to ~/DreamBot/Scripts/
+
+  Or run: .\\Deploy-ToDreamBot.ps1
+
+FEATURES:
+  ✓ Provably Fair (SHA-256 commitment)
+  ✓ Craps Game (x3 payout)
+  ✓ Dice Game (55+ wins x2)
+  ✓ Velocity Bezier Mouse Paths
+  ✓ Anti-Ban Humanization
+  ✓ GUI Configuration
+  ✓ Trade Handling
+  ✓ Paint Overlay
 
 Java Version: ${sourceCompatibility}
 Build Time: ${new Date().format('yyyy-MM-dd HH:mm:ss')}
 
-✓ Build completed successfully!
+✓ BUILD SUCCESSFUL - JAR READY FOR DEPLOYMENT!
 """
     }
 }
