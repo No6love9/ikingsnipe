@@ -432,7 +432,20 @@ class BlackjackGame:
             level_reward = new_level * 10_000_000
             await self.data_manager.update_balance(user_id, level_reward, f"Level Up Reward to Level {new_level}")
             logger.info(f"User {user_id} leveled up from {old_level} to {new_level}. Rewarded {level_reward:,} GP.")
-            # TODO: Send a level-up message to the user
+            
+            # Send a level-up message to the user
+            try:
+                user = await self.interaction.client.fetch_user(user_id)
+                embed = discord.Embed(
+                    title="🎉 LEVEL UP!",
+                    description=f"Congratulations {user.mention}! You've reached **Level {new_level}**!",
+                    color=GOAT_GOLD
+                )
+                embed.add_field(name="Reward", value=f"💰 {level_reward:,} GP", inline=True)
+                embed.set_thumbnail(url=GOAT_ICON_URL)
+                await self.interaction.channel.send(embed=embed)
+            except Exception as e:
+                logger.error(f"Failed to send level-up message: {e}")
 
         await self.data_manager.save_config()
 
@@ -478,7 +491,7 @@ class CrapsGame:
         await self.interaction.channel.send(file=file, view=view)
 
     async def _add_xp(self, user_id: int, xp_amount: int):
-        # Duplicated from BlackjackGame for now, will refactor into a utility function later
+        # Use the same logic as BlackjackGame
         user_data = await self.data_manager.get_user_data(user_id)
         user_data['xp'] += xp_amount
         
@@ -490,6 +503,20 @@ class CrapsGame:
             level_reward = new_level * 10_000_000
             await self.data_manager.update_balance(user_id, level_reward, f"Level Up Reward to Level {new_level}")
             logger.info(f"User {user_id} leveled up from {old_level} to {new_level}. Rewarded {level_reward:,} GP.")
+            
+            # Send a level-up message to the user
+            try:
+                user = await self.interaction.client.fetch_user(user_id)
+                embed = discord.Embed(
+                    title="🎉 LEVEL UP!",
+                    description=f"Congratulations {user.mention}! You've reached **Level {new_level}**!",
+                    color=GOAT_GOLD
+                )
+                embed.add_field(name="Reward", value=f"💰 {level_reward:,} GP", inline=True)
+                embed.set_thumbnail(url=GOAT_ICON_URL)
+                await self.interaction.channel.send(embed=embed)
+            except Exception as e:
+                logger.error(f"Failed to send level-up message: {e}")
 
         await self.data_manager.save_config()
 
@@ -525,7 +552,7 @@ class FlowerPokerGame:
         await self.interaction.channel.send(file=file)
 
     async def _add_xp(self, user_id: int, xp_amount: int):
-        # Duplicated from BlackjackGame for now, will refactor into a utility function later
+        # Use the same logic as BlackjackGame
         user_data = await self.data_manager.get_user_data(user_id)
         user_data['xp'] += xp_amount
         
@@ -537,6 +564,20 @@ class FlowerPokerGame:
             level_reward = new_level * 10_000_000
             await self.data_manager.update_balance(user_id, level_reward, f"Level Up Reward to Level {new_level}")
             logger.info(f"User {user_id} leveled up from {old_level} to {new_level}. Rewarded {level_reward:,} GP.")
+            
+            # Send a level-up message to the user
+            try:
+                user = await self.interaction.client.fetch_user(user_id)
+                embed = discord.Embed(
+                    title="🎉 LEVEL UP!",
+                    description=f"Congratulations {user.mention}! You've reached **Level {new_level}**!",
+                    color=GOAT_GOLD
+                )
+                embed.add_field(name="Reward", value=f"💰 {level_reward:,} GP", inline=True)
+                embed.set_thumbnail(url=GOAT_ICON_URL)
+                await self.interaction.channel.send(embed=embed)
+            except Exception as e:
+                logger.error(f"Failed to send level-up message: {e}")
 
         await self.data_manager.save_config()
 

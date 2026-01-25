@@ -95,15 +95,22 @@ async def casino_stats(ctx):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
-        cursor.execute("SELECT SUM(bet) as total_wagered, SUM(CASE WHEN result='WIN' THEN bet * 2 ELSE 0 END) as total_paid FROM game_history")
+        cursor.execute("SELECT SUM(bet) as total_wagered FROM game_history")
         stats = cursor.fetchone()
-        
         total_wagered = stats['total_wagered'] if stats and stats['total_wagered'] else 0
+
+        cursor.execute("SELECT COUNT(DISTINCT username) as total_players FROM players")
+        player_stats = cursor.fetchone()
+        total_players = player_stats['total_players'] if player_stats else 0
+
+        cursor.execute("SELECT COUNT(*) as total_games FROM game_history")
+        game_stats = cursor.fetchone()
+        total_games = game_stats['total_games'] if game_stats else 0
         
         embed = discord.Embed(title="🐐 GoatGang Casino Statistics", color=0xD4AF37)
         embed.add_field(name="Total Wagered", value=f"💰 {format_gp(total_wagered)} GP", inline=False)
-        embed.add_field(name="Total Players", value="SELECT COUNT(DISTINCT username) FROM players", inline=True)
-        embed.add_field(name="Total Games", value="SELECT COUNT(*) FROM game_history", inline=True)
+        embed.add_field(name="Total Players", value=str(total_players), inline=True)
+        embed.add_field(name="Total Games", value=str(total_games), inline=True)
         embed.set_footer(text="Data is real-time from the MySQL database.")
         
         await ctx.send(embed=embed)
