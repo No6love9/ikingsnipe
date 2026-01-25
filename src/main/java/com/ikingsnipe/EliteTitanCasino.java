@@ -127,17 +127,25 @@ public class EliteTitanCasino extends AbstractScript {
         
         // Show GUI
         try {
-            gui = new CasinoGUI(config, (start) -> {
-                this.started = start;
-                this.guiComplete = true;
-                if (start) {
-                    Logger.log("[EliteTitan] GUI closed - Script STARTED");
-                    currentState = State.IDLE;
-                } else {
-                    Logger.log("[EliteTitan] GUI closed - Script CANCELLED");
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                try {
+                    gui = new CasinoGUI(config, (start) -> {
+                        this.started = start;
+                        this.guiComplete = true;
+                        if (start) {
+                            Logger.log("[EliteTitan] GUI closed - Script STARTED");
+                            currentState = State.IDLE;
+                        } else {
+                            Logger.log("[EliteTitan] GUI closed - Script CANCELLED");
+                        }
+                    });
+                    gui.setVisible(true);
+                } catch (Exception e) {
+                    Logger.error("[EliteTitan] GUI Thread Error: " + e.getMessage());
+                    this.started = true;
+                    this.guiComplete = true;
                 }
             });
-            gui.setVisible(true);
         } catch (Exception e) {
             Logger.error("[EliteTitan] GUI Error: " + e.getMessage());
             // Continue without GUI

@@ -26,13 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * - Graceful shutdown
  * - Statistics tracking
  */
-@ScriptManifest(
-    name = "GoatGang Edition v2.0",
-    author = "iKingSnipe",
-    version = 14.1,
-    category = Category.MISC,
-    description = "Enterprise Casino Framework - Production Ready"
-)
+// Legacy Manifest Removed
 public class BotApplicationV2 extends TreeScript {
     
     // Configuration

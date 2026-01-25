@@ -13,13 +13,7 @@ import org.dreambot.api.utilities.Logger;
 import org.dreambot.api.wrappers.widgets.message.Message;
 import java.awt.*;
 
-@ScriptManifest(
-    name = "GoatGang Edition", 
-    author = "iKingSnipe", 
-    version = 14.0, 
-    category = Category.MISC, 
-    description = "Enterprise Casino Framework - Tree-Branch-Leaf Edition"
-)
+// Legacy Manifest Removed
 public class BotApplication extends TreeScript {
     private CasinoConfig config;
     private CasinoGUI gui;
