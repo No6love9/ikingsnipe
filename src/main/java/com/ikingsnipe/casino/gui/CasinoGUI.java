@@ -242,6 +242,14 @@ public class CasinoGUI extends JFrame {
             createLabel("Master Password:"), new JPasswordField("********") {{ setEditable(false); setBackground(new Color(45, 45, 55)); setForeground(TEXT_PRIMARY); }},
             new JLabel("Source code is encrypted and obfuscated.") {{ setForeground(ACCENT_GOLD); setFont(new Font("Arial", Font.ITALIC, 10)); }}
         }));
+        panel.add(createSection("Anti-Ban v8.2.7", new Component[]{
+            createCheckbox("Enable Micro Breaks", config.enableMicroBreaks, b -> config.enableMicroBreaks = b),
+            createCheckbox("Enable Camera Jitter", config.enableCameraJitter, b -> config.enableCameraJitter = b),
+            createCheckbox("Enable Mouse Fatigue", config.enableMouseFatigue, b -> config.enableMouseFatigue = b),
+            createCheckbox("Enable Mouse Smoothing (Bezier)", config.enableMouseSmoothing, b -> config.enableMouseSmoothing = b),
+            createCheckbox("Enable Random Walking", config.enableRandomWalking, b -> config.enableRandomWalking = b),
+            createCheckbox("Enable Anti-Mute", config.enableAntiMute, b -> config.enableAntiMute = b)
+        }));
         return panel;
     }
 

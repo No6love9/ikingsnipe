@@ -40,7 +40,7 @@ $SCRIPT_VERSION = "2026.1.0"
 # ============================================================================
 
 $PROJECT_ROOT = Split-Path -Parent $MyInvocation.MyCommand.Path
-$JAR_NAME = "ikingsnipe-14.0.0-GOATGANG.jar"
+$JAR_NAME = "EliteTitanCasino-fat.jar"
 $JAR_BUILD_PATH = "$PROJECT_ROOT\build\libs\$JAR_NAME"
 
 # Common DreamBot installation paths

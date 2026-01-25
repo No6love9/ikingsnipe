@@ -9,11 +9,11 @@ buildscript {
 
 plugins {
     id 'java'
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 group = 'com.ikingsnipe'
-version = '14.0.0-GOATGANG'
+version = '8.2.7-velocity-bezier'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -26,8 +26,9 @@ repositories {
 }
 
 dependencies {
-    // DreamBot API - Compile Only (provided at runtime)
-    compileOnly fileTree(dir: 'libs', include: ['dreambot-*.jar'])
+    // DreamBot API - Compile Only (provided at runtime by DreamBot client)
+    // NEVER shade this - it's provided by the client loader
+    compileOnly fileTree(dir: 'libs', include: ['dreambot-*.jar', 'dreambot*.jar'])
     
     // Discord JDA for bot features
     implementation('net.dv8tion:JDA:4.4.0_352') { exclude module: 'opus-java' }
@@ -37,7 +38,7 @@ dependencies {
     implementation 'mysql:mysql-connector-java:8.0.33'
     
     // JSON processing
-    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'com.google.code.gson:gson:2.11.0'
     
     // Logging
     implementation 'org.slf4j:slf4j-api:1.7.36'
@@ -69,7 +70,7 @@ tasks.withType(JavaCompile) {
 
 shadowJar {
     // Output configuration
-    archiveFileName = 'ikingsnipe-14.0.0-GOATGANG.jar'
+    archiveFileName = 'EliteTitanCasino-fat.jar'
     archiveClassifier = ''
     
     // Relocate dependencies to avoid conflicts
@@ -113,8 +114,8 @@ task obfuscate(type: proguard.gradle.ProGuardTask, dependsOn: shadowJar) {
     configuration 'proguard.txt'
     
     // Input and output
-    injars "build/libs/ikingsnipe-14.0.0-GOATGANG.jar"
-    outjars "build/libs/ikingsnipe-14.0.0-GOATGANG-Protected.jar"
+    injars "build/libs/EliteTitanCasino-fat.jar"
+    outjars "build/libs/EliteTitanCasino-fat-Protected.jar"
     
     // Use the current Java home for library jars
     def javaHome = System.getProperty('java.home')
@@ -145,8 +146,8 @@ task placeJar(dependsOn: shadowJar) {
         }
         
         // Copy JAR to output folder
-        def sourceJar = file("build/libs/ikingsnipe-14.0.0-GOATGANG.jar")
-        def destJar = file("output/ikingsnipe-14.0.0-GOATGANG.jar")
+        def sourceJar = file("build/libs/EliteTitanCasino-fat.jar")
+        def destJar = file("output/EliteTitanCasino-fat.jar")
         
         if (sourceJar.exists()) {
             copy {
@@ -202,8 +203,8 @@ Version: ${project.version}
 Group: ${project.group}
 
 Output Locations:
-  • Main JAR: build/libs/ikingsnipe-14.0.0-GOATGANG.jar
-  • Output:   output/ikingsnipe-14.0.0-GOATGANG.jar
+  • Main JAR: build/libs/EliteTitanCasino-fat.jar
+  • Output:   output/EliteTitanCasino-fat.jar
   • Compat:   output/EliteTitanCasino.jar
 
 Deployment:

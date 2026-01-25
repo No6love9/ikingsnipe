@@ -94,6 +94,7 @@ public class CasinoConfig {
     public int breakDurationMinutes = 5;
     public boolean enableCameraJitter = true;
     public boolean enableMouseFatigue = true;
+    public boolean enableMouseSmoothing = true;  // Velocity-varied Bezier mouse paths (v8.2.7)
     public boolean enableRandomWalking = true;
     public boolean enableSmartAdaptiveLogic = true;
     public boolean enableAntiMute = true;
