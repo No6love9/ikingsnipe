@@ -1,320 +1,132 @@
 package com.ikingsnipe.casino.gui;
 
-import org.dreambot.api.methods.input.Keyboard;
-
-
-import com.ikingsnipe.casino.managers.ProfitTracker;
 import com.ikingsnipe.casino.models.CasinoConfig;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.function.Consumer;
 
 /**
- * GoatGang Edition GUI by iKingSnipe
- * Professional high-end design with custom branding and Save/Load persistence.
+ * CasinoGUI - Elite Titan Casino
+ * 
+ * Professional, modular, and configurable GUI.
  */
 public class CasinoGUI extends JFrame {
     private CasinoConfig config;
     private final Consumer<Boolean> onStart;
-    private ProfitTracker profitTracker;
-
-    // Modern Color Palette
-    private static final Color BG_DARK = new Color(15, 15, 20);
-    private static final Color BG_CARD = new Color(25, 25, 35);
-    private static final Color ACCENT_GOLD = new Color(212, 175, 55);
-    private static final Color TEXT_PRIMARY = new Color(240, 240, 240);
-    private static final Color TEXT_SECONDARY = new Color(180, 180, 190);
-    private static final Color SUCCESS_GREEN = new Color(76, 175, 80);
 
     public CasinoGUI(CasinoConfig config, Consumer<Boolean> onStart) {
         this.config = config;
         this.onStart = onStart;
-        
-        setTitle("GoatGang Edition by iKingSnipe");
+
+        setTitle("Elite Titan Casino - GoatGang Edition");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(900, 700);
+        setSize(850, 600);
         setLocationRelativeTo(null);
         setUndecorated(true);
-        
+
         initComponents();
     }
 
     private void initComponents() {
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(BG_DARK);
-        mainPanel.setBorder(BorderFactory.createLineBorder(ACCENT_GOLD, 2));
+        mainPanel.setBackground(Theme.BG_DARK);
+        mainPanel.setBorder(BorderFactory.createLineBorder(Theme.ACCENT_GOLD, 1));
 
-        // --- Header Section ---
-        JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(BG_DARK);
-        header.setPreferredSize(new Dimension(0, 100));
-        header.setBorder(new EmptyBorder(10, 20, 10, 20));
+        // Header
+        mainPanel.add(createHeader(), BorderLayout.NORTH);
 
-        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
-        titlePanel.setOpaque(false);
-        
-        try {
-            ImageIcon icon = new ImageIcon(getClass().getResource("/assets/goat_crown.webp"));
-            Image img = icon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
-            JLabel logo = new JLabel(new ImageIcon(img));
-            titlePanel.add(logo);
-        } catch (Exception e) {
-            JLabel logo = new JLabel("🐐");
-            logo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 40));
-            titlePanel.add(logo);
-        }
-
-        JPanel textPanel = new JPanel(new GridLayout(2, 1));
-        textPanel.setOpaque(false);
-        JLabel title = new JLabel("GoatGang Edition");
-        title.setFont(new Font("Arial", Font.BOLD, 28));
-        title.setForeground(ACCENT_GOLD);
-        JLabel subtitle = new JLabel("by iKingSnipe | Enterprise Casino Solutions");
-        subtitle.setFont(new Font("Arial", Font.ITALIC, 14));
-        subtitle.setForeground(TEXT_SECONDARY);
-        textPanel.add(title);
-        textPanel.add(subtitle);
-        titlePanel.add(textPanel);
-        header.add(titlePanel, BorderLayout.WEST);
-
-        JPanel controls = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        controls.setOpaque(false);
-        JButton closeBtn = new JButton("✕");
-        closeBtn.setFont(new Font("Arial", Font.BOLD, 18));
-        closeBtn.setForeground(TEXT_SECONDARY);
-        closeBtn.setBorderPainted(false);
-        closeBtn.setContentAreaFilled(false);
-        closeBtn.setFocusPainted(false);
-        closeBtn.addActionListener(e -> dispose());
-        controls.add(closeBtn);
-        header.add(controls, BorderLayout.NORTH);
-
-        mainPanel.add(header, BorderLayout.NORTH);
-
-        // --- Tabs ---
+        // Sidebar / Tabs
         JTabbedPane tabs = new JTabbedPane(JTabbedPane.LEFT);
-        tabs.setBackground(BG_DARK);
-        tabs.setForeground(TEXT_PRIMARY);
-        tabs.setFont(new Font("Arial", Font.BOLD, 14));
+        tabs.setBackground(Theme.BG_DARK);
+        tabs.setForeground(Theme.TEXT_PRIMARY);
+        tabs.setFont(Theme.FONT_REGULAR);
 
-        tabs.addTab("Dashboard", createDashboardPanel());
-        tabs.addTab("Games", createGamesPanel());
-        tabs.addTab("Clan Settings", createClanPanel());
-        tabs.addTab("Trade Config", createTradePanel());
-        tabs.addTab("Chat/AI", createChatPanel());
-        tabs.addTab("Security", createSecurityPanel());
+        tabs.addTab("Dashboard", createDashboard());
+        tabs.addTab("Games", createGamesConfig());
+        tabs.addTab("Anti-Ban", createAntiBanConfig());
+        tabs.addTab("Discord", createDiscordConfig());
 
         mainPanel.add(tabs, BorderLayout.CENTER);
 
-        // --- Footer ---
-        JPanel footer = new JPanel(new BorderLayout());
-        footer.setBackground(BG_DARK);
-        footer.setPreferredSize(new Dimension(0, 60));
+        // Footer
+        mainPanel.add(createFooter(), BorderLayout.SOUTH);
+
+        setContentPane(mainPanel);
+    }
+
+    private JPanel createHeader() {
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(Theme.BG_DARK);
+        header.setPreferredSize(new Dimension(0, 80));
+        header.setBorder(new EmptyBorder(10, 20, 10, 20));
+
+        JLabel title = new JLabel("ELITE TITAN CASINO");
+        title.setFont(Theme.FONT_TITLE);
+        title.setForeground(Theme.ACCENT_GOLD);
+        header.add(title, BorderLayout.WEST);
+
+        JButton closeBtn = new JButton("✕");
+        closeBtn.setForeground(Theme.TEXT_SECONDARY);
+        closeBtn.setContentAreaFilled(false);
+        closeBtn.setBorderPainted(false);
+        closeBtn.setFocusPainted(false);
+        closeBtn.addActionListener(e -> dispose());
+        header.add(closeBtn, BorderLayout.EAST);
+
+        return header;
+    }
+
+    private JPanel createDashboard() {
+        JPanel p = createBasePanel();
+        p.add(new JLabel("Welcome to GoatGang Enterprise Solutions") {{
+            setForeground(Theme.TEXT_PRIMARY);
+            setFont(Theme.FONT_SUBTITLE);
+        }});
+        return p;
+    }
+
+    private JPanel createGamesConfig() {
+        JPanel p = createBasePanel();
+        // Add game toggles and multipliers here
+        return p;
+    }
+
+    private JPanel createAntiBanConfig() {
+        JPanel p = createBasePanel();
+        // Add anti-ban settings
+        return p;
+    }
+
+    private JPanel createDiscordConfig() {
+        JPanel p = createBasePanel();
+        // Add webhook settings
+        return p;
+    }
+
+    private JPanel createFooter() {
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        footer.setBackground(Theme.BG_DARK);
         footer.setBorder(new EmptyBorder(10, 20, 10, 20));
-        
-        JLabel copyright = new JLabel("© 2026 iKingSnipe. All Rights Reserved. Ownership: GoatGang.");
-        copyright.setFont(new Font("Arial", Font.PLAIN, 10));
-        copyright.setForeground(new Color(100, 100, 110));
-        footer.add(copyright, BorderLayout.WEST);
 
-        JPanel actionButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        actionButtons.setOpaque(false);
-
-        JButton saveBtn = createStyledButton("SAVE CONFIG", new Color(45, 45, 55), TEXT_PRIMARY);
-        saveBtn.addActionListener(e -> config.save());
-        
-        JButton loadBtn = createStyledButton("LOAD CONFIG", new Color(45, 45, 55), TEXT_PRIMARY);
-        loadBtn.addActionListener(e -> {
-            this.config = CasinoConfig.load();
-            refreshUI();
-        });
-
-        JButton startBtn = createStyledButton("LAUNCH GOATGANG", ACCENT_GOLD, Color.BLACK);
+        JButton startBtn = new JButton("LAUNCH SCRIPT");
+        startBtn.setBackground(Theme.ACCENT_GOLD);
+        startBtn.setForeground(Color.BLACK);
+        startBtn.setFont(Theme.FONT_SUBTITLE);
         startBtn.addActionListener(e -> {
             onStart.accept(true);
             dispose();
         });
+        footer.add(startBtn);
 
-        actionButtons.add(saveBtn);
-        actionButtons.add(loadBtn);
-        actionButtons.add(startBtn);
-        footer.add(actionButtons, BorderLayout.EAST);
-
-        mainPanel.add(footer, BorderLayout.SOUTH);
-
-        setContentPane(mainPanel);
-        
-        MouseAdapter ma = new MouseAdapter() {
-            int lastX, lastY;
-            public void mousePressed(MouseEvent e) { lastX = e.getXOnScreen(); lastY = e.getYOnScreen(); }
-            public void mouseDragged(MouseEvent e) {
-                int x = e.getXOnScreen(); int y = e.getYOnScreen();
-                setLocation(getLocationOnScreen().x + x - lastX, getLocationOnScreen().y + y - lastY);
-                lastX = x; lastY = y;
-            }
-        };
-        header.addMouseListener(ma);
-        header.addMouseMotionListener(ma);
-    }
-
-    private void refreshUI() {
-        // In a real implementation, we would re-initialize components or use data binding
-        // For this version, we'll just notify the user that they should restart the GUI for full visual refresh
-        JOptionPane.showMessageDialog(this, "Configuration loaded. Please restart the GUI to see all changes visually.", "Config Loaded", JOptionPane.INFORMATION_MESSAGE);
-    }
-
-    private JButton createStyledButton(String text, Color bg, Color fg) {
-        JButton b = new JButton(text);
-        b.setBackground(bg);
-        b.setForeground(fg);
-        b.setFont(new Font("Arial", Font.BOLD, 12));
-        b.setFocusPainted(false);
-        b.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        return b;
-    }
-
-    private JPanel createDashboardPanel() {
-        JPanel panel = createBasePanel();
-        panel.add(createSection("Live Statistics", new Component[]{
-            createStatLabel("Status:", "ONLINE", SUCCESS_GREEN),
-            createStatLabel("Runtime:", "00:00:00", TEXT_PRIMARY),
-            createStatLabel("Total Profit:", "0 GP", TEXT_PRIMARY),
-            createStatLabel("Active Players:", "0", TEXT_PRIMARY)
-        }));
-        return panel;
-    }
-
-    private JPanel createGamesPanel() {
-        JPanel panel = createBasePanel();
-        panel.add(createSection("Game Selection", new Component[]{
-            createCheckbox("Dice Duel", true, b -> {}),
-            createCheckbox("Flower Poker", true, b -> {}),
-            createCheckbox("Craps", true, b -> {}),
-            createCheckbox("Blackjack", true, b -> {}),
-            createCheckbox("Hot/Cold", true, b -> {})
-        }));
-        panel.add(createSection("Betting Limits", new Component[]{
-            createLabel("Min Bet:"), createTextField(String.valueOf(config.minBet), s -> config.minBet = Long.parseLong(s)),
-            createLabel("Max Bet:"), createTextField(String.valueOf(config.maxBet), s -> config.maxBet = Long.parseLong(s))
-        }));
-        return panel;
-    }
-
-    private JPanel createClanPanel() {
-        JPanel panel = createBasePanel();
-        panel.add(createSection("Clan Chat Configuration", new Component[]{
-            createCheckbox("Enable Clan Chat", config.clanChatEnabled, b -> config.clanChatEnabled = b),
-            createLabel("CC Name:"), createTextField(config.clanChatName, s -> config.clanChatName = s),
-            createCheckbox("Announce Wins in CC", config.clanChatAnnounceWins, b -> config.clanChatAnnounceWins = b)
-        }));
-        return panel;
-    }
-
-    private JPanel createTradePanel() {
-        JPanel panel = createBasePanel();
-        panel.add(createSection("Trade Management", new Component[]{
-            createCheckbox("Auto Accept Trades", config.autoAcceptTrades, b -> config.autoAcceptTrades = b),
-            createCheckbox("Verify Trade Amount", config.verifyTradeAmount, b -> config.verifyTradeAmount = b),
-            createLabel("Trade Timeout (s):"), createTextField(String.valueOf(config.tradeTimeoutSeconds), s -> config.tradeTimeoutSeconds = Integer.parseInt(s))
-        }));
-        return panel;
-    }
-
-    private JPanel createChatPanel() {
-        JPanel panel = createBasePanel();
-        panel.add(createSection("Chat & AI Responses", new Component[]{
-            createCheckbox("Enable Chat AI", config.chatAIEnabled, b -> config.chatAIEnabled = b),
-            createLabel("Ad Interval (s):"), createTextField(String.valueOf(config.adIntervalSeconds), s -> config.adIntervalSeconds = Integer.parseInt(s))
-        }));
-        return panel;
-    }
-
-    private JPanel createSecurityPanel() {
-        JPanel panel = createBasePanel();
-        panel.add(createSection("License & Security", new Component[]{
-            createLabel("License Key:"), createTextField("GG-XXXX-XXXX-XXXX", s -> {}),
-            createLabel("Master Password:"), new JPasswordField("********") {{ setEditable(false); setBackground(new Color(45, 45, 55)); setForeground(TEXT_PRIMARY); }},
-            new JLabel("Source code is encrypted and obfuscated.") {{ setForeground(ACCENT_GOLD); setFont(new Font("Arial", Font.ITALIC, 10)); }}
-        }));
-        panel.add(createSection("Anti-Ban v8.2.7", new Component[]{
-            createCheckbox("Enable Micro Breaks", config.enableMicroBreaks, b -> config.enableMicroBreaks = b),
-            createCheckbox("Enable Camera Jitter", config.enableCameraJitter, b -> config.enableCameraJitter = b),
-            createCheckbox("Enable Mouse Fatigue", config.enableMouseFatigue, b -> config.enableMouseFatigue = b),
-            createCheckbox("Enable Mouse Smoothing (Bezier)", config.enableMouseSmoothing, b -> config.enableMouseSmoothing = b),
-            createCheckbox("Enable Random Walking", config.enableRandomWalking, b -> config.enableRandomWalking = b),
-            createCheckbox("Enable Anti-Mute", config.enableAntiMute, b -> config.enableAntiMute = b)
-        }));
-        return panel;
+        return footer;
     }
 
     private JPanel createBasePanel() {
         JPanel p = new JPanel();
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-        p.setBackground(BG_DARK);
+        p.setBackground(Theme.BG_CARD);
         p.setBorder(new EmptyBorder(20, 20, 20, 20));
         return p;
     }
-
-    private JPanel createSection(String title, Component[] components) {
-        JPanel p = new JPanel();
-        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-        p.setBackground(BG_CARD);
-        p.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(ACCENT_GOLD),
-            title, TitledBorder.LEFT, TitledBorder.TOP,
-            new Font("Arial", Font.BOLD, 12), ACCENT_GOLD
-        ));
-        p.setMaximumSize(new Dimension(Integer.MAX_VALUE, 250));
-        for (Component c : components) { p.add(c); p.add(Box.createVerticalStrut(5)); }
-        return p;
-    }
-
-    private JLabel createLabel(String text) {
-        JLabel l = new JLabel(text);
-        l.setForeground(TEXT_SECONDARY);
-        return l;
-    }
-
-    private JLabel createStatLabel(String label, String value, Color valueColor) {
-        JLabel l = new JLabel("<html>" + label + " <font color='" + toHex(valueColor) + "'>" + value + "</font></html>");
-        l.setForeground(TEXT_SECONDARY);
-        l.setFont(new Font("Arial", Font.PLAIN, 14));
-        return l;
-    }
-
-    private String toHex(Color c) { return String.format("#%02x%02x%02x", c.getRed(), c.getGreen(), c.getBlue()); }
-
-    private JTextField createTextField(String text, Consumer<String> onChange) {
-        JTextField f = new JTextField(text);
-        f.setBackground(new Color(45, 45, 55));
-        f.setForeground(TEXT_PRIMARY);
-        f.setCaretColor(TEXT_PRIMARY);
-        f.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(80, 80, 90)), new EmptyBorder(5, 5, 5, 5)));
-        f.addActionListener(e -> onChange.accept(f.getText()));
-        JPopupMenu menu = new JPopupMenu();
-        JMenuItem copy = new JMenuItem("Copy");
-        JMenuItem paste = new JMenuItem("Paste");
-        copy.addActionListener(e -> f.copy());
-        paste.addActionListener(e -> { f.paste(); onChange.accept(f.getText()); });
-        menu.add(copy); menu.add(paste);
-        f.setComponentPopupMenu(menu);
-        return f;
-    }
-
-    private JCheckBox createCheckbox(String text, boolean selected, Consumer<Boolean> onChange) {
-        JCheckBox c = new JCheckBox(text, selected);
-        c.setBackground(BG_CARD);
-        c.setForeground(TEXT_PRIMARY);
-        c.setFocusPainted(false);
-        c.addActionListener(e -> onChange.accept(c.isSelected()));
-        return c;
-    }
-
-    public void setProfitTracker(ProfitTracker tracker) { this.profitTracker = tracker; }
 }

@@ -1,32 +1,52 @@
 package com.ikingsnipe.casino.games.impl;
 
-import org.dreambot.api.methods.input.Keyboard;
-
-
 import com.ikingsnipe.casino.games.AbstractGame;
+import com.ikingsnipe.casino.games.GameContext;
 import com.ikingsnipe.casino.games.GameResult;
 
+/**
+ * HotColdGame - Elite Titan Casino
+ * 
+ * Player chooses Hot (51-100) or Cold (1-50).
+ */
 public class HotColdGame extends AbstractGame {
+
     @Override
-    public GameResult play(String player, long bet, String seed) {
-        int roll = random.nextInt(100) + 1;
+    public String getId() { return "hotcold"; }
+
+    @Override
+    public String getDisplayName() { return "Hot or Cold"; }
+
+    @Override
+    public String getTrigger() { return "!hc"; }
+
+    @Override
+    public double getDefaultMultiplier() { return 2.0; }
+
+    @Override
+    public GameResult play(String player, long bet, GameContext context) {
+        String choice = context != null ? context.getString("choice") : "hot";
+        if (choice == null) choice = "hot";
         
-        // Hot/Cold: 1-50 is Cold, 51-100 is Hot.
-        // We simulate a 50/50 win chance for the player.
-        boolean win = roll > 50;
+        int roll = provablyFair.generateDiceRoll();
+        String reveal = provablyFair.getShortRevealString();
         
-        double multiplier = 2.0;
-        if (settings != null) {
-            multiplier = settings.multiplier;
-        }
+        boolean isHot = roll > 50;
+        boolean win = (choice.equalsIgnoreCase("hot") && isHot) || (choice.equalsIgnoreCase("cold") && !isHot);
         
-        long payout = win ? (long)(bet * multiplier) : 0;
+        double multiplier = (settings != null) ? settings.multiplier : getDefaultMultiplier();
+        long payout = win ? calculatePayout(bet, multiplier) : 0;
         
-        String type = roll > 50 ? "HOT" : "COLD";
-        String resultMsg = win ? "WIN" : "LOSS";
+        String outcome = isHot ? "HOT" : "COLD";
+        String description = String.format("%s: Rolled %d (%s) | Choice: %s | Seed: %s", 
+            win ? "WIN" : "LOSS", roll, outcome, choice.toUpperCase(), reveal);
         
-        return new GameResult(win, payout,
-            String.format("%s: Rolled %d (%s)", resultMsg, roll, type), 
-            String.valueOf(roll));
+        logGame(player, description, payout);
+        return new GameResult(win, payout, description, String.valueOf(roll));
+    }
+
+    @Override
+    public String getRulesDescription() {
+        return "Choose Hot (51-100) or Cold (1-50). Correct guess wins x2.0.";
     }
 }

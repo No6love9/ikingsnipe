@@ -1,37 +1,70 @@
 package com.ikingsnipe.casino.games;
 
-import org.dreambot.api.methods.input.Keyboard;
-
-
 import com.ikingsnipe.casino.models.CasinoConfig;
-import java.util.Random;
+import com.ikingsnipe.casino.utils.ProvablyFairCraps;
+import org.dreambot.api.utilities.Logger;
 
 /**
- * Enhanced Base Game Class for snipes♧scripts Enterprise
- * Supports multiplier-based payouts and complex game states
+ * AbstractGame - Elite Titan Casino
+ * 
+ * Base implementation for all games, providing provably fair utilities
+ * and configuration management.
  */
-public abstract class AbstractGame {
-    protected final Random random = new Random();
+public abstract class AbstractGame implements Game {
     protected CasinoConfig.GameSettings settings;
+    protected final ProvablyFairCraps provablyFair;
+    protected boolean enabled = true;
 
-    public void setSettings(CasinoConfig.GameSettings settings) {
-        this.settings = settings;
+    public AbstractGame() {
+        this.provablyFair = new ProvablyFairCraps();
     }
 
-    /**
-     * Core game execution logic
-     * @param player Name of the player
-     * @param bet Amount bet in GP
-     * @param seed Provably fair seed
-     * @return GameResult containing win status and payout
-     */
-    public abstract GameResult play(String player, long bet, String seed);
+    @Override
+    public void configure(CasinoConfig.GameSettings settings) {
+        this.settings = settings;
+        if (settings != null) {
+            this.enabled = settings.enabled;
+        }
+    }
 
-    /**
-     * Calculate payout based on multiplier in settings
-     */
-    protected long calculatePayout(long bet) {
-        if (settings == null) return (long)(bet * 2.0);
-        return (long)(bet * settings.multiplier);
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+        if (settings != null) {
+            settings.enabled = enabled;
+        }
+    }
+
+    @Override
+    public boolean isProvablyFair() {
+        return true; // All professional games in v9.0 are provably fair
+    }
+
+    @Override
+    public String getPreRollCommitment() {
+        return provablyFair.getShortCommitmentHash();
+    }
+
+    @Override
+    public String getFullCommitment() {
+        return provablyFair.getCommitmentHash();
+    }
+
+    @Override
+    public String getRevealString() {
+        return provablyFair.getRevealString();
+    }
+
+    protected long calculatePayout(long bet, double multiplier) {
+        return (long) (bet * multiplier);
+    }
+
+    protected void logGame(String player, String description, long payout) {
+        Logger.log(String.format("[%s] %s - %s - Payout: %d", getId(), player, description, payout));
     }
 }

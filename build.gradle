@@ -13,7 +13,7 @@ plugins {
 }
 
 group = 'com.ikingsnipe'
-version = '8.2.8-guaranteed'
+version = '9.0.0-GOATGANG'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -100,9 +100,9 @@ shadowJar {
             'Main-Class': 'com.ikingsnipe.EliteTitanCasino',
             'Script-Name': 'Elite Titan Casino',
             'Script-Author': 'iKingSnipe',
-            'Script-Version': '8.2.8',
+            'Script-Version': '9.0.0',
             'Script-Category': 'MISC',
-            'Script-Description': 'Provably Fair Casino Bot - Craps, Dice, Anti-Ban',
+            'Script-Description': 'Elite Titan Casino - Professional Provably Fair Gaming Suite',
             'Implementation-Title': 'Elite Titan Casino by iKingSnipe',
             'Implementation-Version': project.version,
             'Implementation-Vendor': 'iKingSnipe / GoatGang',
@@ -144,7 +144,7 @@ task lightJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) 
             'Main-Class': 'com.ikingsnipe.EliteTitanCasino',
             'Script-Name': 'Elite Titan Casino',
             'Script-Author': 'iKingSnipe',
-            'Script-Version': '8.2.8',
+            'Script-Version': '9.0.0',
             'Implementation-Title': 'Elite Titan Casino (Lite)',
             'Implementation-Version': project.version
         )
