@@ -1,16 +1,14 @@
 plugins {
     id 'java'
-    id 'application' // Added for mainClassName
     id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 group = 'com.nightfury'
-version = '1.0-MANUS'
+version = '1.0'
 
 java {
-    // Use Java 21 as requested for modern features (Records, Virtual Threads)
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 repositories {
@@ -19,96 +17,63 @@ repositories {
 }
 
 dependencies {
-    // DreamBot API - Compile Only (provided at runtime by DreamBot client)
-    compileOnly fileTree(dir: 'libs', include: ['dreambot-*.jar', 'dreambot*.jar'])
+    // DreamBot API - Compile Only
+    compileOnly fileTree(dir: 'libs', include: ['*.jar'])
     
-    // Discord Integration (JDA 5.0+ for modern features)
-    implementation 'net.dv8tion:JDA:5.0.0-beta.20'
+    // Discord Integration
+    implementation('net.dv8tion:JDA:4.4.0_352') {
+        exclude module: 'opus-java'
+    }
     
-    // Database & Connection Pooling (H2 for embedded DB, HikariCP for pooling)
-    implementation 'com.h2database:h2:2.2.224'
-    implementation 'com.zaxxer:HikariCP:5.1.0'
+    // Database & Connection Pooling
+    implementation 'com.h2database:h2:1.4.200'
+    implementation 'com.zaxxer:HikariCP:3.4.5'
     
     // JSON processing
-    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'com.google.code.gson:gson:2.8.9'
     
-    // Logging (SLF4J Simple for lightweight logging)
-    implementation 'org.slf4j:slf4j-api:2.0.9'
-    implementation 'org.slf4j:slf4j-simple:2.0.9'
-    
-    // JavaFX dependencies for the UI
-    // Note: These need to be configured for the specific OS if running as a desktop app
-    // For a simple fat JAR, we include them but they might need modular configuration
-    // For this build, we assume a standard environment where JavaFX is available or bundled.
-    // A proper JavaFX build would use the 'org.openjfx.javafxplugin'
-    // We will rely on the user to handle JavaFX module path if running outside a standard IDE/JRE
+    // Logging
+    implementation 'org.slf4j:slf4j-api:1.7.32'
+    implementation 'org.slf4j:slf4j-simple:1.7.32'
 }
-
-// ============================================================================
-// COMPILATION CONFIGURATION
-// ============================================================================
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
-    options.release = 21 // Use the release flag for Java 9+
-    
-    // Enforce zero deprecation warnings
-    options.compilerArgs << "-Xlint:deprecation" << "-Werror"
+    options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
 }
-
-// ============================================================================
-// SHADOW JAR CONFIGURATION (Fat JAR with all dependencies)
-// ============================================================================
 
 shadowJar {
     archiveBaseName.set('iKingSnipe-Manus')
     archiveClassifier.set('all')
-    archiveVersion.set(project.version)
+    archiveVersion.set('')
     
-    // Relocation to prevent Classpath Hell and ensure isolation
+    // Relocation for isolation
     relocate 'net.dv8tion.jda', 'com.nightfury.shaded.jda'
     relocate 'com.zaxxer.hikari', 'com.nightfury.shaded.hikari'
     relocate 'com.google.gson', 'com.nightfury.shaded.gson'
     relocate 'org.slf4j', 'com.nightfury.shaded.slf4j'
     relocate 'org.h2', 'com.nightfury.shaded.h2'
     
-    // Exclude unnecessary files
     exclude 'META-INF/*.SF'
     exclude 'META-INF/*.DSA'
     exclude 'META-INF/*.RSA'
-    exclude 'META-INF/maven/**'
     
-    // Merge service files for proper SPI loading
     mergeServiceFiles()
     
-    // Manifest configuration
     manifest {
         attributes(
-            'Main-Class': 'com.nightfury.core.Main',
-            'Implementation-Title': 'iKingSnipe - Manus System Integration',
-            'Implementation-Version': project.version,
-            'Built-By': 'Manus AI',
-            'Build-Timestamp': new Date().format('yyyy-MM-dd HH:mm:ss')
+            'Main-Class': 'com.nightfury.core.DreamBotScript',
+            'Script-Name': 'iKingSnipe - Manus Edition',
+            'Script-Author': 'iKingSnipe',
+            'Script-Version': '1.0',
+            'Script-Category': 'MISC',
+            'Script-Description': 'Enterprise Trade & Sniper System'
         )
     }
 }
 
-// Set the main class for the 'application' plugin
-application {
-    mainClass.set('com.nightfury.core.Main')
-}
-
-// ============================================================================
-// CLEAN TASK
-// ============================================================================
-
 clean {
     delete 'build'
-    delete 'output'
 }
-
-// ============================================================================
-// DEFAULT TASKS
-// ============================================================================
 
 defaultTasks 'clean', 'shadowJar'
