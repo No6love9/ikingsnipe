@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iKingSnipe - Manus Edition Installation Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 100%);
+            color: #e0e0e0;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #151515;
+            border: 1px solid #2d2d2d;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 255, 195, 0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #00ffc3;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            color: #00ffc3;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 255, 195, 0.5);
+        }
+
+        .subtitle {
+            color: #888888;
+            font-size: 1.1em;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            color: #00ffc3;
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: #00ffc3;
+            color: #0d0d0d;
+            border-radius: 50%;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 1.2em;
+        }
+
+        .step {
+            background: #1a1a1a;
+            border-left: 4px solid #00ffc3;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .step h3 {
+            color: #00ffc3;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .step p {
+            color: #d0d0d0;
+            margin-bottom: 10px;
+        }
+
+        .code-block {
+            background: #0d0d0d;
+            border: 1px solid #333333;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #00ffc3;
+            margin: 10px 0;
+            overflow-x: auto;
+            font-size: 0.9em;
+        }
+
+        .path-windows {
+            background: #0d0d0d;
+            border-left: 3px solid #00ffc3;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        .path-linux {
+            background: #0d0d0d;
+            border-left: 3px solid #00ffc3;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        .path-mac {
+            background: #0d0d0d;
+            border-left: 3px solid #00ffc3;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        .warning {
+            background: #2d2d1a;
+            border-left: 4px solid #ffaa00;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            color: #ffdd99;
+        }
+
+        .success {
+            background: #1a2d1a;
+            border-left: 4px solid #00ff00;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            color: #99ff99;
+        }
+
+        .info {
+            background: #1a2d2d;
+            border-left: 4px solid #00ccff;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            color: #99ddff;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin: 15px 0;
+        }
+
+        .feature-list li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .feature-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #00ffc3;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .troubleshooting {
+            background: #2d1a1a;
+            border-left: 4px solid #ff6666;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .troubleshooting h4 {
+            color: #ff9999;
+            margin-bottom: 10px;
+        }
+
+        .troubleshooting p {
+            color: #ddbbbb;
+            margin-bottom: 8px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #2d2d2d;
+            color: #666666;
+            font-size: 0.9em;
+        }
+
+        .github-link {
+            display: inline-block;
+            background: #00ffc3;
+            color: #0d0d0d;
+            padding: 12px 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+
+        .github-link:hover {
+            background: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 195, 0.5);
+        }
+
+        .button-group {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: #1a1a1a;
+            border: 1px solid #2d2d2d;
+        }
+
+        th {
+            background: #00ffc3;
+            color: #0d0d0d;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #2d2d2d;
+        }
+
+        tr:hover {
+            background: #1f1f1f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 iKingSnipe - Manus Edition</h1>
+            <p class="subtitle">Professional Installation & Setup Guide</p>
+        </header>
+
+        <div class="section">
+            <h2><span class="step-number">📦</span>Overview</h2>
+            <div class="step">
+                <p>Welcome to the <strong>iKingSnipe - Manus Edition</strong> installation guide. This script is a professional-grade trading and sniping system designed for the DreamBot client.</p>
+                
+                <h3>Key Features:</h3>
+                <ul class="feature-list">
+                    <li>Real-time trade processing with 20 TPS (Ticks Per Second)</li>
+                    <li>Human-like behavior with Gaussian Jitter anti-detection</li>
+                    <li>Embedded H2 Database for transaction logging</li>
+                    <li>Discord C2 (Command & Control) integration</li>
+                    <li>Java 8/11 compatible with DreamBot 3 & 4</li>
+                    <li>Fully isolated Fat JAR with relocated dependencies</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="step-number">1️⃣</span>Prerequisites</h2>
+            <div class="step">
+                <h3>Before You Begin:</h3>
+                <p>Ensure you have the following installed on your system:</p>
+                
+                <table>
+                    <tr>
+                        <th>Requirement</th>
+                        <th>Version</th>
+                        <th>Notes</th>
+                    </tr>
+                    <tr>
+                        <td>DreamBot Client</td>
+                        <td>Latest</td>
+                        <td>Download from official DreamBot website</td>
+                    </tr>
+                    <tr>
+                        <td>Java Runtime Environment (JRE)</td>
+                        <td>Java 8 or higher</td>
+                        <td>DreamBot handles this automatically</td>
+                    </tr>
+                </table>
+
+                <div class="info">
+                    <strong>ℹ️ Note:</strong> DreamBot typically bundles its own Java environment, so you may not need to install Java separately. The script is compatible with whatever Java version DreamBot uses.
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="step-number">2️⃣</span>Download the Script</h2>
+            <div class="step">
+                <h3>Get the Latest JAR File:</h3>
+                <p>Download the <code>iKingSnipe-Manus-all.jar</code> file from one of these sources:</p>
+                
+                <div class="button-group">
+                    <a href="https://github.com/No6love9/ikingsnipe/releases" class="github-link">📥 Download from GitHub</a>
+                </div>
+
+                <p>Or clone the repository directly:</p>
+                <div class="code-block">
+git clone https://github.com/No6love9/ikingsnipe.git
+                </div>
+
+                <div class="success">
+                    <strong>✓ Success:</strong> You should now have the <code>iKingSnipe-Manus-all.jar</code> file on your computer.
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="step-number">3️⃣</span>Locate Your Scripts Folder</h2>
+            <div class="step">
+                <h3>Find the DreamBot Scripts Directory:</h3>
+                <p>The location varies depending on your operating system. Select yours below:</p>
+
+                <h4 style="color: #00ffc3; margin-top: 15px;">Windows:</h4>
+                <div class="path-windows">
+                    <code>%LOCALAPPDATA%\DreamBot\Scripts\</code>
+                    <p style="margin-top: 10px; font-size: 0.9em;">Or manually navigate to: <code>C:\Users\[YourUsername]\AppData\Local\DreamBot\Scripts\</code></p>
+                </div>
+
+                <h4 style="color: #00ffc3; margin-top: 15px;">Linux:</h4>
+                <div class="path-linux">
+                    <code>~/.dreambot/Scripts/</code>
+                    <p style="margin-top: 10px; font-size: 0.9em;">Or: <code>$HOME/.dreambot/Scripts/</code></p>
+                </div>
+
+                <h4 style="color: #00ffc3; margin-top: 15px;">macOS:</h4>
+                <div class="path-mac">
+                    <code>~/DreamBot/Scripts/</code>
+                    <p style="margin-top: 10px; font-size: 0.9em;">Or: <code>$HOME/DreamBot/Scripts/</code></p>
+                </div>
+
+                <div class="info">
+                    <strong>💡 Tip:</strong> If the Scripts folder doesn't exist, create it manually in the DreamBot directory.
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="step-number">4️⃣</span>Install the Script</h2>
+            <div class="step">
+                <h3>Copy the JAR File:</h3>
+                <p>Move or copy the <code>iKingSnipe-Manus-all.jar</code> file into your Scripts folder.</p>
+
+                <h4 style="color: #00ffc3; margin-top: 15px;">Windows (Command Prompt):</h4>
+                <div class="code-block">
+copy "C:\path\to\iKingSnipe-Manus-all.jar" "%LOCALAPPDATA%\DreamBot\Scripts\"
+                </div>
+
+                <h4 style="color: #00ffc3; margin-top: 15px;">Linux/macOS (Terminal):</h4>
+                <div class="code-block">
+cp ~/Downloads/iKingSnipe-Manus-all.jar ~/.dreambot/Scripts/
+                </div>
+
+                <p style="margin-top: 15px;">Or simply drag and drop the file into the Scripts folder using your file manager.</p>
+
+                <div class="success">
+                    <strong>✓ Installation Complete:</strong> The JAR file is now in the correct location.
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="step-number">5️⃣</span>Load the Script in DreamBot</h2>
+            <div class="step">
+                <h3>Start the Script:</h3>
+                <ol style="margin-left: 20px; color: #d0d0d0;">
+                    <li>Open the <strong>DreamBot Client</strong></li>
+                    <li>Navigate to the <strong>Scripts</strong> tab</li>
+                    <li>Click the <strong>Refresh</strong> button to reload the script list</li>
+                    <li>Look for <strong>"iKingSnipe - Manus Edition"</strong> in the <strong>MISC</strong> category</li>
+                    <li>Select the script and click <strong>Start</strong></li>
+                </ol>
+
+                <div class="success">
+                    <strong>✓ Script Running:</strong> The script is now active and processing trades in real-time.
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="step-number">6️⃣</span>Discord C2 Setup (Optional)</h2>
+            <div class="step">
+                <h3>Remote Control via Discord:</h3>
+                <p>To enable remote command and control through Discord, set the <code>DISCORD_BOT_TOKEN</code> environment variable:</p>
+
+                <h4 style="color: #00ffc3; margin-top: 15px;">Windows (Environment Variables):</h4>
+                <ol style="margin-left: 20px; color: #d0d0d0;">
+                    <li>Right-click <strong>This PC</strong> → <strong>Properties</strong></li>
+                    <li>Click <strong>Advanced system settings</strong></li>
+                    <li>Click <strong>Environment Variables</strong></li>
+                    <li>Click <strong>New</strong> under User variables</li>
+                    <li>Variable name: <code>DISCORD_BOT_TOKEN</code></li>
+                    <li>Variable value: <code>your_bot_token_here</code></li>
+                    <li>Click <strong>OK</strong> and restart DreamBot</li>
+                </ol>
+
+                <h4 style="color: #00ffc3; margin-top: 15px;">Linux/macOS (Terminal):</h4>
+                <div class="code-block">
+export DISCORD_BOT_TOKEN="your_bot_token_here"
+                </div>
+
+                <div class="info">
+                    <strong>ℹ️ Discord Commands:</strong>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li><code>!status</code> - Check script status and current settings</li>
+                        <li><code>!set delay 4500</code> - Adjust base delay (in milliseconds)</li>
+                        <li><code>!set autoaccept true</code> - Enable/disable auto-accept</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="step-number">⚠️</span>Troubleshooting</h2>
+            
+            <div class="troubleshooting">
+                <h4>Script doesn't appear in the Scripts list</h4>
+                <p><strong>Solution:</strong></p>
+                <ul style="margin-left: 20px;">
+                    <li>Verify the JAR file is in the correct Scripts folder</li>
+                    <li>Restart the DreamBot client completely</li>
+                    <li>Click the Refresh button in the Scripts tab</li>
+                    <li>Check that the JAR file name is exactly: <code>iKingSnipe-Manus-all.jar</code></li>
+                </ul>
+            </div>
+
+            <div class="troubleshooting">
+                <h4>Script crashes on startup</h4>
+                <p><strong>Solution:</strong></p>
+                <ul style="margin-left: 20px;">
+                    <li>Check the DreamBot console for error messages</li>
+                    <li>Ensure you have Java 8 or higher installed</li>
+                    <li>Try re-downloading the JAR file from GitHub</li>
+                    <li>Verify no other scripts are conflicting</li>
+                </ul>
+            </div>
+
+            <div class="troubleshooting">
+                <h4>Discord C2 not connecting</h4>
+                <p><strong>Solution:</strong></p>
+                <ul style="margin-left: 20px;">
+                    <li>Verify the <code>DISCORD_BOT_TOKEN</code> environment variable is set correctly</li>
+                    <li>Ensure your Discord bot has the correct permissions</li>
+                    <li>Check that your bot is invited to the correct Discord server</li>
+                    <li>Restart DreamBot after setting the environment variable</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="step-number">📚</span>Support & Resources</h2>
+            <div class="step">
+                <p>For additional help and resources:</p>
+                
+                <div class="button-group">
+                    <a href="https://github.com/No6love9/ikingsnipe" class="github-link">📖 GitHub Repository</a>
+                    <a href="https://github.com/No6love9/ikingsnipe/issues" class="github-link">🐛 Report Issues</a>
+                </div>
+
+                <div class="info">
+                    <strong>💬 Community:</strong> Join the DreamBot community forums for additional support and tips from other users.
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>iKingSnipe - Manus Edition | Professional Trading & Sniping System</p>
+            <p>© 2026 iKingSnipe. All rights reserved. | Built with Manus AI</p>
+        </footer>
+    </div>
+</body>
+</html>
