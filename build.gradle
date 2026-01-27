@@ -1,23 +1,16 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.guardsquare:proguard-gradle:7.3.2'
-    }
-}
-
 plugins {
     id 'java'
+    id 'application' // Added for mainClassName
     id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
-group = 'com.ikingsnipe'
-version = '9.0.0-GOATGANG'
+group = 'com.nightfury'
+version = '1.0-MANUS'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    // Use Java 21 as requested for modern features (Records, Virtual Threads)
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 repositories {
@@ -27,25 +20,28 @@ repositories {
 
 dependencies {
     // DreamBot API - Compile Only (provided at runtime by DreamBot client)
-    // NEVER shade this - it's provided by the client loader
     compileOnly fileTree(dir: 'libs', include: ['dreambot-*.jar', 'dreambot*.jar'])
     
-    // Discord JDA for bot features (optional - can be removed for lighter JAR)
-    implementation('net.dv8tion:JDA:4.4.0_352') { exclude module: 'opus-java' }
+    // Discord Integration (JDA 5.0+ for modern features)
+    implementation 'net.dv8tion:JDA:5.0.0-beta.20'
     
-    // Database connectivity (optional)
+    // Database & Connection Pooling (H2 for embedded DB, HikariCP for pooling)
+    implementation 'com.h2database:h2:2.2.224'
     implementation 'com.zaxxer:HikariCP:5.1.0'
-    implementation 'mysql:mysql-connector-java:8.0.33'
     
     // JSON processing
     implementation 'com.google.code.gson:gson:2.11.0'
     
-    // Logging
-    implementation 'org.slf4j:slf4j-api:1.7.36'
-    implementation 'org.slf4j:slf4j-simple:1.7.36'
+    // Logging (SLF4J Simple for lightweight logging)
+    implementation 'org.slf4j:slf4j-api:2.0.9'
+    implementation 'org.slf4j:slf4j-simple:2.0.9'
     
-    // Utilities
-    implementation 'commons-codec:commons-codec:1.15'
+    // JavaFX dependencies for the UI
+    // Note: These need to be configured for the specific OS if running as a desktop app
+    // For a simple fat JAR, we include them but they might need modular configuration
+    // For this build, we assume a standard environment where JavaFX is available or bundled.
+    // A proper JavaFX build would use the 'org.openjfx.javafxplugin'
+    // We will rely on the user to handle JavaFX module path if running outside a standard IDE/JRE
 }
 
 // ============================================================================
@@ -54,14 +50,10 @@ dependencies {
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+    options.release = 21 // Use the release flag for Java 9+
     
-    // Enable all warnings for code quality
-    options.compilerArgs += ['-Xlint:deprecation', '-Xlint:unchecked']
-    
-    // Performance optimization: Parallel compilation
-    options.fork = true
-    options.forkOptions.memoryMaximumSize = '2g'
-    options.forkOptions.jvmArgs = ['-XX:+UseG1GC', '-XX:MaxGCPauseMillis=200']
+    // Enforce zero deprecation warnings
+    options.compilerArgs << "-Xlint:deprecation" << "-Werror"
 }
 
 // ============================================================================
@@ -69,115 +61,41 @@ tasks.withType(JavaCompile) {
 // ============================================================================
 
 shadowJar {
-    // Output configuration
-    archiveFileName = 'EliteTitanCasino.jar'
-    archiveClassifier = ''
+    archiveBaseName.set('iKingSnipe-Manus')
+    archiveClassifier.set('all')
+    archiveVersion.set(project.version)
     
-    // Relocate dependencies to avoid conflicts with DreamBot's bundled libs
-    relocate 'com.google.gson', 'com.ikingsnipe.libs.gson'
-    relocate 'com.zaxxer.hikari', 'com.ikingsnipe.libs.hikari'
-    relocate 'org.slf4j', 'com.ikingsnipe.libs.slf4j'
-    relocate 'net.dv8tion.jda', 'com.ikingsnipe.libs.jda'
-    relocate 'org.apache.commons', 'com.ikingsnipe.libs.commons'
+    // Relocation to prevent Classpath Hell and ensure isolation
+    relocate 'net.dv8tion.jda', 'com.nightfury.shaded.jda'
+    relocate 'com.zaxxer.hikari', 'com.nightfury.shaded.hikari'
+    relocate 'com.google.gson', 'com.nightfury.shaded.gson'
+    relocate 'org.slf4j', 'com.nightfury.shaded.slf4j'
+    relocate 'org.h2', 'com.nightfury.shaded.h2'
     
-    // Exclude unnecessary files (signatures, maven metadata)
-    exclude 'com/zaxxer/hikari/hibernate/**'
-    exclude 'com/zaxxer/hikari/metrics/**'
+    // Exclude unnecessary files
     exclude 'META-INF/*.SF'
     exclude 'META-INF/*.DSA'
     exclude 'META-INF/*.RSA'
     exclude 'META-INF/maven/**'
-    exclude 'META-INF/proguard/**'
-    exclude 'META-INF/versions/**'
-    exclude 'META-INF/native-image/**'
     
     // Merge service files for proper SPI loading
     mergeServiceFiles()
     
-    // Manifest configuration - DreamBot reads this
+    // Manifest configuration
     manifest {
         attributes(
-            'Main-Class': 'com.ikingsnipe.EliteTitanCasino',
-            'Script-Name': 'Elite Titan Casino',
-            'Script-Author': 'iKingSnipe',
-            'Script-Version': '9.0.0',
-            'Script-Category': 'MISC',
-            'Script-Description': 'Elite Titan Casino - Professional Provably Fair Gaming Suite',
-            'Implementation-Title': 'Elite Titan Casino by iKingSnipe',
+            'Main-Class': 'com.nightfury.core.Main',
+            'Implementation-Title': 'iKingSnipe - Manus System Integration',
             'Implementation-Version': project.version,
-            'Implementation-Vendor': 'iKingSnipe / GoatGang',
-            'Built-By': 'EliteForge Build System',
-            'Build-Timestamp': new Date().format('yyyy-MM-dd HH:mm:ss'),
-            'Class-Path': '.'
+            'Built-By': 'Manus AI',
+            'Build-Timestamp': new Date().format('yyyy-MM-dd HH:mm:ss')
         )
     }
 }
 
-// ============================================================================
-// LIGHTWEIGHT JAR (No Discord/Database - for testing)
-// ============================================================================
-
-task lightJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
-    archiveFileName = 'EliteTitanCasino-lite.jar'
-    archiveClassifier = 'lite'
-    
-    from sourceSets.main.output
-    configurations = [project.configurations.runtimeClasspath]
-    
-    // Only include Gson (required for config)
-    dependencies {
-        include(dependency('com.google.code.gson:gson'))
-        include(dependency('commons-codec:commons-codec'))
-    }
-    
-    relocate 'com.google.gson', 'com.ikingsnipe.libs.gson'
-    
-    exclude 'META-INF/*.SF'
-    exclude 'META-INF/*.DSA'
-    exclude 'META-INF/*.RSA'
-    exclude 'META-INF/maven/**'
-    
-    mergeServiceFiles()
-    
-    manifest {
-        attributes(
-            'Main-Class': 'com.ikingsnipe.EliteTitanCasino',
-            'Script-Name': 'Elite Titan Casino',
-            'Script-Author': 'iKingSnipe',
-            'Script-Version': '9.0.0',
-            'Implementation-Title': 'Elite Titan Casino (Lite)',
-            'Implementation-Version': project.version
-        )
-    }
-}
-
-// ============================================================================
-// JAR PLACEMENT TASK
-// ============================================================================
-
-task placeJar(dependsOn: shadowJar) {
-    doLast {
-        // Create output directory if it doesn't exist
-        def outputDir = file('output')
-        if (!outputDir.exists()) {
-            outputDir.mkdirs()
-        }
-        
-        // Copy JAR to output folder
-        def sourceJar = file("build/libs/EliteTitanCasino.jar")
-        def destJar = file("output/EliteTitanCasino.jar")
-        
-        if (sourceJar.exists()) {
-            copy {
-                from sourceJar
-                into outputDir
-            }
-            println "✓ JAR placed in output folder: ${destJar.absolutePath}"
-            println "✓ JAR Size: ${(sourceJar.length() / 1024 / 1024).round(2)} MB"
-        } else {
-            println "✗ Error: JAR not found at ${sourceJar.absolutePath}"
-        }
-    }
+// Set the main class for the 'application' plugin
+application {
+    mainClass.set('com.nightfury.core.Main')
 }
 
 // ============================================================================
@@ -193,54 +111,4 @@ clean {
 // DEFAULT TASKS
 // ============================================================================
 
-defaultTasks 'clean', 'shadowJar', 'placeJar'
-
-// ============================================================================
-// BUILD SUMMARY TASK
-// ============================================================================
-
-task buildSummary {
-    doLast {
-        def jarFile = file("build/libs/EliteTitanCasino.jar")
-        def jarSize = jarFile.exists() ? "${(jarFile.length() / 1024 / 1024).round(2)} MB" : "N/A"
-        
-        println """
-╔════════════════════════════════════════════════════════════════╗
-║           ELITE TITAN CASINO - BUILD COMPLETE                 ║
-╚════════════════════════════════════════════════════════════════╝
-
-Project: ${project.name}
-Version: ${project.version}
-Main Class: com.ikingsnipe.EliteTitanCasino
-
-Output JAR:
-  • Location: build/libs/EliteTitanCasino.jar
-  • Size: ${jarSize}
-  • Copy to: output/EliteTitanCasino.jar
-
-DEPLOYMENT:
-  Windows: Copy to %LOCALAPPDATA%\\DreamBot\\Scripts\\
-  Linux:   Copy to ~/.dreambot/Scripts/
-  Mac:     Copy to ~/DreamBot/Scripts/
-
-  Or run: .\\Deploy-ToDreamBot.ps1
-
-FEATURES:
-  ✓ Provably Fair (SHA-256 commitment)
-  ✓ Craps Game (x3 payout)
-  ✓ Dice Game (55+ wins x2)
-  ✓ Velocity Bezier Mouse Paths
-  ✓ Anti-Ban Humanization
-  ✓ GUI Configuration
-  ✓ Trade Handling
-  ✓ Paint Overlay
-
-Java Version: ${sourceCompatibility}
-Build Time: ${new Date().format('yyyy-MM-dd HH:mm:ss')}
-
-✓ BUILD SUCCESSFUL - JAR READY FOR DEPLOYMENT!
-"""
-    }
-}
-
-build.finalizedBy(buildSummary)
+defaultTasks 'clean', 'shadowJar'
